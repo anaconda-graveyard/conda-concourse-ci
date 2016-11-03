@@ -1,0 +1,8 @@
+package:
+  name: frank
+  version: 1.0
+
+requirements:
+  run:
+    - python
+    - numpy

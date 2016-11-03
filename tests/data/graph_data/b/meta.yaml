@@ -1,0 +1,10 @@
+package:
+  name: b
+  version: 1.0
+
+requirements:
+  build:
+    - a
+  run:
+    # c depends on b at build time, but b depends on c at run time
+    - c

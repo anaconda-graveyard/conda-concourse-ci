@@ -1,0 +1,9 @@
+package:
+  name: platform_dependencies
+  version: 1.0
+
+requirements:
+  build:
+    - win_dep  # [win32]
+    - osx_dep  1.0 # [osx]
+    - linux_dep  # [linux]

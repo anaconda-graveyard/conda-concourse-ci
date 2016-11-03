@@ -1,0 +1,8 @@
+package:
+  name: a
+  version: 1.0
+
+requirements:
+  run:
+    - c  # [win]
+    - d  # [win64]

@@ -1,0 +1,43 @@
+{% set version="0.1.0" %}
+
+package:
+  name: conda-concourse-ci
+  version: {{ version }}
+
+source:
+  path: ../
+
+build:
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+  entry_points:
+    - ccci = conda_concourse_ci.cli:build_cli
+
+requirements:
+  build:
+    - python
+  run:
+    - conda-build >=2.0.4
+    - networkx
+    - python
+    - requests
+    - six
+    - yaml
+
+test:
+  requires:
+    - responses
+    - mock
+    - pytest
+    - pytest-cov
+    - graphviz
+  commands:
+    - pip install pytest-mock graphviz
+    - py.test tests --cov conda_concourse_ci
+  source_files:
+    - tests
+
+about:
+  summary: Glue between conda-build and Concourse CI.  Builds repos of recipes.
+  home: https://github.com/conda/conda-concourse-ci
+  dev_url: https://github.com/conda/conda-concourse-ci
+  doc_url: https://github.com/conda/conda-concourse-ci

@@ -1,0 +1,3 @@
+worker_label: centos5-64
+platform: linux
+arch: 64
