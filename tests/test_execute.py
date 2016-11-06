@@ -1,74 +1,61 @@
-import time
+import os
 
 from conda_concourse_ci import execute
 import conda_concourse_ci
 
-from distributed import LocalCluster, Client, progress
 import pytest
 from pytest_mock import mocker
 
-from .utils import testing_graph, test_data_dir, testing_conda_resolve
-from . import utils
+from .utils import (testing_graph, test_data_dir, testing_conda_resolve, testing_metadata,
+                    graph_data_dir)
 
 
-def dask_evaluate(outputs):
-    utils.port_increment += 2
-    scheduler_port = 8786 + utils.port_increment
-    diagnostics_port = 8787 + utils.port_increment
-
-    cluster = LocalCluster(n_workers=1, threads_per_worker=10, nanny=False,
-                           scheduler_port=scheduler_port, diagnostics_port=diagnostics_port)
-    client = Client(cluster)
-    futures = client.persist(outputs)
-    return client.gather(futures)
+def test_package_key(testing_metadata):
+    assert (execute.package_key('build', testing_metadata, 'linux') ==
+            'build-test_package_key-1-linux')
 
 
-def test_job(mocker):
-    mocker.patch.object(execute, 'submit_job')
-    mocker.patch.object(execute, 'check_job_status')
-    mocker.patch.object(execute, 'delayed')
-    execute.check_job_status.return_value = 'success'
-    ret = execute._job('something', None, commit_sha='abc')
-    assert ret == 'abc'
-
-    with pytest.raises(Exception):
-        execute.check_job_status.return_value = 'failed'
-        ret = execute._job('something', None, commit_sha='abc')
-
-
-def test_job_passthrough():
-    ret = execute._job({'something': 123}, None, passthrough=True)
-    assert ret == {'something': 123}
-
-
-def test_job_wait_and_timeout(mocker):
-    mocker.patch.object(execute, 'submit_job')
-    mocker.patch.object(execute, 'check_job_status')
-    execute.check_job_status.return_value = 'running'
-    now = time.time()
-    with pytest.raises(Exception):
-        execute._job('something', None, commit_sha='abc', sleep_interval=0.5, run_timeout=2)
-    assert time.time() - now >= 2.0
-
-
-def test_platform_package_key():
-    assert (execute._platform_package_key('build', 'frank', {'worker_label': 'steve'}) ==
-            'build_frank_steve')
-
-
-def test_get_dask_outputs(mocker, testing_graph, testing_conda_resolve):
+def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
     mocker.patch.object(execute, 'construct_graph')
     mocker.patch.object(execute, 'Resolve')
     mocker.patch.object(execute, 'get_index')
-    mocker.patch.object(execute, 'expand_run')
-    mocker.patch.object(execute, '_job')
     mocker.patch.object(execute.subprocess, 'check_call')
     mocker.patch.object(execute.subprocess, 'check_output')
     mocker.patch.object(conda_concourse_ci.compute_build_graph, '_installable')
     execute.subprocess.check_output.return_value = 'abc'
     execute.construct_graph.return_value = testing_graph
     execute.Resolve.return_value = testing_conda_resolve
-    execute._job.return_value = 'abc'
-    execute.delayed = lambda x, pure: x
     conda_concourse_ci.compute_build_graph._installable.return_value = True
-    execute.get_dask_outputs(test_data_dir)
+    task_graph = execute.collect_tasks(graph_data_dir, folders=['a'],
+                                       matrix_base_dir=test_data_dir)
+    test_platforms = os.listdir(os.path.join(test_data_dir, 'test_platforms.d'))
+    build_platforms = os.listdir(os.path.join(test_data_dir, 'build_platforms.d'))
+    n_platforms = len(test_platforms) + len(build_platforms)
+    # minimum args means build and test provided folders.  Two tasks.
+    assert len(task_graph.nodes()) == n_platforms
+
+
+def test_get_plan_dict(mocker, testing_graph):
+    plan = execute.graph_to_plan_dict(testing_graph)
+    reference = execute._plan_boilerplate()
+    reference.update({
+        'jobs': [
+            {'name': 'execute',
+             'public': True,
+             'plan': [
+                 {'get': 's3-intermediary'},
+                 {'aggregate': [
+                     {'task': 'build-b-0-linux',
+                      'file': 's3-intermediary/ci-tasks/build-b-0-linux.yml'},
+                     {'task': 'test-b-0-linux',
+                      'file': 's3-intermediary/ci-tasks/test-b-0-linux.yml'}
+                     ]}
+             ]
+            }
+        ]
+    })
+    assert plan == reference
+
+
+def test_get_task_dict(mocker, testing_graph):
+    execute.get_task_dict(testing_graph, 'build-b-0-linux')

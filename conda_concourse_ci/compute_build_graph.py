@@ -16,10 +16,10 @@ log = logging.getLogger(__file__)
 CONDA_BUILD_CACHE = os.environ.get("CONDA_BUILD_CACHE")
 
 
-def _package_key(metadata, label):
+def package_key(run, metadata, label):
     # get the build string from whatever conda-build makes of the configuration
     configuration = build_string_from_metadata(metadata)
-    return "-".join([metadata.name(), configuration, label])
+    return "-".join([run, metadata.name(), configuration, label])
 
 
 def _git_changed_files(git_rev, stop_rev=None, git_root=''):
@@ -75,10 +75,12 @@ def _deps_to_version_dict(deps):
     d = {}
     for x in deps:
         x = x.strip().split()
-        if len(x) == 2:
-            d[x[0]] = x[1]
+        if len(x) == 3:
+            d[x[0]] = (x[1], x[2])
+        elif len(x) == 2:
+            d[x[0]] = (x[1], 'any')
         else:
-            d[x[0]] = 'any'
+            d[x[0]] = ('any', 'any')
     return d
 
 
@@ -99,112 +101,97 @@ def get_run_test_deps(meta):
     return _deps_to_version_dict(run_reqs + test_reqs)
 
 
-def construct_graph(recipes_dir, platform, arch, label, folders=(), deps_type='build',
+def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resolve,
+                        recipes_dir=None):
+    with set_conda_env_vars(env_var_set):
+        rendered = api.render(recipe_dir, platform=worker['platform'],
+                              arch=worker['arch'])
+    # directories passed may not be valid recipes.  Skip them if they aren't
+    if not rendered:
+        return
+
+    metadata, _, _ = rendered
+    name = package_key(run, metadata, worker['label'])
+
+    if metadata.skip():
+        raise ValueError("Tried to {0} recipe {1}, which is skipped in meta.yaml"
+                         .format(run, recipe_dir))
+
+    graph.add_node(name, meta=metadata, env=env_var_set, worker=worker)
+    add_dependency_nodes_and_edges(name, graph, run, env_var_set, worker, conda_resolve,
+                                   recipes_dir=recipes_dir)
+
+    # add the test equivalent at the same time.  This is so that expanding can find it.
+    if run == 'build':
+        add_recipe_to_graph(recipe_dir, graph, 'test', env_var_set, worker, conda_resolve,
+                            recipes_dir=recipes_dir)
+        graph.add_edge(package_key('test', metadata, worker['label']), name)
+
+    return name
+
+
+def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
                     git_rev=None, stop_rev=None, matrix_base_dir=None):
     '''
     Construct a directed graph of dependencies from a directory of recipes
 
-    deps_type: whether to use build or run/test requirements for the graph.  Avoids cycles.
+    run: whether to use build or run/test requirements for the graph.  Avoids cycles.
           values: 'build' or 'test'.  Actually, only 'build' matters - otherwise, it's
                    run/test for any other value.
     '''
-    g = nx.DiGraph()
-    if not matrix_base_dir:
-        matrix_base_dir = recipes_dir
+    matrix_base_dir = matrix_base_dir or recipes_dir
     if not os.path.isabs(recipes_dir):
         recipes_dir = os.path.normpath(os.path.join(os.getcwd(), recipes_dir))
     assert os.path.isdir(recipes_dir)
-
-    # get all immediate subdirectories
-    other_top_dirs = [d for d in os.listdir(recipes_dir)
-                      if os.path.isdir(os.path.join(recipes_dir, d)) and
-                      not d.startswith('.')]
-    recipe_dirs = []
-    for recipe_dir in other_top_dirs:
-        try:
-            find_recipe(os.path.join(recipes_dir, recipe_dir))
-            recipe_dirs.append(recipe_dir)
-        except IOError:
-            pass
 
     if not folders:
         if not git_rev:
             git_rev = 'HEAD'
         folders = git_changed_recipes(git_rev, stop_rev=stop_rev,
                                       git_root=recipes_dir)
-
-    for rd in recipe_dirs:
-        recipe_dir = os.path.join(recipes_dir, rd)
+    graph = nx.DiGraph()
+    for folder in folders:
+        recipe_dir = os.path.join(recipes_dir, folder)
         env_var_sets = expand_build_matrix(recipe_dir, matrix_base_dir)
 
         for env_var_set in env_var_sets:
-            with set_conda_env_vars(env_var_set):
-                metadata, _, _ = api.render(recipe_dir, platform=platform, arch=arch)
-            name = _package_key(metadata, label)
-
-            run_dict = {'build': deps_type == 'build' and rd in folders,  # will be built and tested
-                        'test': deps_type == 'test' and rd in folders,  # must be installable; will be tested
-                        'install': False,  # must be installable, but is not necessarily tested
-                        }
-            if not metadata.skip():
-                # since we have no dependency ordering without a graph, it is conceivable that we add
-                #    recipe information after we've already added package info as just a dependency.
-                #    This first clause is if we encounter a recipe for the first time.  Its else clause
-                #    is when we encounter a recipe after we've already added a node based on a
-                #    dependency that can (presumably) be downloaded.
-                if name.split('-')[0] not in g.nodes():
-                    g.add_node(name, meta=metadata, recipe=recipe_dir, **run_dict)
-                else:
-                    # when we add deps, we don't know what their build strings might be.  Base this
-                    #    only on name, until we have more info to add
-                    nx.relabel_nodes(g, {name.split('-')[0]: name}, copy=False)
-                    g.node[name]['meta'] = metadata
-                    g.node[name]['recipe'] = recipe_dir
-            deps = get_build_deps(metadata) if deps_type == 'build' else get_run_test_deps(metadata)
-            for dep, version in deps.items():
-                if dep not in (node.split('-')[0] for node in g.nodes()):
-                    # we fill in the rest of the metadata if we encounter a recipe for this package
-                    g.add_node(dep, meta=MetaData.fromdict({
-                        'package': {'name': dep,
-                                    'version': version}
-                        }))
-                else:
-                    dep = [node for node in g.nodes() if node.split('-')[0] == dep][0]
-                g.node[dep]['install'] = True
-                g.add_edge(name, dep)
-    return g
+            add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resolve,
+                                recipes_dir)
+    return graph
 
 
-def _fix_blank_versions(metadata):
-    version = metadata.version()
-    if version == 'any':
-        version = ""
-    return version
+def _fix_any(value):
+    if value == 'any':
+        value = ""
+    return value
 
 
 def _installable(metadata, conda_resolve):
     """Can Conda install the package we need?"""
     return conda_resolve.valid(conda_interface.MatchSpec(" ".join([metadata.name(),
-                                                                   _fix_blank_versions(metadata)])),
+                                                                   _fix_any(metadata.version()),
+                                                                   _fix_any(metadata.build_id())])),
                                filter=conda_resolve.default_filter())
 
 
-def _buildable(metadata):
+def _buildable(metadata, recipes_dir=None):
     """Does the recipe that we have available produce the package we need?"""
-    available = False
-    # best: metadata comes from a real recipe, and we have a path to it
+    # best: metadata comes from a real recipe, and we have a path to it.  Version may still
+    #    not match.
+    recipes_dir = recipes_dir or os.getcwd()
+    path = os.path.join(recipes_dir, metadata.name())
     if os.path.exists(metadata.meta_path):
         recipe_metadata, _, _ = api.render(metadata.meta_path)
     # next best: matching name recipe folder in cwd
-    elif os.path.isdir(metadata.name()):
-        recipe_metadata, _, _ = api.render(metadata.name())
+    elif os.path.isdir(path):
+        recipe_metadata, _, _ = api.render(path)
     else:
         return False
 
     # this is our target match
     match_dict = {'name': metadata.name(),
-                    'version': _fix_blank_versions(metadata),
-                    'build': metadata.build_number(), }
+                  'version': _fix_any(metadata.version()),
+                  'build': _fix_any(metadata.build_number()), }
     # we don't care about version, so just make it match.
     if not match_dict['version']:
         match_dict['version'] = recipe_metadata.version()
@@ -212,101 +199,115 @@ def _buildable(metadata):
     ms = conda_interface.MatchSpec(" ".join([recipe_metadata.name(),
                                              recipe_metadata.version()]))
     available = ms.match(match_dict)
-    return available
+    return recipe_metadata.meta_path if available else False
 
 
-def upstream_dependencies_needing_build(graph, conda_resolve):
-    dirty_nodes = [node for node, value in graph.node.items() if any([
-        value.get('build'), value.get('install'), value.get('test')])]
-    for node in dirty_nodes:
-        for successor in graph.successors_iter(node):
-            version = graph.node[successor].get('meta').version()
-            if not _installable(successor, version, conda_resolve):
-                if _buildable(successor, version):
-                    graph.node[successor]['build'] = True
-                    dirty_nodes.append(successor)
-                else:
-                    raise ValueError("Dependency %s is not installable, and recipe (if available)"
-                                     " can't produce desired version.", successor)
-    return set(dirty_nodes)
+def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_resolve,
+                                   recipes_dir=None):
+    '''add build nodes for any upstream deps that are not yet installable
+
+    changes graph in place.
+    '''
+    metadata = graph.node[node]['meta']
+    deps = get_build_deps(metadata) if run == 'build' else get_run_test_deps(metadata)
+    for dep, (version, build_str) in deps.items():
+        dummy_meta = MetaData.fromdict({
+            'package': {'name': dep,
+                        'version': version},
+            'build': {'string': build_str}})
+        dep_name = package_key('build', dummy_meta, worker['label'])
+        if not _installable(dummy_meta, conda_resolve):
+            if dep_name not in graph.nodes():
+                recipe_dir = _buildable(dummy_meta, recipes_dir)
+                if not recipe_dir:
+                    raise ValueError("Dependency %s is not installable, and recipe (if "
+                                        " available) can't produce desired version.", dep)
+                dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', env_var_set,
+                                               worker, conda_resolve, recipes_dir)
+            graph.add_edge(node, dep_name)
 
 
-def expand_run(graph, conda_resolve, run, steps=0, max_downstream=5):
-    """Apply the build label to any nodes that need (re)building.  "need rebuilding" means
-    both packages that our target package depends on, but are not yet built, as well as
-    packages that depend on our target package.  For the latter, you can specify how many
-    dependencies deep (steps) to follow that chain, since it can be quite large.
+def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
+               recipes_dir=None, matrix_base_dir=None):
+    """Apply the build label to any nodes that need (re)building or testing.
+
+    "need rebuilding" means both packages that our target package depends on,
+    but are not yet built, as well as packages that depend on our target
+    package. For the latter, you can specify how many dependencies deep (steps)
+    to follow that chain, since it can be quite large.
 
     If steps is -1, all downstream dependencies are rebuilt or retested
     """
-    upstream_dependencies_needing_build(graph, conda_resolve)
     downstream = 0
+    initial_nodes = len(graph.nodes())
 
-    initial_dirty = len(dirty(graph))
+    # for build, we get test automatically.  Give people the max_downstream in terms
+    #   of packages, not tasks
+    if run == 'build':
+        max_downstream *= 2
 
-    def expand_step(dirty_nodes, downstream):
-        for node in dirty_nodes:
-            for predecessor in graph.predecessors(node):
-                if max_downstream < 0 or (downstream - initial_dirty) < max_downstream:
-                    graph.node[predecessor][run] = True
+    def expand_step(task_graph, full_graph, downstream):
+        for node in task_graph.nodes():
+            for predecessor in full_graph.predecessors(node):
+                if max_downstream < 0 or (downstream - initial_nodes) < max_downstream:
+                    add_recipe_to_graph(
+                        os.path.dirname(full_graph.node[predecessor]['meta'].meta_path),
+                        task_graph,
+                        run=run, env_var_set=task_graph.node[node]['env'],
+                        worker=worker, conda_resolve=conda_resolve, recipes_dir=recipes_dir)
                     downstream += 1
-        return len(dirty(graph))
+        return len(graph.nodes())
 
     # starting from our initial collection of dirty nodes, trace the tree down to packages
     #   that depend on the dirty nodes.  These packages may need to be rebuilt, or perhaps
     #   just tested.  The 'run' argument determines which.
 
-    if steps >= 0:
-        for step in range(steps):
-            downstream = expand_step(dirty(graph), downstream)
-    else:
-        start_dirty_nodes = dirty(graph)
-        while True:
-            downstream = expand_step(start_dirty_nodes, downstream)
-            new_dirty = dirty(graph)
-            if start_dirty_nodes == new_dirty:
-                break
-            start_dirty_nodes = new_dirty
+    if steps != 0:
+        if not recipes_dir:
+            raise ValueError("recipes_dir is necessary if steps != 0.  Please pass it as an argument.")
+        # here we need to fully populate a graph that has the right build or run/test deps.
+        #    We don't create this elsewhere because it is unnecessary and costly.
 
-    return dirty(graph)
+        # get all immediate subdirectories
+        other_top_dirs = [d for d in os.listdir(recipes_dir)
+                        if os.path.isdir(os.path.join(recipes_dir, d)) and
+                        not d.startswith('.')]
+        recipe_dirs = []
+        for recipe_dir in other_top_dirs:
+            try:
+                find_recipe(os.path.join(recipes_dir, recipe_dir))
+                recipe_dirs.append(recipe_dir)
+            except IOError:
+                pass
+
+        # constructing the graph for build will automatically also include the test deps
+        full_graph = construct_graph(recipes_dir, worker, 'build', folders=recipe_dirs,
+                                     matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve)
+
+        if steps >= 0:
+            for step in range(steps):
+                downstream = expand_step(graph, full_graph, downstream)
+        else:
+            while True:
+                nodes = graph.nodes()
+                downstream = expand_step(graph, full_graph, downstream)
+                if nodes == graph.nodes():
+                    break
 
 
-def dirty(graph):
-    """
-    Return a set of all dirty nodes in the graph.
-    """
-    # Reverse the edges to get true dependency
-    return {n: v for n, v in graph.node.items() if v.get('build') or v.get('test')}
-
-
-def order_build(graph, packages=None, level=0, filter_dirty=True):
+def order_build(graph):
     '''
     Assumes that packages are in graph.
     Builds a temporary graph of relevant nodes and returns it topological sort.
 
     Relevant nodes selected in a breadth first traversal sourced at each pkg
     in packages.
-
-    Values expected for packages is one of None, sequence:
-       None: build the whole graph
-       empty sequence: build nodes marked dirty
-       non-empty sequence: build nodes in sequence
     '''
 
-    if not packages:
-        packages = graph.nodes()
-        if filter_dirty:
-            packages = dirty(graph)
-    tmp_global = graph.subgraph(packages)
-
-    # copy relevant node data to tmp_global
-    for n in tmp_global.nodes_iter():
-        tmp_global.node[n] = graph.node[n]
-
     try:
-        order = nx.topological_sort(tmp_global, reverse=True)
+        order = nx.topological_sort(graph, reverse=True)
     except nx.exception.NetworkXUnfeasible:
-        raise ValueError("Cycles detected in graph: %s", nx.find_cycle(tmp_global,
+        raise ValueError("Cycles detected in graph: %s", nx.find_cycle(graph,
                                                                        orientation='ignore'))
 
-    return tmp_global, order
+    return order

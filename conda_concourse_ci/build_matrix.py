@@ -4,7 +4,6 @@ from itertools import product
 import os
 
 from conda_build.api import render
-from conda_build.metadata import build_string_from_metadata
 import six
 import yaml
 
@@ -16,12 +15,6 @@ def load_platforms(platforms_dir):
             with open(os.path.join(platforms_dir, f)) as buff:
                 platforms.append(yaml.load(buff))
     return platforms
-
-
-def _package_key(run, metadata, label):
-    # get the build string from whatever conda-build makes of the configuration
-    configuration = build_string_from_metadata(metadata)
-    return "_".join([run, metadata.name(), configuration, label])
 
 
 @contextlib.contextmanager
@@ -95,6 +88,9 @@ def expand_build_matrix(build_recipe, repo_base_dir):
     versions_file = os.path.join(repo_base_dir, 'versions.yml')
     with open(versions_file) as f:
         dicts = yaml.load(f)
+    if (not os.path.isabs(build_recipe) and not
+            os.path.isdir(os.path.join(os.getcwd(), build_recipe))):
+        build_recipe = os.path.join(repo_base_dir, build_recipe)
     if os.path.isdir(build_recipe):
         dicts = _filter_environment_with_metadata(build_recipe, dicts)
     # ensure that all values are strings, not floats

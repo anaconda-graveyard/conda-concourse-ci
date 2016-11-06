@@ -8,13 +8,23 @@ import networkx as nx
 import pytest
 
 test_data_dir = os.path.join(os.path.dirname(__file__), 'data')
+graph_data_dir = os.path.join(test_data_dir, 'graph_data')
 
-default_meta = MetaData.fromdict({
-                   'name': 'steve',
-                   'version': '1.0',
-                })
+default_worker = {"platform": 'someplatform',
+                  'arch': 'somearch',
+                  'label': 'linux'}
 
-build_dict = {'build': True, 'test': False, 'install': False, 'meta': default_meta}
+
+def default_metadata(name='steve', version=1.0, dependencies=None):
+    metadata = {
+                 'package': {
+                     'name': name,
+                     'version': version,
+                   }
+                }
+    if dependencies:
+        metadata.update({'requirements': dependencies})
+    return MetaData.fromdict(metadata)
 
 
 @pytest.fixture(scope='function')
@@ -84,15 +94,16 @@ def testing_git_repo(testing_workdir, request):
 @pytest.fixture(scope='function')
 def testing_graph(request):
     g = nx.DiGraph()
-    for x in ['a', 'b', 'c', 'd', 'e']:
-        g.add_node(x, build=False, test=False, install=False, meta=default_meta)
-    # d depends on c depends on b depends on a
-    g.add_edge('b', 'a')
-    g.add_edge('c', 'b')
-    g.add_edge('d', 'c')
-    g.add_edge('e', 'd')
-    g.node['b']['build'] = True
+    g.add_node('build-b-0-linux', meta=default_metadata('b', dependencies={'build': 'a'}), env={},
+               worker=default_worker)
+    g.add_node('test-b-0-linux', meta=default_metadata('b'), env={}, worker=default_worker)
+    g.add_edge('test-b-0-linux', 'build-b-0-linux')
     return g
+
+
+def add_testing_node(graph, name, run):
+    graph.add_node('{0}-{1}-0-linux'.format(run, name), meta=default_metadata(name),
+                   env={}, worker=default_worker)
 
 
 @pytest.fixture(scope='function')

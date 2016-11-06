@@ -5,8 +5,3 @@ package:
 requirements:
   build:
     - b
-
-test:
-  requires:
-    # d depends on c at build time, but c depends on d at test time
-    - d

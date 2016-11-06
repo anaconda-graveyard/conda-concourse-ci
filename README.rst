@@ -109,7 +109,7 @@ You'll also need some configuration to specify your platform and version matrix.
 
 In these folders, create any number of arbitrarily named .yaml files.  These files are expected to have the following keys:
 
-* ``worker_label``: this is the label used by Concourse CI to identify appropriate workers for your job
+* ``label``: this is the label used by Concourse CI to identify appropriate workers for your job
 * ``platform``: the conda platform to build on.  Examples: win, osx, linux
 * ``arch``: the architecture to build for.  Examples: 32, 64, armv7l, ppc64le
 

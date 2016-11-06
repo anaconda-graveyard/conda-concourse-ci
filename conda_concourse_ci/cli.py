@@ -1,10 +1,10 @@
 import argparse
+import contextlib
 import logging
-
-from dask import visualize
-from distributed import LocalCluster, Client, progress
+import subprocess
 
 import conda_concourse_ci
+from .compute_build_graph import git_changed_recipes
 from .execute import collect_tasks, write_tasks
 
 log = logging.getLogger(__file__)
@@ -14,8 +14,6 @@ def parse_args(parse_this=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("path", default='.')
     package_specs = parser.add_mutually_exclusive_group()
-    package_specs.add_argument("--all", action='store_true', dest='_all',
-                               help='Show/build all nodes in the graph, not just changed ones')
     package_specs.add_argument('--packages', '-p',
                         default=[],
                         nargs="+",
@@ -58,6 +56,19 @@ def parse_args(parse_this=None):
     return parser.parse_args(parse_this)
 
 
+@contextlib.contextmanager
+def checkout_git_rev(checkout_rev, path):
+    git_current_rev = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+                                              cwd=path).rstrip()
+    subprocess.check_call(['git', 'checkout', checkout_rev], cwd=path)
+    try:
+        yield
+    except:    # pragma: no cover
+        raise  # pragma: no cover
+    finally:
+        subprocess.check_call(['git', 'checkout', git_current_rev], cwd=path)
+
+
 def build_cli(args=None):
     if not args:
         args = parse_args()
@@ -69,12 +80,14 @@ def build_cli(args=None):
     else:
         logging.basicConfig(level=logging.INFO)
 
-    filter_dirty = any(args.packages) or not args._all
+    checkout_rev = args.stop_rev or args.git_rev
+    folders = args.packages
+    if not folders:
+        folders = git_changed_recipes(args.git_rev, args.stop_rev, git_root=args.path)
 
-    plan, tasks = collect_tasks(args.path, packages=args.packages, filter_dirty=filter_dirty,
-                                git_rev=args.git_rev, stop_rev=args.stop_rev,
-                                steps=args.steps, max_downstream=args.max_downstream,
-                                test=args.test, debug=args.debug)
+    with checkout_git_rev(checkout_rev, args.path):
+        plan, tasks = collect_tasks(args.path, folders=folders, steps=args.steps,
+                                    max_downstream=args.max_downstream, test=args.test)
     # this just writes the plan using the same code as writing the tasks.
     tasks.udpate({'plan': plan})
     write_tasks(tasks, output_folder=args.output_folder)
