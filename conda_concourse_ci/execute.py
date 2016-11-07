@@ -33,7 +33,7 @@ def _plan_boilerplate():
              'source': {
                  'uri': '{{recipe-repo}}'},
                  'branch': "{{recipe-repo-commit}}"
-            },
+             },
             {'name': 'execute-tasks',
              'type': 'concourse-pipeline',
              'source': {
@@ -46,21 +46,26 @@ def _plan_boilerplate():
                  ]
 
              }},
-            {'name': 's3-intermediary',
+            {'name': 's3-tasks',
              'type': 's3-simple',
-             'trigger': True,
-             'source': {
-                 'bucket': '{{aws-bucket}}',
-                 'access_key_id': '{{aws-key-id}}',
-                 'secret_access_key': '{{aws-secret-key}}',
-                 # tiny bit hokey here.  We include only paths starting with c
-                 #   This includes config and ci-tasks folders
-                 'options': [
-                     '"--exclude \'*\'"',
-                     '"--include \'c*\'"'
-                     ]
-                 }
-             }
+             'bucket': '{{aws-bucket}}',
+             'access_key_id': '{{aws-key-id}}',
+             'secret_access_key': '{{aws-secret-key}}',
+             'options': [
+                 "--exclude '*'",
+                 "--include 'ci-tasks'"
+             ]
+             },
+            {'name': 's3-config',
+             'type': 's3-simple',
+             'bucket': '{{aws-bucket}}',
+             'access_key_id': '{{aws-key-id}}',
+             'secret_access_key': '{{aws-secret-key}}',
+             'options': [
+                 "--exclude '*'",
+                 "--include 'config'"
+             ]
+             },
         ],
     }
 
@@ -78,7 +83,7 @@ def find_task_deps_in_group(task, graph, groups):
 def graph_to_plan_dict(graph, public=True):
     plan = _plan_boilerplate()
     order = order_build(graph)
-    tasks = [{'get': 's3-intermediary'}]
+    tasks = [{'get': 's3-tasks'}, {'get': 's3-config'}]
     # cluster things together into explicitly parallel groups
     aggregate_groups = [[], ]
     for task in order:
@@ -86,7 +91,7 @@ def graph_to_plan_dict(graph, public=True):
         in_group = find_task_deps_in_group(task, graph, aggregate_groups)
         if in_group == -1:
             aggregate_groups[0].append({'task': task,
-                                        'file': 's3-intermediary/ci-tasks/{}.yml'.format(task),
+                                        'file': 's3-tasks/ci-tasks/{}.yml'.format(task),
                                         })
         else:
             try:
@@ -94,7 +99,7 @@ def graph_to_plan_dict(graph, public=True):
             except IndexError:
                 aggregate_groups.append([])
             aggregate_groups[in_group + 1].append({'task': task,
-                                                    'file': ('s3-intermediary/ci-tasks/{}.yml'
+                                                    'file': ('s3-tasks/ci-tasks/{}.yml'
                                                              .format(task)),
                                                    })
 

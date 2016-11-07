@@ -20,7 +20,7 @@ setup(
                  'conda_concourse_ci'},
     entry_points={
         'console_scripts': [
-            'c3i=conda_concourse_ci.cli:build_cli'
+            'c3i=conda_concourse_ci.cli:main'
         ]
     },
     include_package_data=True,
