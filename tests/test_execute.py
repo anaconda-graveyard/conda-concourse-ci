@@ -16,14 +16,12 @@ def test_package_key(testing_metadata):
 
 
 def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
-    mocker.patch.object(execute, 'construct_graph')
     mocker.patch.object(execute, 'Resolve')
     mocker.patch.object(execute, 'get_index')
     mocker.patch.object(execute.subprocess, 'check_call')
     mocker.patch.object(execute.subprocess, 'check_output')
     mocker.patch.object(conda_concourse_ci.compute_build_graph, '_installable')
     execute.subprocess.check_output.return_value = 'abc'
-    execute.construct_graph.return_value = testing_graph
     execute.Resolve.return_value = testing_conda_resolve
     conda_concourse_ci.compute_build_graph._installable.return_value = True
     task_graph = execute.collect_tasks(graph_data_dir, folders=['a'],

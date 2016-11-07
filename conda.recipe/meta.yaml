@@ -10,13 +10,14 @@ source:
 build:
   script: python setup.py install --single-version-externally-managed --record=record.txt
   entry_points:
-    - ccci = conda_concourse_ci.cli:build_cli
+    - c3i = conda_concourse_ci.cli:build_cli
 
 requirements:
   build:
     - python
   run:
-    - conda-build >=2.0.4
+    - conda-build >=2.0.9
+    - contextlib2
     - networkx
     - python
     - requests
@@ -25,13 +26,10 @@ requirements:
 
 test:
   requires:
-    - responses
-    - mock
     - pytest
     - pytest-cov
-    - graphviz
   commands:
-    - pip install pytest-mock graphviz
+    - pip install pytest-mock
     - py.test tests --cov conda_concourse_ci
   source_files:
     - tests
@@ -41,3 +39,4 @@ about:
   home: https://github.com/conda/conda-concourse-ci
   dev_url: https://github.com/conda/conda-concourse-ci
   doc_url: https://github.com/conda/conda-concourse-ci
+  license: BSD 3-clause

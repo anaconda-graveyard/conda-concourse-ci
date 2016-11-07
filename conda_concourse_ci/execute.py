@@ -65,48 +65,74 @@ def _plan_boilerplate():
     }
 
 
+def find_task_deps_in_group(task, graph, groups):
+    found = [-1]
+    for dep in graph.successors(task):
+        for idx, group in enumerate(groups):
+            if any(dep == entry['task'] for entry in group):
+                found.append(idx)
+                break
+    return max(found)
+
+
 def graph_to_plan_dict(graph, public=True):
     plan = _plan_boilerplate()
     order = order_build(graph)
     tasks = [{'get': 's3-intermediary'}]
     # cluster things together into explicitly parallel groups
-    aggregate_group = []
+    aggregate_groups = [[], ]
     for task in order:
-        # If any dependency is part of the current group, then we need to start a new group.
-        if '-'.join(['build'] + task.split('-')[1:]) in aggregate_group:
-            tasks.append({'aggregate': aggregate_group})
-            aggregate_group = []
-        aggregate_group.append({'task': task,
-                                'file': 's3-intermediary/ci-tasks/{}.yml'.format(task),
-                                })
-    if tasks[-1] != {'aggregate': aggregate_group}:
-        tasks.append({'aggregate': aggregate_group})
+        # If any dependency is part of a current group, then we need to go one past that group.
+        in_group = find_task_deps_in_group(task, graph, aggregate_groups)
+        if in_group == -1:
+            aggregate_groups[0].append({'task': task,
+                                        'file': 's3-intermediary/ci-tasks/{}.yml'.format(task),
+                                        })
+        else:
+            try:
+                aggregate_groups[in_group + 1]
+            except IndexError:
+                aggregate_groups.append([])
+            aggregate_groups[in_group + 1].append({'task': task,
+                                                    'file': ('s3-intermediary/ci-tasks/{}.yml'
+                                                             .format(task)),
+                                                   })
+
+    tasks.extend([{'aggregate': group} for group in aggregate_groups])
     plan.update({'jobs': [{'name': 'execute',
-                          'public': public,
-                          'plan': tasks
-                          }]})
+                           'public': public,
+                           'plan': tasks
+                           }]})
     return plan
 
 
 def get_task_dict(graph, node):
     test_arg = '--no-test' if node.startswith('build') else '--test'
     task_dict = {
-        {'platform': graph.node[node]['worker']['label'],
-         'outputs': {'name': node},
-         'run': {
+        'platform': graph.node[node]['worker']['label'],
+        'outputs': {'name': node},
+        'run': {
              'path': 'conda',
              'args': ['build', test_arg, os.path.dirname(graph.node[node]['meta'].meta_path)]}
 
          }
-        }
 
     # this has details on what image or image_resource to use.
-    task_dict.update(graph.node[node]['worker']['connector'])
+    #   TODO: is it OK to be empty?
+    task_dict.update(graph.node[node]['worker'].get('connector', {}))
 
     task_dict.update({
-        'inputs': graph.node[node].successors
+        'inputs': graph.successors(node)
     })
     return task_dict
+
+
+def parse_platforms(matrix_base_dir, run):
+    platform_folder = '{}_platforms.d'.format(run)
+    platforms = load_platforms(os.path.join(matrix_base_dir, platform_folder))
+    log.debug("Platforms found for mode %s:", run)
+    log.debug(platforms)
+    return platforms
 
 
 def collect_tasks(path, folders, steps=0, test=False, max_downstream=5, matrix_base_dir=None):
@@ -121,49 +147,36 @@ def collect_tasks(path, folders, steps=0, test=False, max_downstream=5, matrix_b
     indexes = {}
     task_graph = nx.DiGraph()
     for run in runs:
-        platform_folder = '{}_platforms.d'.format(run)
-        platforms = load_platforms(os.path.join(matrix_base_dir, platform_folder))
-        log.debug("Platforms found for mode %s:", run)
-        log.debug(platforms)
+        platforms = parse_platforms(matrix_base_dir, run)
         # loop over platforms here because each platform may have different dependencies
         # each platform will be submitted with a different label
         for platform in platforms:
             index_key = '-'.join([platform['platform'], str(platform['arch'])])
             if index_key not in indexes:
                 indexes[index_key] = Resolve(get_index(platform=index_key))
-            # this graph is potentially different for both platform, and for build or test mode
+            # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
                                 matrix_base_dir=matrix_base_dir, conda_resolve=indexes[index_key])
-            # Apply the build label to any nodes that need (re)building.
-            g = expand_run(g, conda_resolve=indexes[index_key], worker=platform, run=run,
-                           steps=steps, max_downstream=max_downstream, recipes_dir=path,
-                           matrix_base_dir=matrix_base_dir)
-            for node in g.nodes():
-                if g.node[node]['build'] and run != 'build':
-                    pkg_run = 'build'
-                else:
-                    pkg_run = 'test'
-                new_node_key = package_key(pkg_run, g.node[node]['meta'], platform['label'])
-                nx.relabel_nodes(g, {node: new_node_key}, copy=False)
-                # ensure that testing depends on the packge being built
-                if (new_node_key.startswith('test') and
-                        new_node_key.replace('test', 'build') in g.nodes()):
-                    g.add_edge(new_node_key, new_node_key.replace('test', 'build'))
+            # Apply the build label to any nodes that need (re)building or testing
+            expand_run(g, conda_resolve=indexes[index_key], worker=platform, run=run,
+                       steps=steps, max_downstream=max_downstream, recipes_dir=path,
+                       matrix_base_dir=matrix_base_dir)
+            # merge this graph with the main one
             task_graph = nx.compose(task_graph, g)
     return task_graph
 
 
-def graph_to_plan_and_tasks(graph):
-    # sort build order, and also filter so that we have solely dirty nodes in subgraph
-    subgraph, order = order_build(graph)
-
-    plan = None
-    tasks = None
-
+def graph_to_plan_and_tasks(graph, public=True):
+    plan = graph_to_plan_dict(graph, public)
+    tasks = {node: get_task_dict(graph, node) for node in graph.nodes()}
     return plan, tasks
 
 
 def write_tasks(tasks, output_folder='ci-tasks'):
+    try:
+        os.makedirs(output_folder)
+    except:
+        pass
     for name, task in tasks.items():
         with open(os.path.join(output_folder, name + '.yml'), 'w') as f:
             f.write(yaml.dump(task))

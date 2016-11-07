@@ -2,10 +2,11 @@ import argparse
 import contextlib
 import logging
 import subprocess
+import sys
 
 import conda_concourse_ci
 from .compute_build_graph import git_changed_recipes
-from .execute import collect_tasks, write_tasks
+from .execute import collect_tasks, write_tasks, graph_to_plan_and_tasks
 
 log = logging.getLogger(__file__)
 
@@ -38,16 +39,13 @@ def parse_args(parse_this=None):
                         default=None,
                         help=('stop revision to examine.  When provided,'
                               'changes are git_rev..stop_rev'))
-    parser.add_argument('--threads',
-                        default=50,
-                        help=('dask scheduling threads.  Effectively number of parallel builds, '
-                              'though not all builds run on one host.'))
-    parser.add_argument('--visualize',
-                        help=('Output a PDF visualization of the package build graph, and quit.  '
-                              'Argument is output file name (pdf)'),
-                        default="")
     parser.add_argument('--test', action='store_true',
                         help='test packages (instead of building them)')
+    parser.add_argument('--private', action='store_false',
+                        help='hide build logs (overall graph still shown in Concourse web view)',
+                        dest='public')
+    parser.add_argument('--matrix-base-dir',
+                        help='path to matrix configuration, if different from recipe path')
     parser.add_argument('--version', action='version',
         help='Show the conda-build version number and exit.',
         version='conda-concourse-ci %s' % conda_concourse_ci.__version__)
@@ -84,13 +82,15 @@ def build_cli(args=None):
     folders = args.packages
     if not folders:
         folders = git_changed_recipes(args.git_rev, args.stop_rev, git_root=args.path)
+    if not folders:
+        print("No folders specified to build, and nothing changed in git.  Exiting.")
+        sys.exit(0)
 
     with checkout_git_rev(checkout_rev, args.path):
-        plan, tasks = collect_tasks(args.path, folders=folders, steps=args.steps,
-                                    max_downstream=args.max_downstream, test=args.test)
+        task_graph = collect_tasks(args.path, folders=folders, steps=args.steps,
+                                    max_downstream=args.max_downstream, test=args.test,
+                                   matrix_base_dir=args.matrix_base_dir)
+    plan, tasks = graph_to_plan_and_tasks(task_graph, args.public)
     # this just writes the plan using the same code as writing the tasks.
-    tasks.udpate({'plan': plan})
-    write_tasks(tasks, output_folder=args.output_folder)
-
-    log.info("Computed jobs:")
-    log.info(tasks)
+    tasks.update({'plan': plan})
+    write_tasks(tasks)

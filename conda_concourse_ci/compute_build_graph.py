@@ -7,8 +7,7 @@ import subprocess
 
 import networkx as nx
 from conda_build import api, conda_interface
-from conda_build.metadata import MetaData
-from conda_build.metadata import find_recipe, build_string_from_metadata
+from conda_build.metadata import MetaData, find_recipe, build_string_from_metadata
 
 from .build_matrix import expand_build_matrix, set_conda_env_vars
 
