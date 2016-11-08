@@ -8,7 +8,7 @@ from .utils import (testing_workdir, testing_git_repo, testing_graph, testing_co
                     testing_metadata, make_recipe, test_data_dir, graph_data_dir)
 
 dummy_worker = {'platform': 'someos', 'arch': 'somearch', 'label': 'linux',
-                'connector': {'image': 'busybox'}}
+                'connector': {'image': 'msarahan/conda-concourse-ci'}}
 
 
 def test_get_build_deps(testing_metadata):
@@ -60,8 +60,7 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
       a -> d  # win64
     """
 
-    worker = {'platform': 'win', 'arch': '32', 'label': 'linux',
-                'connector': {'image': 'busybox'}}
+    worker = {'platform': 'win', 'arch': '32', 'label': 'linux'}
     mocker.patch.object(compute_build_graph, '_installable')
     mocker.patch.object(compute_build_graph, '_buildable',
                         lambda meta, recipes_dir: os.path.join(recipes_dir, meta.name()))

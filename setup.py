@@ -23,8 +23,11 @@ setup(
             'c3i=conda_concourse_ci.cli:main'
         ]
     },
+    package_data={
+        'bootstrap': ['bootstrap/*'],
+    },
     include_package_data=True,
-    license="BSD license",
+    license="BSD 3-clause",
     zip_safe=False,
     keywords='conda_concourse_ci',
     classifiers=[

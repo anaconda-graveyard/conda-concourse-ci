@@ -5,6 +5,7 @@ import conda_concourse_ci
 
 import pytest
 from pytest_mock import mocker
+import yaml
 
 from .utils import (testing_graph, test_data_dir, testing_conda_resolve, testing_metadata,
                     graph_data_dir)
@@ -33,21 +34,21 @@ def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
     assert len(task_graph.nodes()) == n_platforms
 
 
-def test_get_plan_dict(mocker, testing_graph):
-    plan = execute.graph_to_plan_dict(testing_graph)
+def test_get_plan_text(mocker, testing_graph):
+    plan = execute.graph_to_plan_text(testing_graph)
     reference = execute._plan_boilerplate()
-    reference.update({
+    reference = reference + "\n" + yaml.dump({
         'jobs': [
             {'name': 'execute',
              'public': True,
              'plan': [
-                 {'get': 's3-intermediary'},
-                 {'aggregate': [
-                     {'task': 'build-b-0-linux',
-                      'file': 's3-intermediary/ci-tasks/build-b-0-linux.yml'},
-                     {'task': 'test-b-0-linux',
-                      'file': 's3-intermediary/ci-tasks/test-b-0-linux.yml'}
-                     ]}
+                 {'get': 'recipe-repo-checkout'},
+                 {'get': 's3-tasks'},
+                 {'get': 's3-config'},
+                 {'aggregate': [{'task': 'build-b-0-linux',
+                                 'file': 's3-tasks/ci-tasks/build-b-0-linux.yml'}]},
+                 {'aggregate': [{'task': 'test-b-0-linux',
+                                 'file': 's3-tasks/ci-tasks/test-b-0-linux.yml'}]}
              ]
             }
         ]

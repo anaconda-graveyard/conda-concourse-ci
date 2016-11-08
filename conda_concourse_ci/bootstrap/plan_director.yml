@@ -1,0 +1,77 @@
+resource_types:
+- name: concourse-pipeline
+  type: docker-image
+  source:
+    repository: robdimsdale/concourse-pipeline-resource
+    tag: latest-final
+- name: s3-simple
+  type: docker-image
+  source:
+    repository: 18fgsa/s3-resource-simple
+
+resources:
+- name: recipe-repo-source
+  type: git
+  source:
+    branch: {{recipe-repo-commit}}
+    uri: {{recipe-repo}}
+- name: s3-tasks
+  type: s3-simple
+  source:
+    bucket: {{aws-bucket}}
+    access_key_id: {{aws-key-id}}
+    secret_access_key: {{aws-secret-key}}
+    region_name: {{aws-region-name}}
+    options: [--exclude '*', --include 'ci-tasks*']
+- name: s3-config
+  type: s3-simple
+  source:
+    bucket: {{aws-bucket}}
+    secret_access_key: {{aws-secret-key}}
+    access_key_id: {{aws-key-id}}
+    region_name: {{aws-region-name}}
+    options: [--exclude '*', --include 'config*']
+- name: set-execute-pipelines
+  type: concourse-pipeline
+  source:
+    target: {{concourse-url}}
+    teams:
+    - name: {{concourse-team}}
+      username: {{concourse-user}}
+      password: {{concourse-password}}
+
+
+jobs:
+- name: collect-tasks
+  public: True
+  plan:
+  # this copies local config up to the server, to be used by subsequent steps
+  - get: recipe-repo-source
+  - get: s3-config
+  - task: install-run-c3i
+    config:
+      # seems redundant, but you need this in order to have the repo source code folder show up
+      inputs:
+        - name: recipe-repo-source
+        - name: s3-config
+      outputs:
+        - name: ci-tasks
+      image_resource:
+        type: docker-image
+        source:
+          repository: msarahan/conda-concourse-ci
+      platform: linux
+      run:
+        path: c3i
+        args: [examine, recipe-repo-source, --matrix-base-dir, s3-config/config]
+        # debugging - often useful to see what's on the other side
+        # path: ls
+        # args: [-lR]
+  - put: s3-tasks
+  - put: set-execute-pipelines
+    params:
+      pipelines:
+      - name: execute
+        team: {{concourse-team}}
+        config_file: s3-tasks/ci-tasks/plan.yml
+        vars_files: [s3-config/config/config.yml]

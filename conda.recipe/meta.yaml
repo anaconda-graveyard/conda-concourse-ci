@@ -10,7 +10,7 @@ source:
 build:
   script: python setup.py install --single-version-externally-managed --record=record.txt
   entry_points:
-    - c3i = conda_concourse_ci.cli:build_cli
+    - c3i = conda_concourse_ci.cli:main
 
 requirements:
   build:

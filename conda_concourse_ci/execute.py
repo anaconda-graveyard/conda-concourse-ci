@@ -15,59 +15,38 @@ log = logging.getLogger(__file__)
 
 
 def _plan_boilerplate():
-    return {
-        "resource_types": [
-            {'name': 'concourse-pipeline',
-             'type': 'docker-image',
-             'source': {
-                 'repository': 'robdimsdale/concourse-pipeline-resource',
-                 'tag': 'latest-final'}
-             },
-            {'name': 's3-simple',
-             'type': 'docker-image',
-             'source': {'repository': '18fgsa/s3-resource-simple'}}
-        ],
-        'resources': [
-            {'name': 'recipe-repo',
-             'type': 'git',
-             'source': {
-                 'uri': '{{recipe-repo}}'},
-                 'branch': "{{recipe-repo-commit}}"
-             },
-            {'name': 'execute-tasks',
-             'type': 'concourse-pipeline',
-             'source': {
-                 'target': '{{concourse-url}}',
-                 'teams': [
-                     {'name': '{{concourse-team}}',
-                      'username': "{{concourse-user}}",
-                      'password': "{{concourse-password}}",
-                      }
-                 ]
+    return """
+resource_types:
+- name: concourse-pipeline
+  type: docker-image
+  source:
+    repository: robdimsdale/concourse-pipeline-resource
+    tag: latest-final
+- name: s3-simple
+  type: docker-image
+  source: {repository: 18fgsa/s3-resource-simple}
 
-             }},
-            {'name': 's3-tasks',
-             'type': 's3-simple',
-             'bucket': '{{aws-bucket}}',
-             'access_key_id': '{{aws-key-id}}',
-             'secret_access_key': '{{aws-secret-key}}',
-             'options': [
-                 "--exclude '*'",
-                 "--include 'ci-tasks'"
-             ]
-             },
-            {'name': 's3-config',
-             'type': 's3-simple',
-             'bucket': '{{aws-bucket}}',
-             'access_key_id': '{{aws-key-id}}',
-             'secret_access_key': '{{aws-secret-key}}',
-             'options': [
-                 "--exclude '*'",
-                 "--include 'config'"
-             ]
-             },
-        ],
-    }
+resources:
+- name: recipe-repo-checkout
+  type: git
+  source:
+    uri: {{recipe-repo}}
+    branch: {{recipe-repo-commit}}
+- name: s3-tasks
+  type: s3-simple
+  source:
+    bucket: {{aws-bucket}}
+    access_key_id: {{aws-key-id}}
+    secret_access_key: {{aws-secret-key}}
+    options: [--exclude '*', --include 'ci-tasks*']
+- name: s3-config
+  type: s3-simple
+  source:
+    bucket: {{aws-bucket}}
+    access_key_id: {{aws-key-id}}
+    secret_access_key: {{aws-secret-key}}
+    options: [--exclude '*', --include 'config*']
+"""
 
 
 def find_task_deps_in_group(task, graph, groups):
@@ -80,10 +59,9 @@ def find_task_deps_in_group(task, graph, groups):
     return max(found)
 
 
-def graph_to_plan_dict(graph, public=True):
-    plan = _plan_boilerplate()
+def graph_to_plan_text(graph, public=True):
     order = order_build(graph)
-    tasks = [{'get': 's3-tasks'}, {'get': 's3-config'}]
+    tasks = [{'get': 'recipe-repo-checkout'}, {'get': 's3-tasks'}, {'get': 's3-config'}]
     # cluster things together into explicitly parallel groups
     aggregate_groups = [[], ]
     for task in order:
@@ -104,7 +82,12 @@ def graph_to_plan_dict(graph, public=True):
                                                    })
 
     tasks.extend([{'aggregate': group} for group in aggregate_groups])
-    plan.update({'jobs': [{'name': 'execute',
+    # it probably seems a little crazy that we do this as a string, not as a dictionary.
+    #    it is crazy.  The crappy thing is that the placeholder variables in the boilerplate
+    #    are not evaluated correctly if we dump a dictionary.  They end up quoted, which prevents
+    #    their evaluation.  So, strings it is.
+    plan = _plan_boilerplate()
+    plan = plan + '\n' + yaml.dump({'jobs': [{'name': 'execute',
                            'public': public,
                            'plan': tasks
                            }]})
@@ -172,7 +155,7 @@ def collect_tasks(path, folders, steps=0, test=False, max_downstream=5, matrix_b
 
 
 def graph_to_plan_and_tasks(graph, public=True):
-    plan = graph_to_plan_dict(graph, public)
+    plan = graph_to_plan_text(graph, public)
     tasks = {node: get_task_dict(graph, node) for node in graph.nodes()}
     return plan, tasks
 
