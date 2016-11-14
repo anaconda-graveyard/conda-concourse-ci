@@ -107,6 +107,13 @@ The configuration you submit creates a pipeline that monitors your specified git
 new commits come in, it triggers c3i to examine repository changes.  c3i writes the updated plan for these
 changes, and that plan is used to set a new pipeline for the build/test tasks.
 
+FAQ/Issues
+----------
+
+- error setting version: RequestTimeTooSkewed: The difference between the request time and the current time is too large.
+
+This happens with virtual machines that are suspended and reopened later.  Restarting the docker container or VM that is running your concourse server is often a fix.
+
 Credits
 ---------
 This package is derived from `the ProtoCI project
