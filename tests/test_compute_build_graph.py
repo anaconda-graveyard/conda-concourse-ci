@@ -45,6 +45,11 @@ def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
                                   ('test-test_dir_1-0-linux', 'build-test_dir_1-0-linux')])
 
 
+def test_package_key(testing_metadata):
+    assert (compute_build_graph.package_key('build', testing_metadata, 'linux') ==
+            'build-test_package_key-1-linux')
+
+
 def test_platform_specific_graph(mocker, testing_conda_resolve):
     """the recipes herein have selectors on dependencies.  We're making sure they work correctly.
 

@@ -16,6 +16,7 @@ requirements:
   build:
     - python
   run:
+    - boto3
     - conda-build >=2.0.9
     - contextlib2
     - networkx

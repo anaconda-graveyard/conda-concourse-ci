@@ -26,6 +26,31 @@ Features
 * Determine changed conda recipes from either the most recent commit, or from a range of commits
 * Trigger additional build jobs to a concourse CI server based on those changes
 
+Requirements
+------------
+
+* an s3 store, used as intermediate storage
+* a git repository of recipes
+
+Setup
+-----
+
+This package requires some configuration before starting. First, create
+configuration files. These can be anywhere, and since they'll contain sensitive
+access information, it's probably best that you don't check them into a public
+repository. To get a basic skeleton setup, run the ``c3i bootstrap`` command
+where you want your configuration to live. From here:
+
+    - set your passwords and access keys in config/config.yml
+    - edit target build and test platforms in config/*_platforms.d. Note that
+      'connector' key is optional.
+    - edit config/versions.yml to your liking. Defaults should work out of the
+      box.
+    - upload
+    - Finally, submit this configuration with 'c3i submit'. This sends your
+      configuration files to your s3 bucket, establishing the foundation which
+      future builds will customize (git commit, for example)
+
 Usage
 -----
 This package is intended to be installed on some build worker - no label is important.  It computes
@@ -77,14 +102,6 @@ The interface to this functionality is the ``c3i`` entry point:
 The basic concept for where and how to use c3i is based around repositories of recipes.
 These repositories must live on the concourse instance which is being used for CI, but can
 be clones or mirrors of other git repos (github?)
-
-This tool does not care if recipes are actual folders, or git submodules.  In such a
-repository, run the ``c3i bootstrap`` command to create skeleton configuration files.  From here:
-
-    - set your passwords and access keys in config/config.yml
-    - edit target build and test platforms in config/*_platforms.d.  Note that 'connector' key is optional.
-    - edit config/versions.yml to your liking.  Defaults should work out of the box.
-    - Finally, submit this configuration with 'c3i submit'
 
 The configuration you submit creates a pipeline that monitors your specified git recipe repository.  When
 new commits come in, it triggers c3i to examine repository changes.  c3i writes the updated plan for these

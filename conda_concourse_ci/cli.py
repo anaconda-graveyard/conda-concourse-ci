@@ -5,7 +5,9 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
 
+import boto3
 import yaml
 
 import conda_concourse_ci
@@ -65,12 +67,16 @@ def parse_args(parse_this=None):
     return parser.parse_args(parse_this)
 
 
+def get_current_git_rev(path):
+    return subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+                                   cwd=path).rstrip()
+
+
 @contextlib.contextmanager
 def checkout_git_rev(checkout_rev, path):
     checkout_ok = False
     try:
-        git_current_rev = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
-                                                  cwd=path).rstrip()
+        git_current_rev = get_current_git_rev(path)
         subprocess.check_call(['git', 'checkout', checkout_rev], cwd=path)
         checkout_ok = True
     except subprocess.CalledProcessError:    # pragma: no cover
@@ -89,14 +95,26 @@ def submit(args):
     builds.  This is creating the task that monitors git changes and triggers regeneration
     of the dynamic job.
     """
-    config_path = os.path.join(os.path.dirname(args.plan_director_path), 'config', 'config.yml')
-    config = yaml.load(open(config_path))
+    root = os.path.dirname(args.plan_director_path)
+    config_folder = os.path.join(root, 'config')
+    config_path = os.path.join(config_folder, 'config.yml')
+    with open(os.path.join(config_path)) as src:
+        data = yaml.load(src)
+
+    for root, dirnames, files in os.walk(config_folder):
+        for f in files:
+            local_path = os.path.join(root, f)
+            remote_path = local_path.replace(config_folder, 'config')
+            upload_to_s3(local_path, remote_path, bucket=data['aws-bucket'],
+                         key_id=data['aws-key-id'], secret_key=data['aws-secret-key'],
+                         region_name=data['aws-region-name'])
+
     # make sure we are logged in to the configured server
     subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'login',
-                           '--concourse-url', config['concourse-url'],
-                           '--username', config['concourse-user'],
-                           '--password', config['concourse-password'],
-                           '--team-name', config['concourse-team']])
+                           '--concourse-url', data['concourse-url'],
+                           '--username', data['concourse-user'],
+                           '--password', data['concourse-password'],
+                           '--team-name', data['concourse-team']])
     # set the new pipeline details
     subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'sp',
                            '-c', args.plan_director_path,
@@ -104,6 +122,9 @@ def submit(args):
     # unpause the pipeline
     subprocess.check_call(['fly', '-t', 'conda-concourse-server',
                            'up', '-p', 'plan_director'])
+    # trigger the job to actually run
+    subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'tj', '-j',
+                           'plan_director/collect-tasks'])
 
 
 def _copy_yaml_if_not_there(path):
@@ -144,6 +165,30 @@ Overview:
 """)
 
 
+def archive_tasks_and_recipes(task_folder, recipe_root, recipe_folders, version):
+    filename = 'tasks-and-recipes-{0}.tar.bz2'.format(version)
+    with tarfile.TarFile(filename, 'w') as tar:
+        tar.add(task_folder)
+        for folder in recipe_folders:
+            tar.add(os.path.join(recipe_root, folder))
+
+    # this move into output is because that's the folder that concourse finds output in
+    dest = os.path.join(task_folder, filename)
+    if os.path.exists(dest):
+        os.remove(dest)
+    shutil.move(filename, dest)
+
+
+def upload_to_s3(local_location, remote_location, bucket, key_id, secret_key,
+                 region_name='us-west-2'):
+    s3 = boto3.resource('s3', aws_access_key_id=key_id,
+                        aws_secret_access_key=secret_key,
+                        region_name=region_name)
+
+    bucket = s3.Bucket(bucket)
+    bucket.upload_file(local_location, remote_location)
+
+
 def build_cli(args):
     checkout_rev = args.stop_rev or args.git_rev
     folders = args.folders
@@ -152,21 +197,38 @@ def build_cli(args):
     if not folders:
         print("No folders specified to build, and nothing changed in git.  Exiting.")
         return
+    matrix_base_dir = args.matrix_base_dir or args.path
 
     with checkout_git_rev(checkout_rev, args.path):
         task_graph = collect_tasks(args.path, folders=folders, steps=args.steps,
-                                    max_downstream=args.max_downstream, test=args.test,
-                                   matrix_base_dir=args.matrix_base_dir)
-    plan, tasks = graph_to_plan_and_tasks(task_graph, args.public)
-    # this just writes the plan using the same code as writing the tasks.
-    output_folder = 'ci-tasks'
+                                   max_downstream=args.max_downstream, test=args.test,
+                                   matrix_base_dir=matrix_base_dir)
+        try:
+            repo_commit = get_current_git_rev(args.path)
+        except subprocess.CalledProcessError:
+            repo_commit = 'master'
+
+    # this file is created and updated by the semver resource
+    with open('version/version') as f:
+        version = f.read().rstrip()
+    plan, tasks = graph_to_plan_and_tasks(task_graph, version, args.public)
+
+    output_folder = 'output'
     write_tasks(tasks, output_folder)
     try:
         os.makedirs(output_folder)
     except:
         pass
-    with open(os.path.join('ci-tasks', 'plan.yml'), 'w') as f:
+    with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
+        data = yaml.load(src)
+    data['recipe-repo-commit'] = repo_commit
+    data['version'] = version
+    with open(os.path.join(output_folder, 'plan.yml'), 'w') as f:
         f.write(plan)
+    print(os.getcwd())
+    with open(os.path.join('config-out', 'config.yml'), 'w') as f:
+        yaml.dump(data, f)
+    archive_tasks_and_recipes(output_folder, args.path, folders, version)
 
 
 def main(args=None):

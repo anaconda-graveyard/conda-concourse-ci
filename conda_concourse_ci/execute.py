@@ -1,14 +1,12 @@
 from __future__ import print_function, division
 import logging
 import os
-import subprocess
 
 from conda_build.conda_interface import Resolve, get_index
-from conda_build.metadata import build_string_from_metadata
 import networkx as nx
 import yaml
 
-from .compute_build_graph import construct_graph, expand_run, order_build, package_key
+from .compute_build_graph import construct_graph, expand_run, order_build
 from .build_matrix import load_platforms
 
 log = logging.getLogger(__file__)
@@ -16,36 +14,16 @@ log = logging.getLogger(__file__)
 
 def _plan_boilerplate():
     return """
-resource_types:
-- name: concourse-pipeline
-  type: docker-image
-  source:
-    repository: robdimsdale/concourse-pipeline-resource
-    tag: latest-final
-- name: s3-simple
-  type: docker-image
-  source: {repository: 18fgsa/s3-resource-simple}
-
 resources:
-- name: recipe-repo-checkout
-  type: git
-  source:
-    uri: {{recipe-repo}}
-    branch: {{recipe-repo-commit}}
-- name: s3-tasks
-  type: s3-simple
+- name: s3-archive
+  type: s3
+  trigger: true
   source:
     bucket: {{aws-bucket}}
     access_key_id: {{aws-key-id}}
     secret_access_key: {{aws-secret-key}}
-    options: [--exclude '*', --include 'ci-tasks*']
-- name: s3-config
-  type: s3-simple
-  source:
-    bucket: {{aws-bucket}}
-    access_key_id: {{aws-key-id}}
-    secret_access_key: {{aws-secret-key}}
-    options: [--exclude '*', --include 'config*']
+    region_name: {{aws-region-name}}
+    regexp: tasks-and-recipes-(.*).tar.bz2
 """
 
 
@@ -59,9 +37,27 @@ def find_task_deps_in_group(task, graph, groups):
     return max(found)
 
 
-def graph_to_plan_text(graph, public=True):
+def graph_to_plan_text(graph, version, public=True):
     order = order_build(graph)
-    tasks = [{'get': 'recipe-repo-checkout'}, {'get': 's3-tasks'}, {'get': 's3-config'}]
+    extract_task = {'task': 'extract_archive',
+                    'config': {
+                        'inputs': [{'name': 's3-archive'}],
+                        'outputs': [{'name': 'extracted-archive'}],
+                        'image_resource': {
+                            'type': 'docker-image',
+                            'source': {'repository': 'msarahan/conda-concourse-ci'}},
+                        'platform': 'linux',
+                        'run': {
+                            'path': 'tar',
+                            'args': ['-xvf',
+                                     's3-archive/tasks-and-recipes-{0}.tar.bz2'.format(version),
+                                     '-C', 'extracted-archive']
+                                }
+                        }
+                    }
+    tasks = [{'get': 's3-archive',
+              'trigger': 'true', 'params': {'version': '{{version}}'}},
+             extract_task]
     # cluster things together into explicitly parallel groups
     aggregate_groups = [[], ]
     for task in order:
@@ -69,7 +65,7 @@ def graph_to_plan_text(graph, public=True):
         in_group = find_task_deps_in_group(task, graph, aggregate_groups)
         if in_group == -1:
             aggregate_groups[0].append({'task': task,
-                                        'file': 's3-tasks/ci-tasks/{}.yml'.format(task),
+                                        'file': 'extracted-archive/output/{}.yml'.format(task),
                                         })
         else:
             try:
@@ -77,7 +73,7 @@ def graph_to_plan_text(graph, public=True):
             except IndexError:
                 aggregate_groups.append([])
             aggregate_groups[in_group + 1].append({'task': task,
-                                                    'file': ('s3-tasks/ci-tasks/{}.yml'
+                                                    'file': ('extracted-archive/output/{}.yml'
                                                              .format(task)),
                                                    })
 
@@ -90,19 +86,32 @@ def graph_to_plan_text(graph, public=True):
     plan = plan + '\n' + yaml.dump({'jobs': [{'name': 'execute',
                            'public': public,
                            'plan': tasks
-                           }]})
+                                              }]})
+    # yaml dump quotes this inappropriately.  Nuke quoting in string.
+    plan = plan.replace('"{{version}}"', '{{version}}').replace("'{{version}}'", '{{version}}')
     return plan
+
+conda_platform_to_concourse_platform = {
+    'win': 'windows',
+    'osx': 'darwin',
+    'linux': 'linux',
+}
 
 
 def get_task_dict(graph, node):
     test_arg = '--no-test' if node.startswith('build') else '--test'
+    recipe_folder_name = os.path.basename(os.path.dirname(graph.node[node]['meta'].meta_path))
     task_dict = {
-        'platform': graph.node[node]['worker']['label'],
-        'outputs': {'name': node},
+        'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
+        # dependency inputs are down below
+        'inputs': [{'name': 'extracted-archive'}, ],
+        'outputs': [{'name': node}, ],
+        'params': graph.node[node]['env'],
         'run': {
              'path': 'conda',
-             'args': ['build', test_arg, os.path.dirname(graph.node[node]['meta'].meta_path)]}
-
+             'args': ['build', test_arg, os.path.join('recipe-repo-source', recipe_folder_name)],
+             'dir': 'extracted-archive',
+                }
          }
 
     # this has details on what image or image_resource to use.
@@ -123,14 +132,11 @@ def parse_platforms(matrix_base_dir, run):
     return platforms
 
 
-def collect_tasks(path, folders, steps=0, test=False, max_downstream=5, matrix_base_dir=None):
+def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downstream=5):
     runs = ['test']
     # not testing means build and test
     if not test:
         runs.insert(0, 'build')
-
-    if not matrix_base_dir:
-        matrix_base_dir = path
 
     indexes = {}
     task_graph = nx.DiGraph()
@@ -154,13 +160,13 @@ def collect_tasks(path, folders, steps=0, test=False, max_downstream=5, matrix_b
     return task_graph
 
 
-def graph_to_plan_and_tasks(graph, public=True):
-    plan = graph_to_plan_text(graph, public)
+def graph_to_plan_and_tasks(graph, version, public=True):
+    plan = graph_to_plan_text(graph, version, public)
     tasks = {node: get_task_dict(graph, node) for node in graph.nodes()}
     return plan, tasks
 
 
-def write_tasks(tasks, output_folder='ci-tasks'):
+def write_tasks(tasks, output_folder='output'):
     try:
         os.makedirs(output_folder)
     except:
