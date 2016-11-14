@@ -5,27 +5,27 @@ from conda_concourse_ci import build_matrix as bm
 test_data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
 
-def test_expand_build_matrix():
-    # python version specified; ignores matrix for python
-    configurations = list(bm.expand_build_matrix('python_version_specified',
-                                            repo_base_dir=test_data_dir))
-    assert len(configurations) == 1
+# def test_expand_build_matrix():
+#     # python version specified; ignores matrix for python
+#     configurations = list(bm.expand_build_matrix('python_version_specified',
+#                                             repo_base_dir=test_data_dir))
+#     assert len(configurations) == 1
 
-    # python version not specified; uses matrix for python
-    # (python 2 + python 3) = 2
-    configurations = list(bm.expand_build_matrix('python_test',
-                                            repo_base_dir=test_data_dir))
-    assert len(configurations) == 2
+#     # python version not specified; uses matrix for python
+#     # (python 2 + python 3) = 2
+#     configurations = list(bm.expand_build_matrix('python_test',
+#                                             repo_base_dir=test_data_dir))
+#     assert len(configurations) == 2
 
-    # (python 2 + python 3) = 2
-    configurations = list(bm.expand_build_matrix('python_numpy_no_xx',
-                                            repo_base_dir=test_data_dir))
-    assert len(configurations) == 2
+#     # (python 2 + python 3) = 2
+#     configurations = list(bm.expand_build_matrix('python_numpy_no_xx',
+#                                             repo_base_dir=test_data_dir))
+#     assert len(configurations) == 2
 
-    # (python 2 + python 3) * (numpy 1.10 + 1.11) = 4
-    configurations = list(bm.expand_build_matrix('python_numpy_xx',
-                                            repo_base_dir=test_data_dir))
-    assert len(configurations) == 4
+#     # (python 2 + python 3) * (numpy 1.10 + 1.11) = 4
+#     configurations = list(bm.expand_build_matrix('python_numpy_xx',
+#                                             repo_base_dir=test_data_dir))
+#     assert len(configurations) == 4
 
 
 def test_load_platforms():

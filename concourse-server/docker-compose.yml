@@ -10,7 +10,7 @@ concourse-web:
   image: concourse/concourse
   links: [concourse-db]
   command: web
-  ports: ["8080:8080"]
+  ports: ["8080:8080", "2222:2222"]
   volumes: ["./keys/web:/concourse-keys"]
   environment:
     CONCOURSE_BASIC_AUTH_USERNAME: concourse

@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 import logging
 import os
+import re
 
 from conda_build.conda_interface import Resolve, get_index
 import networkx as nx
@@ -37,27 +38,44 @@ def find_task_deps_in_group(task, graph, groups):
     return max(found)
 
 
+def _extract_task(version):
+    return {'task': 'extract_archive',
+            'config': {
+                'inputs': [{'name': 's3-archive'}],
+                'outputs': [{'name': 'extracted-archive'}],
+                'image_resource': {
+                    'type': 'docker-image',
+                    'source': {'repository': 'msarahan/conda-concourse-ci'}},
+                'platform': 'linux',
+                'run': {
+                    'path': 'tar',
+                    'args': ['-xvf',
+                             's3-archive/tasks-and-recipes-{0}.tar.bz2'.format(version),
+                             '-C', 'extracted-archive']
+                        }
+                      }
+            }
+
+
+_ls_task = {'task': 'ls-folders',
+           'config': {
+               'inputs': [{'name': 'extracted-archive'}],
+               'image_resource': {
+                    'type': 'docker-image',
+                    'source': {'repository': 'msarahan/conda-concourse-ci'}},
+               'platform': 'linux',
+               'run': {
+                   'path': 'ls',
+                   'args': ['-lR']
+                   }
+               }}
+
+
 def graph_to_plan_text(graph, version, public=True):
     order = order_build(graph)
-    extract_task = {'task': 'extract_archive',
-                    'config': {
-                        'inputs': [{'name': 's3-archive'}],
-                        'outputs': [{'name': 'extracted-archive'}],
-                        'image_resource': {
-                            'type': 'docker-image',
-                            'source': {'repository': 'msarahan/conda-concourse-ci'}},
-                        'platform': 'linux',
-                        'run': {
-                            'path': 'tar',
-                            'args': ['-xvf',
-                                     's3-archive/tasks-and-recipes-{0}.tar.bz2'.format(version),
-                                     '-C', 'extracted-archive']
-                                }
-                        }
-                    }
     tasks = [{'get': 's3-archive',
               'trigger': 'true', 'params': {'version': '{{version}}'}},
-             extract_task]
+             _extract_task(version), _ls_task]
     # cluster things together into explicitly parallel groups
     aggregate_groups = [[], ]
     for task in order:
@@ -98,13 +116,17 @@ conda_platform_to_concourse_platform = {
 }
 
 
-def get_task_dict(graph, node):
+def get_task_dict(base_path, graph, node):
     test_arg = '--no-test' if node.startswith('build') else '--test'
-    recipe_folder_name = os.path.basename(os.path.dirname(graph.node[node]['meta'].meta_path))
+    recipe_folder_name = graph.node[node]['meta'].meta_path.replace(base_path, '')
+    if '\\' in recipe_folder_name or '/' in recipe_folder_name:
+        recipe_folder_name = list(filter(None, re.split("[\\/]+", recipe_folder_name)))[0]
+    inputs = [{'name': 'extracted-archive'}]
+    inputs.extend([{'name': dep} for dep in graph.successors(node)])
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         # dependency inputs are down below
-        'inputs': [{'name': 'extracted-archive'}, ],
+        'inputs': inputs,
         'outputs': [{'name': node}, ],
         'params': graph.node[node]['env'],
         'run': {
@@ -118,9 +140,6 @@ def get_task_dict(graph, node):
     #   TODO: is it OK to be empty?
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
 
-    task_dict.update({
-        'inputs': graph.successors(node)
-    })
     return task_dict
 
 
@@ -160,9 +179,9 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
     return task_graph
 
 
-def graph_to_plan_and_tasks(graph, version, public=True):
+def graph_to_plan_and_tasks(base_path, graph, version, public=True):
     plan = graph_to_plan_text(graph, version, public)
-    tasks = {node: get_task_dict(graph, node) for node in graph.nodes()}
+    tasks = {node: get_task_dict(base_path, graph, node) for node in graph.nodes()}
     return plan, tasks
 
 

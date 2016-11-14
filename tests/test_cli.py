@@ -33,7 +33,7 @@ def test_default_args(mocker):
     cli.collect_tasks.assert_called_with(graph_data_dir, folders=['a'], steps=0,
                                          test=False, max_downstream=5,
                                          matrix_base_dir=test_data_dir)
-    cli.graph_to_plan_and_tasks.assert_called_with("steve", "1.0.0", True)
+    cli.graph_to_plan_and_tasks.assert_called_with(graph_data_dir, "steve", "1.0.0", True)
     cli.write_tasks.assert_called_with({}, 'output')
 
 

@@ -29,6 +29,7 @@ def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
 def test_get_plan_text(mocker, testing_graph):
     plan = execute.graph_to_plan_text(testing_graph, '1.0.0')
     reference = execute._plan_boilerplate()
+
     reference = reference + "\n" + yaml.dump({
         'jobs': [
             {'name': 'execute',
@@ -36,20 +37,8 @@ def test_get_plan_text(mocker, testing_graph):
              'plan': [
                  {'get': 's3-archive', 'trigger': 'true',
                   'params': {'version': '{{version}}'}},
-                 {'task': 'extract_archive',
-                  'config': {
-                      'inputs': [{'name': 's3-archive'}, ],
-                      'outputs': [{'name': 'extracted-archive'}, ],
-                      'image_resource': {
-                          'type': 'docker-image',
-                          'source': {'repository': 'msarahan/conda-concourse-ci'},
-                          },
-                      'platform': 'linux',
-                      'run': {
-                          'path': 'tar',
-                          'args': ['-xvf', 's3-archive/tasks-and-recipes-1.0.0.tar.bz2',
-                                   '-C', 'extracted-archive'],
-                      }}},
+                 execute._extract_task('1.0.0'),
+                 execute._ls_task,
                  {'aggregate': [{'task': 'build-b-0-linux',
                                  'file': 'extracted-archive/output/build-b-0-linux.yml'}]},
                  {'aggregate': [{'task': 'test-b-0-linux',
@@ -63,4 +52,4 @@ def test_get_plan_text(mocker, testing_graph):
 
 
 def test_get_task_dict(mocker, testing_graph):
-    execute.get_task_dict(testing_graph, 'build-b-0-linux')
+    execute.get_task_dict(test_data_dir, testing_graph, 'build-b-0-linux')

@@ -211,7 +211,8 @@ def build_cli(args):
     # this file is created and updated by the semver resource
     with open('version/version') as f:
         version = f.read().rstrip()
-    plan, tasks = graph_to_plan_and_tasks(task_graph, version, args.public)
+    plan, tasks = graph_to_plan_and_tasks(os.path.abspath(args.path), task_graph,
+                                          version, args.public)
 
     output_folder = 'output'
     write_tasks(tasks, output_folder)

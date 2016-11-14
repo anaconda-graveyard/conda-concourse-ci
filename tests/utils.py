@@ -10,8 +10,8 @@ import pytest
 test_data_dir = os.path.join(os.path.dirname(__file__), 'data')
 graph_data_dir = os.path.join(test_data_dir, 'graph_data')
 
-default_worker = {"platform": 'someplatform',
-                  'arch': 'somearch',
+default_worker = {"platform": 'linux',
+                  'arch': '64',
                   'label': 'linux'}
 
 

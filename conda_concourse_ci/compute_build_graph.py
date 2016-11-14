@@ -38,12 +38,12 @@ def _get_base_folders(base_dir, changed_files):
     for f in changed_files:
         # only consider files that come from folders
         if '/' in f:
-            try:
-                recipe_dir = f.split('/')[0]
-                find_recipe(os.path.join(base_dir, recipe_dir))
-                recipe_dirs.append(recipe_dir)
-            except IOError:
-                pass
+            f = f.split('/')[0]
+        try:
+            find_recipe(os.path.join(base_dir, f))
+            recipe_dirs.append(f)
+        except IOError:
+            pass
     return recipe_dirs
 
 
@@ -113,8 +113,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resol
     name = package_key(run, metadata, worker['label'])
 
     if metadata.skip():
-        raise ValueError("Tried to {0} recipe {1}, which is skipped in meta.yaml"
-                         .format(run, recipe_dir))
+        return None
 
     graph.add_node(name, meta=metadata, env=env_var_set, worker=worker)
     add_dependency_nodes_and_edges(name, graph, run, env_var_set, worker, conda_resolve,
@@ -223,6 +222,9 @@ def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_
                                         " available) can't produce desired version.", dep)
                 dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', env_var_set,
                                                worker, conda_resolve, recipes_dir)
+                if not dep_name:
+                    raise ValueError("Tried to build recipe {0} as dependency, which is skipped "
+                                     "in meta.yaml".format(recipe_dir))
             graph.add_edge(node, dep_name)
 
 
