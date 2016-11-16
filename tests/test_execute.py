@@ -21,7 +21,8 @@ def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
                                        matrix_base_dir=test_data_dir)
     test_platforms = os.listdir(os.path.join(test_data_dir, 'test_platforms.d'))
     build_platforms = os.listdir(os.path.join(test_data_dir, 'build_platforms.d'))
-    n_platforms = len(test_platforms) + len(build_platforms)
+    # one build, one test per platform, uploads only for builds.
+    n_platforms = len(test_platforms) + 2 * len(build_platforms)
     # minimum args means build and test provided folders.  Two tasks.
     assert len(task_graph.nodes()) == n_platforms
 
@@ -39,10 +40,12 @@ def test_get_plan_text(mocker, testing_graph):
                   'params': {'version': '{{version}}'}},
                  execute._extract_task('1.0.0'),
                  execute._ls_task,
-                 {'aggregate': [{'task': 'build-b-0-linux',
-                                 'file': 'extracted-archive/output/build-b-0-linux.yml'}]},
-                 {'aggregate': [{'task': 'test-b-0-linux',
-                                 'file': 'extracted-archive/output/test-b-0-linux.yml'}]}
+                 {'task': 'build-b-0-linux',
+                  'file': 'extracted-archive/output/build-b-0-linux.yml'},
+                 {'task': 'test-b-0-linux',
+                  'file': 'extracted-archive/output/test-b-0-linux.yml'},
+                 {'task': 'upload-b-0-linux',
+                  'file': 'extracted-archive/output/upload-b-0-linux.yml'}
              ]
             }
         ]

@@ -123,7 +123,11 @@ def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resol
     if run == 'build':
         add_recipe_to_graph(recipe_dir, graph, 'test', env_var_set, worker, conda_resolve,
                             recipes_dir=recipes_dir)
-        graph.add_edge(package_key('test', metadata, worker['label']), name)
+        test_key = package_key('test', metadata, worker['label'])
+        graph.add_edge(test_key, name)
+        upload_key = package_key('upload', metadata, worker['label'])
+        graph.add_node(upload_key, meta=metadata, env=env_var_set, worker=worker)
+        graph.add_edge(upload_key, test_key)
 
     return name
 

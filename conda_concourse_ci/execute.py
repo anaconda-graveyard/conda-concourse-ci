@@ -3,12 +3,14 @@ import logging
 import os
 import re
 
+import conda_build.api
 from conda_build.conda_interface import Resolve, get_index
 import networkx as nx
 import yaml
 
 from .compute_build_graph import construct_graph, expand_run, order_build
-from .build_matrix import load_platforms
+from .build_matrix import load_yaml_config_dir
+from .uploads import get_upload_tasks
 
 log = logging.getLogger(__file__)
 
@@ -77,25 +79,27 @@ def graph_to_plan_text(graph, version, public=True):
               'trigger': 'true', 'params': {'version': '{{version}}'}},
              _extract_task(version), _ls_task]
     # cluster things together into explicitly parallel groups
-    aggregate_groups = [[], ]
-    for task in order:
-        # If any dependency is part of a current group, then we need to go one past that group.
-        in_group = find_task_deps_in_group(task, graph, aggregate_groups)
-        if in_group == -1:
-            aggregate_groups[0].append({'task': task,
-                                        'file': 'extracted-archive/output/{}.yml'.format(task),
-                                        })
-        else:
-            try:
-                aggregate_groups[in_group + 1]
-            except IndexError:
-                aggregate_groups.append([])
-            aggregate_groups[in_group + 1].append({'task': task,
-                                                    'file': ('extracted-archive/output/{}.yml'
-                                                             .format(task)),
-                                                   })
+    # aggregate_groups = [[], ]
+    # for task in order:
+    #     # If any dependency is part of a current group, then we need to go one past that group.
+    #     in_group = find_task_deps_in_group(task, graph, aggregate_groups)
+    #     if in_group == -1:
+    #         aggregate_groups[0].append({'task': task,
+    #                                     'file': 'extracted-archive/output/{}.yml'.format(task),
+    #                                     })
+    #     else:
+    #         try:
+    #             aggregate_groups[in_group + 1]
+    #         except IndexError:
+    #             aggregate_groups.append([])
+    #         aggregate_groups[in_group + 1].append({'task': task,
+    #                                                 'file': ('extracted-archive/output/{}.yml'
+    #                                                          .format(task)),
+    #                                                })
 
-    tasks.extend([{'aggregate': group} for group in aggregate_groups])
+    # tasks.extend([{'aggregate': group} for group in aggregate_groups])
+    tasks.extend({'task': task, 'file': 'extracted-archive/output/{}.yml'.format(task)}
+                 for task in order)
     # it probably seems a little crazy that we do this as a string, not as a dictionary.
     #    it is crazy.  The crappy thing is that the placeholder variables in the boilerplate
     #    are not evaluated correctly if we dump a dictionary.  They end up quoted, which prevents
@@ -108,6 +112,7 @@ def graph_to_plan_text(graph, version, public=True):
     # yaml dump quotes this inappropriately.  Nuke quoting in string.
     plan = plan.replace('"{{version}}"', '{{version}}').replace("'{{version}}'", '{{version}}')
     return plan
+
 
 conda_platform_to_concourse_platform = {
     'win': 'windows',
@@ -131,13 +136,15 @@ def get_task_dict(base_path, graph, node):
         'params': graph.node[node]['env'],
         'run': {
              'path': 'conda',
-             'args': ['build', test_arg, os.path.join('recipe-repo-source', recipe_folder_name)],
+             'args': ['build', test_arg, '--no-anaconda-upload',
+                      os.path.join('recipe-repo-source', recipe_folder_name)],
              'dir': 'extracted-archive',
                 }
          }
 
     # this has details on what image or image_resource to use.
-    #   TODO: is it OK to be empty?
+    #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
+    #   feature right now.
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
 
     return task_dict
@@ -145,7 +152,7 @@ def get_task_dict(base_path, graph, node):
 
 def parse_platforms(matrix_base_dir, run):
     platform_folder = '{}_platforms.d'.format(run)
-    platforms = load_platforms(os.path.join(matrix_base_dir, platform_folder))
+    platforms = load_yaml_config_dir(os.path.join(matrix_base_dir, platform_folder))
     log.debug("Platforms found for mode %s:", run)
     log.debug(platforms)
     return platforms
@@ -181,7 +188,18 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 def graph_to_plan_and_tasks(base_path, graph, version, public=True):
     plan = graph_to_plan_text(graph, version, public)
-    tasks = {node: get_task_dict(base_path, graph, node) for node in graph.nodes()}
+    upload_config_path = os.path.join(base_path, 'uploads.d')
+    tasks = {}
+    # as far as the graph is concerned, there's only one upload job.  However, this job can
+    # represent several upload tasks.  This take the job from the graph, and creates tasks
+    # appropriately.
+    for node in graph.nodes():
+        if node.startswith('upload'):
+            filename = os.path.basename(conda_build.api.get_output_path(graph.node[node]['meta']))
+            tasks.update(task for task in get_upload_tasks(filename, upload_config_path))
+        else:
+            tasks.update({node: get_task_dict(base_path, graph, node)})
+
     return plan, tasks
 
 

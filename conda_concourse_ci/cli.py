@@ -145,7 +145,12 @@ def bootstrap():
     _copy_yaml_if_not_there('config/config.yml')
     # create platform.d folders
     for run_type in ('build', 'test'):
-        _copy_yaml_if_not_there('config/{0}_platforms.d/example.yml'.format(run_type))
+        if not os.path.exists('config/{0}_platforms.d'.format(run_type)):
+            _copy_yaml_if_not_there('config/{0}_platforms.d/example.yml'.format(run_type))
+    if not os.path.exists('config/uploads.d'):
+        _copy_yaml_if_not_there('config/uploads.d/anaconda-example.yml')
+        _copy_yaml_if_not_there('config/uploads.d/scp-example.yml')
+        _copy_yaml_if_not_there('config/uploads.d/custom-example.yml')
     # create basic versions.yml files
     _copy_yaml_if_not_there('config/versions.yml')
     # create initial plan that runs c3i to determine further plans

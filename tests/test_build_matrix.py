@@ -28,8 +28,8 @@ test_data_dir = os.path.join(os.path.dirname(__file__), 'data')
 #     assert len(configurations) == 4
 
 
-def test_load_platforms():
-    platforms = bm.load_platforms(os.path.join(test_data_dir, 'build_platforms.d'))
+def test_load_yaml_config_dir():
+    platforms = bm.load_yaml_config_dir(os.path.join(test_data_dir, 'build_platforms.d'))
     assert len(platforms) == 3
     assert 'label' in platforms[0]
     assert 'platform' in platforms[0]
