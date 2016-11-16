@@ -6,8 +6,6 @@ import paramiko
 from paramiko_scp import SCPClient
 import six
 
-from .build_matrix import load_platforms
-
 log = logging.getLogger(__file__)
 
 
@@ -33,8 +31,8 @@ def upload_scp(package, server, destination_path, port=22, key_var=None, user_pa
     Upload using scp (using paramiko).  Authentication can be done via key or username/password.
 
     For key authentication, store your desired private key as text in a secret environment variable
-       on Concourse CI.  Provide the name of that variable as the key_var argument here.  A temporary
-       in-memory file will be wrtten and fed to paramiko for authentication.
+       on Concourse CI.  Provide the name of that variable as the key_var argument here.  A
+       temporary in-memory file will be wrtten and fed to paramiko for authentication.
 
     For user, provide username and password, separated by a colon in a secret environment variable
       on Concourse CI, and provide the name of that variable here.

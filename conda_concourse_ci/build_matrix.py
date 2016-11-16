@@ -3,7 +3,6 @@ import contextlib
 from itertools import product
 import os
 
-from conda_build.api import render
 import six
 import yaml
 

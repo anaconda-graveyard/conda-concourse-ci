@@ -19,7 +19,7 @@ install:
   - conda config --set auto_update_conda False
   - conda update -q --all
   - conda install -q requests python=$TRAVIS_PYTHON_VERSION pyflakes=1.1 flake8 mock six
-  - conda install -q conda-build pytest-cov networkx
+  - conda install -q conda-build pytest-cov networkx boto3
   - $HOME/miniconda/bin/pip install pytest-mock
   - pip install --no-deps .
   - conda info -a
