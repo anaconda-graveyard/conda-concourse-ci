@@ -136,11 +136,19 @@ def get_task_dict(base_path, graph, node):
         'params': graph.node[node]['env'],
         'run': {
              'path': 'conda',
-             'args': ['build', test_arg, '--no-anaconda-upload',
-                      os.path.join('recipe-repo-source', recipe_folder_name)],
+             'args': ['build', test_arg, '--no-anaconda-upload', '--output-folder', node],
              'dir': 'extracted-archive',
                 }
          }
+    if node.startswith('build'):
+        input_path = os.path.join('recipe-repo-source', recipe_folder_name)
+    else:
+        # the build copies the built package into a folder named after the build task.  That folder
+        #    is an output of the build step, and an input to the test step.
+        meta = graph.node[node]['meta']
+        package_filename = os.path.basename(conda_build.api.get_output_file_path(meta))
+        input_path = os.path.join(os.path.join(node.replace('build', 'test'), package_filename))
+    task_dict['run']['args'].append(input_path)
 
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
@@ -186,17 +194,19 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
     return task_graph
 
 
-def graph_to_plan_and_tasks(base_path, graph, version, public=True):
+def graph_to_plan_and_tasks(base_path, graph, version, matrix_base_dir, public=True):
     plan = graph_to_plan_text(graph, version, public)
-    upload_config_path = os.path.join(base_path, 'uploads.d')
+    upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     tasks = {}
     # as far as the graph is concerned, there's only one upload job.  However, this job can
     # represent several upload tasks.  This take the job from the graph, and creates tasks
     # appropriately.
     for node in graph.nodes():
         if node.startswith('upload'):
-            filename = os.path.basename(conda_build.api.get_output_path(graph.node[node]['meta']))
-            tasks.update(task for task in get_upload_tasks(filename, upload_config_path))
+            filename = os.path.basename(conda_build.api.get_output_file_path(graph.node[node]['meta']))  # NOQA
+            test_task = node.replace('upload', 'test')
+            for task in get_upload_tasks(test_task, filename, upload_config_path):
+                tasks.update(task)
         else:
             tasks.update({node: get_task_dict(base_path, graph, node)})
 

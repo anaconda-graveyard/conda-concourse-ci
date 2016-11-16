@@ -217,7 +217,8 @@ def build_cli(args):
     with open('version/version') as f:
         version = f.read().rstrip()
     plan, tasks = graph_to_plan_and_tasks(os.path.abspath(args.path), task_graph,
-                                          version, args.public)
+                                          version, matrix_base_dir=matrix_base_dir,
+                                          public=args.public)
 
     output_folder = 'output'
     write_tasks(tasks, output_folder)
@@ -252,5 +253,7 @@ def main(args=None):
         submit(args)
     elif args.subparser_name == 'bootstrap':
         bootstrap()
-    else:
+    elif args.subparser_name == 'examine':
         build_cli(args)
+    else:
+        raise ValueError("Unrecognized subcommand to c3i: %s", args.subparser_name)

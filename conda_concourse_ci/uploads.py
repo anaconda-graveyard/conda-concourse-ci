@@ -9,7 +9,7 @@ to run additional tasks (for example, to update the index on the remote side)
 
 import json
 import logging
-# import os
+import os
 # import subprocess
 
 from conda_build.utils import package_has_file
@@ -43,15 +43,19 @@ def _base_task(test_job_name, upload_job_name):
             }}
 
 
-def upload_anaconda(test_job_name, token, user=None, label=None):
+def upload_anaconda(test_job_name, package_path, token, user=None, label=None):
     """
     Upload to anaconda.org using a token.  Tokens are associated with a channel, so the channel
     need not be specified.  You may specify a label to install to a label other than main.
 
     Instructions for generating a token are at:
         https://docs.continuum.io/anaconda-cloud/managing-account#using-tokens
+
+    the task name looks like:
+
+    upload-<task name>-anaconda-<user name or first 4 letters of token if no user provided>
     """
-    cmd = ['--token', token, '--force', 'upload']
+    cmd = ['--token', token, '--force', 'upload', os.path.join(test_job_name, package_path)]
     identifier = token[-4:]
     if user:
         cmd.extend(['--user', user])
@@ -61,7 +65,7 @@ def upload_anaconda(test_job_name, token, user=None, label=None):
     upload_job_name = get_upload_job_name(test_job_name, 'anaconda-' + identifier)
     task = _base_task(test_job_name, upload_job_name)
     task['config']['run'].update({'path': 'anaconda', 'args': cmd})
-    return [{upload_job_name, task}]
+    return [{upload_job_name: task}]
 
 
 def upload_scp(test_job_name, server, destination_path, auth_dict, port=22):
@@ -136,13 +140,13 @@ def upload_command(package, test_job_name, command):
     # return [task]
 
 
-def get_upload_tasks(package_path, upload_config_dir):
+def get_upload_tasks(test_job_name, package_path, upload_config_dir):
     tasks = []
     configurations = load_yaml_config_dir(upload_config_dir)
 
     for config in configurations:
         if 'token' in config:
-            tasks.extend(upload_anaconda(package_path, **config))
+            tasks.extend(upload_anaconda(test_job_name, package_path, **config))
         elif 'server' in config:
             tasks.extend(upload_scp(package_path, **config))
         elif 'command' in config:
