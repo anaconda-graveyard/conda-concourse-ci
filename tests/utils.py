@@ -98,6 +98,8 @@ def testing_graph(request):
                worker=default_worker)
     g.add_node('test-b-0-linux', meta=default_metadata('b'), env={}, worker=default_worker)
     g.add_edge('test-b-0-linux', 'build-b-0-linux')
+    g.add_node('upload-b-0-linux', meta=default_metadata('b'), env={}, worker=default_worker)
+    g.add_edge('upload-b-0-linux', 'test-b-0-linux')
     return g
 
 

@@ -28,21 +28,24 @@ def test_construct_graph(mocker, testing_conda_resolve):
                                             run='build', folders=('b'),
                                             matrix_base_dir=test_data_dir,
                                             conda_resolve=testing_conda_resolve)
-    assert set(g.nodes()) == set(['build-b-0-linux', 'test-b-0-linux'])
+    assert set(g.nodes()) == set(['build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux'])
 
 
 def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
     g = compute_build_graph.construct_graph('.', dummy_worker, 'build',
                                             matrix_base_dir=test_data_dir,
                                             conda_resolve=testing_conda_resolve)
-    assert set(g.nodes()) == set(['build-test_dir_3-0-linux', 'test-test_dir_3-0-linux',
-                                  'build-test_dir_2-0-linux', 'test-test_dir_2-0-linux',
-                                  'build-test_dir_1-0-linux', 'test-test_dir_1-0-linux'])
+    assert set(g.nodes()) == set(['build-test_dir_3-0-linux', 'test-test_dir_3-0-linux', 'upload-test_dir_3-0-linux',
+                                  'build-test_dir_2-0-linux', 'test-test_dir_2-0-linux', 'upload-test_dir_2-0-linux',
+                                  'build-test_dir_1-0-linux', 'test-test_dir_1-0-linux', 'upload-test_dir_1-0-linux'])
     assert set(g.edges()) == set([('build-test_dir_2-0-linux', 'build-test_dir_1-0-linux'),
                                   ('build-test_dir_3-0-linux', 'build-test_dir_2-0-linux'),
                                   ('test-test_dir_2-0-linux', 'build-test_dir_2-0-linux'),
                                   ('test-test_dir_3-0-linux', 'build-test_dir_3-0-linux'),
-                                  ('test-test_dir_1-0-linux', 'build-test_dir_1-0-linux')])
+                                  ('test-test_dir_1-0-linux', 'build-test_dir_1-0-linux'),
+                                  ('upload-test_dir_2-0-linux', 'test-test_dir_2-0-linux'),
+                                  ('upload-test_dir_3-0-linux', 'test-test_dir_3-0-linux'),
+                                  ('upload-test_dir_1-0-linux', 'test-test_dir_1-0-linux')])
 
 
 def test_package_key(testing_metadata):
@@ -87,7 +90,14 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
             ('test-b-0-linux', 'build-b-0-linux'),
             ('test-c-0-linux', 'build-c-0-linux'),
             ('test-d-0-linux', 'build-d-0-linux'),
-            ('test-e-0-linux', 'build-e-0-linux')}
+            ('test-e-0-linux', 'build-e-0-linux'),
+            # uploads for the builds
+            ('upload-a-0-linux', 'test-a-0-linux'),
+            ('upload-b-0-linux', 'test-b-0-linux'),
+            ('upload-c-0-linux', 'test-c-0-linux'),
+            ('upload-d-0-linux', 'test-d-0-linux'),
+            ('upload-e-0-linux', 'test-e-0-linux'),
+    }
     assert set(g.edges()) == deps
     worker['arch'] = '64'
     g = compute_build_graph.construct_graph(graph_data_dir, worker, folders=('a'),
@@ -139,8 +149,8 @@ def test_add_dependency_nodes_and_edges(mocker, testing_graph, testing_conda_res
     compute_build_graph.add_dependency_nodes_and_edges('build-b-0-linux', testing_graph,
                                                             'build', {}, dummy_worker,
                                                             testing_conda_resolve)
-    assert set(testing_graph.nodes()) == {'build-a-0-linux', 'test-a-0-linux',
-                                          'build-b-0-linux', 'test-b-0-linux', }
+    assert set(testing_graph.nodes()) == {'build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
+                                          'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux'}
 
 
 def test_buildable(monkeypatch, testing_metadata):
@@ -180,10 +190,11 @@ def test_installable(testing_conda_resolve, testing_metadata):
 
 
 def test_expand_run_no_up_or_down(mocker, testing_graph, testing_conda_resolve):
+    initial_length = len(testing_graph)
     # all packages are installable in the default index
     compute_build_graph.expand_run(testing_graph, testing_conda_resolve,
                                    worker=dummy_worker, run='build')
-    assert len(testing_graph) == 2
+    assert len(testing_graph) == initial_length
 
 
 def test_expand_run_step_down(mocker, testing_graph, testing_conda_resolve):
@@ -198,11 +209,14 @@ def test_expand_run_step_down(mocker, testing_graph, testing_conda_resolve):
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_data_dir,
                                    steps=1)
-    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux',
-                              'build-b-0-linux', 'test-b-0-linux', }
+    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
+                              'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux'}
     assert set(g.edges()) == {('test-a-0-linux', 'build-a-0-linux'),
                               ('build-b-0-linux', 'build-a-0-linux'),
-                              ('test-b-0-linux', 'build-b-0-linux')}
+                              ('test-b-0-linux', 'build-b-0-linux'),
+                              ('upload-a-0-linux', 'test-a-0-linux'),
+                              ('upload-b-0-linux', 'test-b-0-linux'),
+                              }
 
 
 def test_expand_run_two_steps_down(mocker, testing_graph, testing_conda_resolve):
@@ -219,9 +233,9 @@ def test_expand_run_two_steps_down(mocker, testing_graph, testing_conda_resolve)
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_data_dir,
                                    steps=2)
-    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux',
-                              'build-b-0-linux', 'test-b-0-linux',
-                              'build-c-0-linux', 'test-c-0-linux'}
+    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
+                              'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux',
+                              'build-c-0-linux', 'test-c-0-linux', 'upload-c-0-linux'}
 
 
 def test_expand_run_all_steps_down(mocker, testing_graph, testing_conda_resolve):
@@ -237,11 +251,11 @@ def test_expand_run_all_steps_down(mocker, testing_graph, testing_conda_resolve)
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_data_dir,
                                    steps=-1)
-    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux',
-                              'build-b-0-linux', 'test-b-0-linux',
-                              'build-c-0-linux', 'test-c-0-linux',
-                              'build-d-0-linux', 'test-d-0-linux',
-                              'build-e-0-linux', 'test-e-0-linux', }
+    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
+                              'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux',
+                              'build-c-0-linux', 'test-c-0-linux', 'upload-c-0-linux',
+                              'build-d-0-linux', 'test-d-0-linux', 'upload-d-0-linux',
+                              'build-e-0-linux', 'test-e-0-linux', 'upload-e-0-linux'}
 
 
 def test_expand_run_all_steps_down_with_max(mocker, testing_conda_resolve):
@@ -257,9 +271,9 @@ def test_expand_run_all_steps_down_with_max(mocker, testing_conda_resolve):
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_data_dir,
                                    steps=-1, max_downstream=1)
-    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux',
-                              'build-b-0-linux', 'test-b-0-linux',
-                              'build-c-0-linux', 'test-c-0-linux'}
+    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
+                              'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux',
+                              'build-c-0-linux', 'test-c-0-linux', 'upload-c-0-linux'}
 
 
 def test_expand_run_build_non_installable_prereq(mocker, testing_conda_resolve):
@@ -273,21 +287,21 @@ def test_expand_run_build_non_installable_prereq(mocker, testing_conda_resolve):
     compute_build_graph.expand_run(g, testing_conda_resolve,
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir)
-    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux',
-                              'build-b-0-linux', 'test-b-0-linux'}
+    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
+                              'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux'}
 
     compute_build_graph.expand_run(g, testing_conda_resolve,
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir, matrix_base_dir=test_data_dir,
                                    steps=1)
-    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux',
-                              'build-b-0-linux', 'test-b-0-linux',
-                              'build-c-0-linux', 'test-c-0-linux'}
+    assert set(g.nodes()) == {'build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
+                              'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux',
+                              'build-c-0-linux', 'test-c-0-linux', 'upload-c-0-linux'}
 
 
 def test_order_build(testing_graph):
     order = compute_build_graph.order_build(testing_graph)
-    assert order == ['build-b-0-linux', 'test-b-0-linux']
+    assert order == ['build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux']
 
 
 def test_get_base_folders(testing_workdir):
