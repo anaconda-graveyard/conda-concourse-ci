@@ -265,7 +265,8 @@ def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
 
     if steps != 0:
         if not recipes_dir:
-            raise ValueError("recipes_dir is necessary if steps != 0.  Please pass it as an argument.")
+            raise ValueError("recipes_dir is necessary if steps != 0.  "
+                             "Please pass it as an argument.")
         # here we need to fully populate a graph that has the right build or run/test deps.
         #    We don't create this elsewhere because it is unnecessary and costly.
 
