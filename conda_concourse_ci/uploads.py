@@ -68,7 +68,7 @@ def upload_anaconda(test_job_name, package_path, token, user=None, label=None):
     return [{upload_job_name: task}]
 
 
-def upload_scp(test_job_name, server, destination_path, auth_dict, port=22):
+def upload_scp(test_job_name, package_path, server, destination_path, auth_dict, worker, port=22):
     """
     Upload using scp (using paramiko).  Authentication can be done via key or username/password.
 
@@ -76,53 +76,47 @@ def upload_scp(test_job_name, server, destination_path, auth_dict, port=22):
 
        destination_path = "test-pkgs-someuser/{subdir}"
 
-    auth_dict needs either:
-
-        key: the private key to use for the connection.  Can be either a path to a file locally, or
-            text of the key itself.
-        password: optional password for provided key.  If not provided, assumed to be empty.
-
+    auth_dict needs:
         user: the username to log in with
-        password: the password for the user
+        key_file: the private key to use for the connection.  This key needs to part of your
+            config folder, inside your uploads.d folder.
 
     This tries to call conda index on the remote side after uploading.  Otherwise, the new
       package would be unavailable.
     """
     identifier = server
-    task = _base_task(test_job_name, 'scp-' + identifier)
+    tasks = []
+    for task in ('scp', 'chmod', 'index'):
+        job_name = get_upload_job_name(test_job_name, task + '-' + identifier)
+        tasks.append(_base_task(test_job_name, job_name))
+    key = os.path.join('config', 'uploads.d', auth_dict['key_file'])
 
-    raise NotImplementedError
-    # with paramiko.SSHClient() as ssh:
-    #     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    #     if 'user' in auth_dict:
-    #         ssh.connect(server, port=port, username=auth_dict['user'],
-    #                     password=auth_dict['password'])
-    #     elif 'key' in auth_dict:
-    #         if os.path.exists(os.path.expanduser(auth_dict['key'])):
-    #             key = open(auth_dict['key']).read()
-    #         else:
-    #             key = auth_dict['key']
-    #         key = six.StringIO(key)
-    #         key = paramiko.RSAKey.from_private_key(key, password=auth_dict.get('password'))
-    #         ssh.connect(server, pkey=key)
-    #     else:
-    #         raise ValueError("Neither user nor key provided to scp auth_dict.  Aborting.")
-    #     with SCPClient(ssh.get_transport()) as scp:
-    #         scp.put(package, destination_path)
-    #     if destination_path.endswith(os.path.splitext(package)[1]):
-    #         destination_path = os.path.dirname(destination_path)
+    package_path = os.path.join(test_job_name, package_path)
+    subdir = "-".join([worker['platform'], str(worker['arch'])])
 
-    #     # get package subdir from the package itself, rather than trying to pass it through steps
-    #     subdir = _get_package_subdir(package)
+    server = "{user}@{server}".format(user=auth_dict['user'], server=server)
+    destination_path = destination_path.format(subdir=subdir)
+    remote = server + ":" + destination_path
 
-    #     try:
-    #         ssh.exec_command('conda index {0}'.format(destination_path.format(subdir)))
-    #     except paramiko.SSHException as e:
-    #         log.warn("Conda index failed on remote end (%s) for %s", server, package)
-    #         log.warn(str(e))
+    scp_args = [package_path, remote, '-i', key]
+    chmod_args = ['-i', key, server,
+        'chmod 664 {0}/{1}'.format(destination_path, os.path.basename(package_path))]
+    index_args = ['-i', key, server, 'conda index {0}'.format(destination_path)]
+
+    # scp
+    tasks[0]['config']['run'].update({'path': 'scp', 'args': scp_args})
+    tasks[0]['config']['outputs'] = [{'name': tasks[0]['task']}]
+    # chmod
+    tasks[1]['config']['run'].update({'path': 'ssh', 'args': chmod_args})
+    tasks[1]['config']['inputs'] = [{'name': tasks[0]['task']}]
+    tasks[1]['config']['outputs'] = [{'name': tasks[1]['task']}]
+    # index
+    tasks[2]['config']['run'].update({'path': 'ssh', 'args': index_args})
+    tasks[2]['config']['inputs'] = [{'name': tasks[1]['task']}]
+    return [{task['task']: task} for task in tasks]
 
 
-def upload_command(package, test_job_name, command):
+def upload_command(test_job_name, package_path, command):
     """Execute an arbitrary upload command.  Input string is expected to have a placeholder for
     the package to upload.  For example:
 
@@ -140,7 +134,7 @@ def upload_command(package, test_job_name, command):
     # return [task]
 
 
-def get_upload_tasks(test_job_name, package_path, upload_config_dir):
+def get_upload_tasks(test_job_name, package_path, upload_config_dir, worker):
     tasks = []
     configurations = load_yaml_config_dir(upload_config_dir)
 
@@ -148,9 +142,10 @@ def get_upload_tasks(test_job_name, package_path, upload_config_dir):
         if 'token' in config:
             tasks.extend(upload_anaconda(test_job_name, package_path, **config))
         elif 'server' in config:
-            tasks.extend(upload_scp(package_path, **config))
+            tasks.extend(upload_scp(test_job_name=test_job_name, package_path=package_path,
+                                    worker=worker, **config))
         elif 'command' in config:
-            tasks.extend(upload_command(package_path, **config))
+            tasks.extend(upload_command(test_job_name, package_path, **config))
         else:
             raise ValueError("Unrecognized upload configuration.  Each file needs one of: "
                              "'token', 'server', or 'command'")

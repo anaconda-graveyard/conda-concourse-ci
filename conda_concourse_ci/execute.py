@@ -73,7 +73,7 @@ _ls_task = {'task': 'ls-folders',
                }}
 
 
-def graph_to_plan_text(graph, version, public=True):
+def graph_to_plan_text(graph, version, upload_tasks, public=True):
     order = order_build(graph)
     tasks = [{'get': 's3-archive',
               'trigger': 'true', 'params': {'version': '{{version}}'}},
@@ -99,7 +99,9 @@ def graph_to_plan_text(graph, version, public=True):
 
     # tasks.extend([{'aggregate': group} for group in aggregate_groups])
     tasks.extend({'task': task, 'file': 'extracted-archive/output/{}.yml'.format(task)}
-                 for task in order)
+                 for task in order if task.split('-')[0] in ('build', 'test'))
+    tasks.extend({'task': task, 'file': 'extracted-archive/output/{}.yml'.format(task)}
+                 for task in upload_tasks)
     # it probably seems a little crazy that we do this as a string, not as a dictionary.
     #    it is crazy.  The crappy thing is that the placeholder variables in the boilerplate
     #    are not evaluated correctly if we dump a dictionary.  They end up quoted, which prevents
@@ -195,9 +197,9 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 
 def graph_to_plan_and_tasks(base_path, graph, version, matrix_base_dir, public=True):
-    plan = graph_to_plan_text(graph, version, public)
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     tasks = {}
+    upload_tasks = {}
     # as far as the graph is concerned, there's only one upload job.  However, this job can
     # represent several upload tasks.  This take the job from the graph, and creates tasks
     # appropriately.
@@ -205,10 +207,15 @@ def graph_to_plan_and_tasks(base_path, graph, version, matrix_base_dir, public=T
         if node.startswith('upload'):
             filename = os.path.basename(conda_build.api.get_output_file_path(graph.node[node]['meta']))  # NOQA
             test_task = node.replace('upload', 'test')
-            for task in get_upload_tasks(test_task, filename, upload_config_path):
-                tasks.update(task)
+            for task in get_upload_tasks(test_task, filename, upload_config_path,
+                                         worker=graph.node[node]['worker']):
+                upload_tasks.update(task)
         else:
             tasks.update({node: get_task_dict(base_path, graph, node)})
+    plan = graph_to_plan_text(graph, version, upload_tasks, public)
+
+    for k, v in upload_tasks.items():
+        tasks.update({k: v})
 
     return plan, tasks
 

@@ -2,5 +2,4 @@ server: your-server
 destination_path: "test-pkgs-someuser/{subdir}"
 auth_dict:
   user: username-for-login
-  key: path-or-private-key-text  # optional; can apply to just username/password login, or key to access ssh key.
-  password: optional-applies-to-either-user-or-key
+  key_file: key_path
