@@ -15,19 +15,19 @@ from .uploads import get_upload_tasks
 log = logging.getLogger(__file__)
 
 
-def _plan_boilerplate():
+def _plan_boilerplate(vars):
     return """
 resources:
 - name: s3-archive
   type: s3
   trigger: true
   source:
-    bucket: {{aws-bucket}}
-    access_key_id: {{aws-key-id}}
-    secret_access_key: {{aws-secret-key}}
-    region_name: {{aws-region-name}}
-    regexp: tasks-and-recipes-(.*).tar.bz2
-"""
+    bucket: {aws-bucket}
+    access_key_id: {aws-key-id}
+    secret_access_key: {aws-secret-key}
+    region_name: {aws-region-name}
+    regexp: recipes-{base-name}-(.*).tar.bz2
+""".format(**vars)
 
 
 def find_task_deps_in_group(task, graph, groups):
@@ -40,7 +40,7 @@ def find_task_deps_in_group(task, graph, groups):
     return max(found)
 
 
-def _extract_task(version):
+def _extract_task(base_name, version):
     return {'task': 'extract_archive',
             'config': {
                 'inputs': [{'name': 's3-archive'}],
@@ -52,7 +52,7 @@ def _extract_task(version):
                 'run': {
                     'path': 'tar',
                     'args': ['-xvf',
-                             's3-archive/tasks-and-recipes-{0}.tar.bz2'.format(version),
+                             's3-archive/recipes-{0}-{1}.tar.bz2'.format(base_name, version),
                              '-C', 'extracted-archive']
                         }
                       }
@@ -73,11 +73,10 @@ _ls_task = {'task': 'ls-folders',
                }}
 
 
-def graph_to_plan_text(graph, version, upload_tasks, public=True):
-    order = order_build(graph)
+def graph_to_plan_text(graph, job_tasks, version, vars, public=True):
     tasks = [{'get': 's3-archive',
-              'trigger': 'true', 'params': {'version': '{{version}}'}},
-             _extract_task(version), _ls_task]
+              'trigger': 'true', 'params': {'version': version}},
+             _extract_task(vars['base-name'], version), _ls_task]
     # cluster things together into explicitly parallel groups
     # aggregate_groups = [[], ]
     # for task in order:
@@ -96,23 +95,18 @@ def graph_to_plan_text(graph, version, upload_tasks, public=True):
     #                                                 'file': ('extracted-archive/output/{}.yml'
     #                                                          .format(task)),
     #                                                })
-
+    tasks.extend(job_tasks)
     # tasks.extend([{'aggregate': group} for group in aggregate_groups])
-    tasks.extend({'task': task, 'file': 'extracted-archive/output/{}.yml'.format(task)}
-                 for task in order if task.split('-')[0] in ('build', 'test'))
-    tasks.extend({'task': task, 'file': 'extracted-archive/output/{}.yml'.format(task)}
-                 for task in upload_tasks)
+
     # it probably seems a little crazy that we do this as a string, not as a dictionary.
     #    it is crazy.  The crappy thing is that the placeholder variables in the boilerplate
     #    are not evaluated correctly if we dump a dictionary.  They end up quoted, which prevents
     #    their evaluation.  So, strings it is.
-    plan = _plan_boilerplate()
+    plan = _plan_boilerplate(vars)
     plan = plan + '\n' + yaml.dump({'jobs': [{'name': 'execute',
-                           'public': public,
-                           'plan': tasks
-                                              }]})
-    # yaml dump quotes this inappropriately.  Nuke quoting in string.
-    plan = plan.replace('"{{version}}"', '{{version}}').replace("'{{version}}'", '{{version}}')
+                                              'public': public,
+                                              'plan': tasks
+                                              }]}, default_flow_style=False)
     return plan
 
 
@@ -157,7 +151,7 @@ def get_task_dict(base_path, graph, node):
     #   feature right now.
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
 
-    return task_dict
+    return {'task': node, 'config': task_dict}
 
 
 def parse_platforms(matrix_base_dir, run):
@@ -196,28 +190,30 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
     return task_graph
 
 
-def graph_to_plan_and_tasks(base_path, graph, version, matrix_base_dir, public=True):
+def graph_to_plan_with_tasks(base_path, graph, version, matrix_base_dir, vars, public=True):
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
-    tasks = {}
-    upload_tasks = {}
+    tasks = []
+    upload_tasks = []
     # as far as the graph is concerned, there's only one upload job.  However, this job can
     # represent several upload tasks.  This take the job from the graph, and creates tasks
     # appropriately.
-    for node in graph.nodes():
+
+    order = order_build(graph)
+
+    for node in order:
         if node.startswith('upload'):
             filename = os.path.basename(conda_build.api.get_output_file_path(graph.node[node]['meta']))  # NOQA
             test_task = node.replace('upload', 'test')
             for task in get_upload_tasks(test_task, filename, upload_config_path,
                                          worker=graph.node[node]['worker']):
-                upload_tasks.update(task)
+                upload_tasks.append(task)
         else:
-            tasks.update({node: get_task_dict(base_path, graph, node)})
-    plan = graph_to_plan_text(graph, version, upload_tasks, public)
+            tasks.append(get_task_dict(base_path, graph, node))
 
-    for k, v in upload_tasks.items():
-        tasks.update({k: v})
+    tasks.extend(upload_tasks)
 
-    return plan, tasks
+    plan = graph_to_plan_text(graph, tasks, version, vars, public)
+    return plan
 
 
 def write_tasks(tasks, output_folder='output'):
@@ -227,4 +223,4 @@ def write_tasks(tasks, output_folder='output'):
         pass
     for name, task in tasks.items():
         with open(os.path.join(output_folder, name + '.yml'), 'w') as f:
-            f.write(yaml.dump(task))
+            f.write(yaml.dump(task, default_flow_style=False))

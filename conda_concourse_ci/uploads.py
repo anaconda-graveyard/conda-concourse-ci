@@ -65,7 +65,7 @@ def upload_anaconda(test_job_name, package_path, token, user=None, label=None):
     upload_job_name = get_upload_job_name(test_job_name, 'anaconda-' + identifier)
     task = _base_task(test_job_name, upload_job_name)
     task['config']['run'].update({'path': 'anaconda', 'args': cmd})
-    return [{upload_job_name: task}]
+    return [task]
 
 
 def upload_scp(test_job_name, package_path, server, destination_path, auth_dict, worker, port=22):
@@ -113,7 +113,7 @@ def upload_scp(test_job_name, package_path, server, destination_path, auth_dict,
     # index
     tasks[2]['config']['run'].update({'path': 'ssh', 'args': index_args})
     tasks[2]['config']['inputs'] = [{'name': tasks[1]['task']}]
-    return [{task['task']: task} for task in tasks]
+    return tasks
 
 
 def upload_command(test_job_name, package_path, command):

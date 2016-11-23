@@ -27,9 +27,16 @@ def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
     assert len(task_graph.nodes()) == n_platforms
 
 
+boilerplate_test_vars = {'base-name': 'steve',
+                         'aws-bucket': '123',
+                         'aws-key-id': 'abc',
+                         'aws-secret-key': 'weee',
+                         'aws-region-name': 'frank'}
+
+
 def test_get_plan_text(mocker, testing_graph):
-    plan = execute.graph_to_plan_text(testing_graph, '1.0.0')
-    reference = execute._plan_boilerplate()
+    plan = execute.graph_to_plan_text(testing_graph, [], '1.0.0', boilerplate_test_vars)
+    reference = execute._plan_boilerplate(boilerplate_test_vars)
 
     reference = reference + "\n" + yaml.dump({
         'jobs': [
@@ -37,20 +44,13 @@ def test_get_plan_text(mocker, testing_graph):
              'public': True,
              'plan': [
                  {'get': 's3-archive', 'trigger': 'true',
-                  'params': {'version': '{{version}}'}},
-                 execute._extract_task('1.0.0'),
+                  'params': {'version': '1.0.0'}},
+                 execute._extract_task('steve', '1.0.0'),
                  execute._ls_task,
-                 {'task': 'build-b-0-linux',
-                  'file': 'extracted-archive/output/build-b-0-linux.yml'},
-                 {'task': 'test-b-0-linux',
-                  'file': 'extracted-archive/output/test-b-0-linux.yml'},
-                 {'task': 'upload-b-0-linux',
-                  'file': 'extracted-archive/output/upload-b-0-linux.yml'}
              ]
             }
         ]
-    })
-    reference = reference.replace('"{{version}}"', '{{version}}').replace("'{{version}}'", '{{version}}')
+    }, default_flow_style=False)
     assert plan == reference
 
 

@@ -71,7 +71,7 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
     worker = {'platform': 'win', 'arch': '32', 'label': 'linux'}
     mocker.patch.object(compute_build_graph, '_installable')
     mocker.patch.object(compute_build_graph, '_buildable',
-                        lambda meta, recipes_dir: os.path.join(recipes_dir, meta.name()))
+                        lambda meta, version, recipes_dir: os.path.join(recipes_dir, meta.name()))
     compute_build_graph._installable.return_value = False
     compute_build_graph._buildable
     g = compute_build_graph.construct_graph(graph_data_dir, worker,
@@ -157,36 +157,38 @@ def test_buildable(monkeypatch, testing_metadata):
     monkeypatch.chdir(test_data_dir)
     testing_metadata.meta['package']['name'] = 'somepackage'
     testing_metadata.meta['package']['version'] = 'any'
-    assert compute_build_graph._buildable(testing_metadata)
+    assert compute_build_graph._buildable(testing_metadata, 'any')
     testing_metadata.meta['package']['version'] = '1.2.8'
-    assert compute_build_graph._buildable(testing_metadata)
+    assert compute_build_graph._buildable(testing_metadata, '1.2.8')
+    assert compute_build_graph._buildable(testing_metadata, '1.2.*')
     testing_metadata.meta['package']['version'] = '5.2.9'
-    assert not compute_build_graph._buildable(testing_metadata)
+    assert not compute_build_graph._buildable(testing_metadata, '5.2.9')
     testing_metadata.meta['package']['name'] = 'not_a_package'
-    assert not compute_build_graph._buildable(testing_metadata)
+    assert not compute_build_graph._buildable(testing_metadata, '5.2.9')
 
 
 def test_installable(testing_conda_resolve, testing_metadata):
     testing_metadata.meta['package']['name'] = 'a'
     testing_metadata.meta['package']['version'] = '920'
     testing_metadata.meta['build']['string'] = 'any'
-    assert compute_build_graph._installable(testing_metadata, testing_conda_resolve)
+    assert compute_build_graph._installable(testing_metadata, "920", testing_conda_resolve)
+    assert compute_build_graph._installable(testing_metadata, "920*", testing_conda_resolve)
 
     # non-existent version
     testing_metadata.meta['package']['version'] = '921'
-    assert not compute_build_graph._installable(testing_metadata, testing_conda_resolve)
+    assert not compute_build_graph._installable(testing_metadata, '921', testing_conda_resolve)
 
     # default build number is 0
     testing_metadata.meta['package']['version'] = '920'
     testing_metadata.meta['build']['string'] = '0'
-    assert compute_build_graph._installable(testing_metadata, testing_conda_resolve)
+    assert compute_build_graph._installable(testing_metadata, '920', testing_conda_resolve)
     testing_metadata.meta['package']['version'] = '920'
     testing_metadata.meta['build']['string'] = '1'
-    assert not compute_build_graph._installable(testing_metadata, testing_conda_resolve)
+    assert not compute_build_graph._installable(testing_metadata, '920', testing_conda_resolve)
 
     # package not in index
     testing_metadata.meta['package']['name'] = 'f'
-    assert not compute_build_graph._installable(testing_metadata, testing_conda_resolve)
+    assert not compute_build_graph._installable(testing_metadata, '920', testing_conda_resolve)
 
 
 def test_expand_run_no_up_or_down(mocker, testing_graph, testing_conda_resolve):

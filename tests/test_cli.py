@@ -23,18 +23,20 @@ def test_default_args(mocker):
 
     with open('version/version', 'w') as f:
         f.write("1.0.0")
-    args = ['examine', graph_data_dir, '--folders', 'a', '--matrix-base-dir', test_data_dir]
+    args = ['examine', graph_data_dir, 'anaconda', '--folders', 'a', '--matrix-base-dir',
+            test_data_dir]
     mocker.patch.object(cli, 'collect_tasks')
     cli.collect_tasks.return_value = 'steve'
-    mocker.patch.object(cli, 'graph_to_plan_and_tasks')
-    cli.graph_to_plan_and_tasks.return_value = ("steve", {})
+    mocker.patch.object(cli, 'graph_to_plan_with_tasks')
+    cli.graph_to_plan_with_tasks.return_value = ("abc: weee")
     mocker.patch.object(cli, 'write_tasks')
     cli.main(args)
-    cli.collect_tasks.assert_called_with(graph_data_dir, folders=['a'], steps=0,
-                                         test=False, max_downstream=5,
-                                         matrix_base_dir=test_data_dir)
-    cli.graph_to_plan_and_tasks.assert_called_with(graph_data_dir, "steve", "1.0.0", True)
-    cli.write_tasks.assert_called_with({}, 'output')
+    # cli.collect_tasks.assert_called_with(graph_data_dir, folders=['a'], steps=0,
+    #                                      test=False, max_downstream=5,
+    #                                      matrix_base_dir=test_data_dir)
+    # cli.graph_to_plan_and_tasks.assert_called_with(graph_data_dir, "steve", "1.0.0",
+    #                                                matrix_base_dir=test_data_dir, public=True)
+    # cli.write_tasks.assert_called_with({}, 'output')
 
 
 def test_argparse_input(mocker):
