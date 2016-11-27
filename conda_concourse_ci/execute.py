@@ -220,12 +220,20 @@ def get_upload_job(graph, node, upload_config_path, config_vars):
 
 
 def _resource_type_to_dict(resource_type):
+    """We use sets and HashableDict to ensure no duplicates of resource types
+
+    These are not nicely yaml-encodable.  We convert them into yaml-friendly containers here.
+    """
     out = dict(resource_type)
     out['source'] = dict(out['source'])
     return out
 
 
 def _resource_to_dict(resource):
+    """We use sets and HashableDict to ensure no duplicates of resources.
+
+    These are not nicely yaml-encodable.  We convert them into yaml-friendly containers here.
+    """
     out = _resource_type_to_dict(resource)
     if 'options' in out['source']:
         out['source']['options'] = list(out['source']['options'])

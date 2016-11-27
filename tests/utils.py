@@ -9,6 +9,7 @@ import networkx as nx
 import pytest
 
 test_data_dir = os.path.join(os.path.dirname(__file__), 'data')
+test_config_dir = os.path.join(test_data_dir, 'config-test')
 graph_data_dir = os.path.join(test_data_dir, 'graph_data')
 
 default_worker = {"platform": 'linux',

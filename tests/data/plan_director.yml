@@ -1,0 +1,113 @@
+resource_types:
+- name: concourse-pipeline
+  type: docker-image
+  source:
+    repository: robdimsdale/concourse-pipeline-resource
+    tag: latest-final
+# used to download arbitrary user configuration (credentials, platforms, and versions.yml)
+- name: s3-simple
+  type: docker-image
+  source:
+    repository: 18fgsa/s3-resource-simple
+# used to check for PRs and update status at Github
+- name: pull-request
+  type: docker-image
+  source:
+    repository: jtarchie/pr
+
+resources:
+- name: recipe-repo-source
+  type: pull-request
+  source:
+    repo: {{recipe-repo}}
+    access_token: {{recipe-repo-access-token}}
+
+- name: version
+  type: semver
+  source:
+    bucket: {{aws-bucket}}
+    key: {{version-file}}
+    secret_access_key: {{aws-secret-key}}
+    access_key_id: {{aws-key-id}}
+    region_name: {{aws-region-name}}
+    initial_version: 1.0.0
+
+- name: s3-archive
+  type: s3
+  source:
+    bucket: {{aws-bucket}}
+    access_key_id: {{aws-key-id}}
+    secret_access_key: {{aws-secret-key}}
+    region_name: {{aws-region-name}}
+    # this is the output folder on aws, not the local location.
+    regexp: {{tarball-regex}}
+
+# this is a folder of all of our initial configuration.  No pushing here.
+- name: s3-config-base
+  type: s3-simple
+  trigger: true
+  source:
+    bucket: {{aws-bucket}}
+    secret_access_key: {{aws-secret-key}}
+    access_key_id: {{aws-key-id}}
+    region_name: {{aws-region-name}}
+    options: [--exclude '*', --include {{config-folder-star}}]
+
+- name: set-execute-pipelines
+  type: concourse-pipeline
+  source:
+    target: {{concourse-url}}
+    teams:
+    - name: {{concourse-team}}
+      username: {{concourse-user}}
+      password: {{concourse-password}}
+
+
+jobs:
+- name: collect-tasks
+  public: True
+  plan:
+  # pull down any PR submitted
+  - get: recipe-repo-source
+    trigger: true
+  # update status for that PR
+  - put: recipe-repo-source
+    params:
+      path: recipe-repo-source
+      status: pending
+  - get: s3-config-base
+  - get: version
+    params:
+      bump: patch
+
+  - task: install-run-c3i
+    config:
+      # seems redundant, but you need this in order to have the repo source code folder show up
+      inputs:
+        - name: recipe-repo-source
+        - name: s3-config-base
+        - name: version
+      outputs:
+        - name: output
+      image_resource:
+        type: docker-image
+        source:
+          repository: msarahan/conda-concourse-ci
+      platform: linux
+      run:
+        path: c3i
+        args: [examine, recipe-repo-source, {{base-name}}, --matrix-base-dir, s3-config-base/{{config-folder}}]
+  - put: set-execute-pipelines
+    params:
+      pipelines:
+      - name: {{execute-job-name}}
+        team: {{concourse-team}}
+        config_file: output/plan.yml
+  - put: version
+    params:
+      file: version/version
+  # this should trigger the execute pipeline
+  - put: s3-archive
+    params:
+      # this is the relative location on local disk
+      file: {{tarball-glob}}

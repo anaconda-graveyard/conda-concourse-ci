@@ -18,18 +18,13 @@ from conda_build.utils import package_has_file
 # import six
 
 from .build_matrix import load_yaml_config_dir
-from .utils import HashableDict
+from .utils import HashableDict, ensure_list
 
 log = logging.getLogger(__file__)
 
 
-def _get_package_subdir(package):
-    index = json.load(package_has_file(package, 'info/index.json'))
-    return index['subdir']
-
-
-def get_upload_job_name(test_job_name, upload_job_name):
-    return test_job_name.replace('test', 'upload') + '-' + upload_job_name
+def get_upload_job_name(s3_resource_name, upload_job_name):
+    return '-'.join((s3_resource_name, upload_job_name))
 
 
 def _config_resources_and_task(config_vars):
@@ -51,13 +46,13 @@ def _config_resources_and_task(config_vars):
     return types, resources, tasks
 
 
-def _base_task(test_job_name, upload_job_name):
+def _base_task(s3_resource_name, upload_job_name):
     return {'task': upload_job_name,
             'config': {
-                'inputs': [{'name': test_job_name}],
+                'inputs': [{'name': s3_resource_name}],
                 'image_resource': {
                     'type': 'docker-image',
-                    'source': {'repository': 'msarahan/conda-concourse-ci'}},
+                    'source': {'repository': 'busybox'}},
                 'platform': 'linux',
                 'run': {}
             }}
@@ -142,6 +137,8 @@ def upload_commands(s3_resource_name, package_path, commands, config_vars):
 
     commands = ["scp {package} someuser@someserver:somefolder", ]
 
+    Arguments are split by the space character.
+
     ``package`` is the relative path to the output package, in Concourse terms.
     The contents of the config.yml file are provided in config_vars.  The config files are present
         in the ``config`` relative folder.
@@ -154,11 +151,15 @@ def upload_commands(s3_resource_name, package_path, commands, config_vars):
     resource_types, resources, tasks = _config_resources_and_task(config_vars)
 
     package = os.path.join(s3_resource_name, package_path)
+    commands = ensure_list(commands)
     commands = [command.format(package=package, **config_vars) for command in commands]
 
     for command in commands:
+        command = command.split(' ')
         task = _base_task(s3_resource_name, 'custom')
-        task['config']['run'].update({'path': command[0], 'args': command[1:]})
+        task['config']['run'].update({'path': command[0]})
+        if len(command) > 1:
+            task['config']['run'].update({'args': command[1:]})
         tasks.append(task)
     return resource_types, resources, tasks
 
@@ -186,6 +187,6 @@ def get_upload_tasks(s3_resource_name, package_path, upload_config_dir, worker, 
                              "'token', 'server', or 'command'")
         upload_types.update(types)
         upload_resources.update(resources)
-        upload_tasks.extend(tasks)
+        upload_tasks.extend(task for task in tasks if task not in upload_tasks)
 
     return upload_types, upload_resources, upload_tasks

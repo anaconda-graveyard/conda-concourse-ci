@@ -103,11 +103,12 @@ def get_run_test_deps(meta):
 def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resolve,
                         recipes_dir=None):
     with set_conda_env_vars(env_var_set):
-        rendered = api.render(recipe_dir, platform=worker['platform'],
-                              arch=worker['arch'])
-    # directories passed may not be valid recipes.  Skip them if they aren't
-    if not rendered:
-        return
+        try:
+            rendered = api.render(recipe_dir, platform=worker['platform'],
+                                  arch=worker['arch'])
+        except (IOError, SystemExit):
+            log.debug('invalid recipe dir: %s - skipping', recipe_dir)
+            return None
 
     metadata, _, _ = rendered
     name = package_key(run, metadata, worker['label'])
@@ -268,7 +269,8 @@ def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
 
     if steps != 0:
         if not recipes_dir:
-            raise ValueError("recipes_dir is necessary if steps != 0.  Please pass it as an argument.")
+            raise ValueError("recipes_dir is necessary if steps != 0.  Please pass it "
+                             "as an argument.")
         # here we need to fully populate a graph that has the right build or run/test deps.
         #    We don't create this elsewhere because it is unnecessary and costly.
 

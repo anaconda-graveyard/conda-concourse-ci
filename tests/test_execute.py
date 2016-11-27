@@ -2,14 +2,16 @@ import os
 
 from conda_concourse_ci import execute
 import conda_concourse_ci
+from conda_concourse_ci.utils import HashableDict
 
 from conda_build import api
+import networkx as nx
 import pytest
 from pytest_mock import mocker
 import yaml
 
 from .utils import (testing_graph, test_data_dir, testing_conda_resolve, testing_metadata,
-                    graph_data_dir)
+                    graph_data_dir, default_worker, test_config_dir)
 
 
 def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
@@ -19,9 +21,9 @@ def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
     execute.Resolve.return_value = testing_conda_resolve
     conda_concourse_ci.compute_build_graph._installable.return_value = True
     task_graph = execute.collect_tasks(graph_data_dir, folders=['a'],
-                                       matrix_base_dir=test_data_dir)
-    test_platforms = os.listdir(os.path.join(test_data_dir, 'test_platforms.d'))
-    build_platforms = os.listdir(os.path.join(test_data_dir, 'build_platforms.d'))
+                                       matrix_base_dir=test_config_dir)
+    test_platforms = os.listdir(os.path.join(test_config_dir, 'test_platforms.d'))
+    build_platforms = os.listdir(os.path.join(test_config_dir, 'build_platforms.d'))
     # one build, one test per platform, uploads only for builds.
     n_platforms = len(test_platforms) + 2 * len(build_platforms)
     # minimum args means build and test provided folders.  Two tasks.
@@ -118,11 +120,44 @@ def test_get_test_package_job(testing_graph):
 
 
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
-    with open(os.path.join(test_data_dir, 'config.yml')) as f:
+    # stub out uploads, since it depends on config file stuff and we want to manipulate it
+    mocker.patch.object(execute, "get_upload_job")
+    execute.get_upload_job.return_value = [], [], {}
+
+    with open(os.path.join(test_config_dir, 'config.yml')) as f:
         config_vars = yaml.load(f)
     plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, '1.0.0',
-                                                test_data_dir, config_vars)
+                                                test_config_dir, config_vars)
     # s3-archive, a, b
     assert len(plan_dict['resources']) == 3
     # build a, test a, upload a, build b, test b, upload b, test c
     assert len(plan_dict['jobs']) == 7
+
+
+def test_get_upload_job(mocker, testing_graph):
+    with open(os.path.join(test_config_dir, 'config.yml')) as f:
+        config_vars = yaml.load(f)
+    types, resources, job = execute.get_upload_job(testing_graph, 'build-b-0-linux',
+                                                   os.path.join(test_config_dir, 'uploads.d'),
+                                                   config_vars)
+    assert len(types) == 1
+    assert len(resources) == 1
+    # get config; get package; anaconda; 3 for scp; 1 command;
+    assert len(job['plan']) == 7
+
+
+def test_unknown_job_type():
+    graph = nx.DiGraph()
+    meta, _, _ = api.render(os.path.join(graph_data_dir, 'a'))
+    graph.add_node("invalid-somepkg-0-linux", meta=meta, worker=default_worker)
+    with open(os.path.join(test_config_dir, 'config.yml')) as f:
+        config_vars = yaml.load(f)
+    with pytest.raises(NotImplementedError):
+        execute.graph_to_plan_with_jobs('', graph, '1.0.0', test_data_dir, config_vars)
+
+
+def test_resource_to_dict():
+    resource = HashableDict(source=HashableDict(options=set(('a', 'b'))))
+    out = execute._resource_to_dict(resource)
+    assert type(out['source']['options']) == list
+    assert type(out['source']) == dict

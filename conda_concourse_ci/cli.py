@@ -102,7 +102,8 @@ def submit(args):
     of the dynamic job.
     """
     root = os.path.dirname(args.plan_director_path)
-    config_folder = os.path.join(root, 'config-' + args.base_name)
+    config_folder = 'config' + ('-' + args.base_name) if args.base_name else ""
+    config_folder = os.path.join(root, config_folder)
     config_path = os.path.join(config_folder, 'config.yml')
     with open(os.path.join(config_path)) as src:
         data = yaml.load(src)
@@ -276,5 +277,3 @@ def main(args=None):
         bootstrap(args.base_name)
     elif args.subparser_name == 'examine':
         build_cli(args)
-    else:
-        raise ValueError("Unrecognized subcommand to c3i: %s", args.subparser_name)
