@@ -309,9 +309,11 @@ def test_expand_run_build_non_installable_prereq(mocker, testing_conda_resolve):
 
 def test_order_build(testing_graph):
     order = compute_build_graph.order_build(testing_graph)
-    assert order == ['build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
-                     'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux',
-                     'test-c-0-linux']
+    assert order.index('build-a-0-linux') < order.index('test-a-0-linux')
+    assert order.index('test-a-0-linux') < order.index('upload-a-0-linux')
+    assert order.index('build-b-0-linux') < order.index('test-b-0-linux')
+    assert order.index('test-b-0-linux') < order.index('upload-b-0-linux')
+    assert order.index('build-b-0-linux') < order.index('test-c-0-linux')
 
 
 def test_get_base_folders(testing_workdir):
