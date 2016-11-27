@@ -6,37 +6,25 @@ import re
 import conda_build.api
 from conda_build.conda_interface import Resolve, get_index
 import networkx as nx
-import yaml
 
 from .compute_build_graph import construct_graph, expand_run, order_build
 from .build_matrix import load_yaml_config_dir
 from .uploads import get_upload_tasks
+from .utils import HashableDict
 
 log = logging.getLogger(__file__)
 
 
-def _s3_resource(s3_name, regexp, vars):
-    return {'name': s3_name,
-            'type': 's3',
-            'trigger': True,
-            'source': {
-                'bucket': vars['aws-bucket'],
-                'access_key_id': vars['aws-key-id'],
-                'secret_access_key': vars['aws-secret-key'],
-                'region_name': vars['aws-region-name'],
-                'regexp': regexp,
-                }
-            }
-
-
-# def find_task_deps_in_group(task, graph, groups):
-#     found = [-1]
-#     for dep in graph.successors(task):
-#         for idx, group in enumerate(groups):
-#             if any(dep == entry['task'] for entry in group):
-#                 found.append(idx)
-#                 break
-#     return max(found)
+def _s3_resource(s3_name, regexp, config_vars):
+    return HashableDict(name=s3_name,
+                        type='s3',
+                        trigger=True,
+                        source=HashableDict(bucket=config_vars['aws-bucket'],
+                                            access_key_id=config_vars['aws-key-id'],
+                                            secret_access_key=config_vars['aws-secret-key'],
+                                            region_name=config_vars['aws-region-name'],
+                                            regexp=regexp)
+                        )
 
 
 def _extract_task(base_name, version):
@@ -111,7 +99,7 @@ def get_s3_resource_name(base_name, worker, package_name):
 
 def get_build_job(base_path, graph, node, base_name, recipe_archive_version):
     tasks = [{'get': 's3-archive',
-              'trigger': 'true',
+              'trigger': True,
               'params': {'version': recipe_archive_version},
               'passed': graph.successors(node)},
              _extract_task(base_name, recipe_archive_version)]
@@ -182,7 +170,8 @@ def get_test_package_job(graph, node, base_name):
     s3_resource_name = get_s3_resource_name(base_name, worker, meta.name())
     pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
     tasks = [{'get': s3_resource_name,
-              'trigger': 'true', 'params': {'version': pkg_version},
+              'trigger': True,
+              'params': {'version': pkg_version},
               'passed': graph.successors(node)},
              ]
 
@@ -208,13 +197,49 @@ def get_test_package_job(graph, node, base_name):
     return {'name': node, 'plan': tasks}
 
 
-def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, vars, public=True):
-    upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
+def get_upload_job(graph, node, upload_config_path, config_vars):
+    meta = graph.node[node]['meta']
+    worker = graph.node[node]['worker']
+    base_name = config_vars['base-name']
+    s3_resource_name = get_s3_resource_name(base_name, worker, meta.name())
+    pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
+
+    plan = [{'get': s3_resource_name,
+             'trigger': True,
+             'params': {'version': pkg_version},
+             'passed': graph.successors(node)}, ]
+    filename = os.path.basename(conda_build.api.get_output_file_path(meta))
+
+    resource_types, resources, tasks = get_upload_tasks(s3_resource_name, filename,
+                                                        upload_config_path,
+                                                        worker=graph.node[node]['worker'],
+                                                        config_vars=config_vars)
+    plan.extend(tasks)
+    job = {'name': node, 'plan': plan}
+    return resource_types, resources, job
+
+
+def _resource_type_to_dict(resource_type):
+    out = dict(resource_type)
+    out['source'] = dict(out['source'])
+    return out
+
+
+def _resource_to_dict(resource):
+    out = _resource_type_to_dict(resource)
+    if 'options' in out['source']:
+        out['source']['options'] = list(out['source']['options'])
+    return out
+
+
+def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_vars, public=True):
+    upload_resource_types = set()
+    upload_resources = set()
     jobs = []
+    upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
 
-    upload_tasks = []
-    s3_resources = [("s3-archive", "recipes-{base-name}-(.*).tar.bz2")]
+    s3_resources = [_s3_resource("s3-archive", "recipes-{base-name}-(.*).tar.bz2", config_vars)]
     for node in order:
         package_name = graph.node[node]['meta'].name()
         worker = graph.node[node]['worker']
@@ -223,36 +248,45 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, vars, pu
         #    recipe for determining which package to download from available channels.
         if node.startswith('build'):
             # need to define an s3 resource for each built package
-            s3_resources.append(_s3_resource(get_s3_resource_name(vars['base-name'],
+            s3_resources.append(_s3_resource(get_s3_resource_name(config_vars['base-name'],
                                                                   worker, package_name),
-                                             get_s3_package_regex(vars['base-name'],
+                                             get_s3_package_regex(config_vars['base-name'],
                                                                   worker, package_name),
-                                             vars=vars))
-            job = get_build_job(base_path, graph, node, vars['base-name'], version)
+                                             config_vars=config_vars))
+            jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'], version))
 
         # test jobs need to get the package from either the temporary s3 store or test using the
         #     recipe (download package from available channels) and run a test task
         elif node.startswith('test'):
             if node.replace('test', 'build') in graph.nodes():
                 # we build the package in this plan.  Get it from s3.
-                job = get_test_package_job(graph, node, vars['base-name'])
+                jobs.append(get_test_package_job(graph, node, config_vars['base-name']))
             else:
                 # we are only testing this package in this plan.  Get it from configured channels.
-                job = get_test_recipe_job(base_path, graph, node, vars['base-name'], version)
+                jobs.append(get_test_recipe_job(base_path, graph, node, config_vars['base-name'],
+                                                version))
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
         # appropriately.
+        #
+        # This is also more complicated, because uploads may involve other resource types and
+        # resources that are not used for build/test.  For example, the scp and commands uploads
+        # need to be able to access private keys, which are stored in the config uploads.d folder.
         elif node.startswith('upload'):
-            filename = os.path.basename(conda_build.api.get_output_file_path(graph.node[node]['meta']))  # NOQA
-            test_task = node.replace('upload', 'test')
-            for task in get_upload_tasks(test_task, filename, upload_config_path,
-                                         worker=graph.node[node]['worker']):
-                upload_tasks.append(task)
+            resource_types, resources, job = get_upload_job(graph, node, upload_config_path,
+                                                            config_vars)
+            upload_resource_types.update(resource_types)
+            upload_resources.update(resources)
+            jobs.append(job)
 
         else:
             raise NotImplementedError("Don't know how to handle task.  Currently, tasks must start "
                                       "with 'build', 'test', or 'upload'")
-        jobs.append(job)
 
-    return {'resources': s3_resources, 'jobs': jobs}
+    resources = s3_resources + list(upload_resources)
+    # convert types for smoother output to yaml
+    upload_resource_types = [_resource_type_to_dict(t) for t in upload_resource_types]
+    resources = [_resource_to_dict(r) for r in resources]
+
+    return {'resource_types': upload_resource_types, 'resources': resources, 'jobs': jobs}

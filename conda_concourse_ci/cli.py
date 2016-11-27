@@ -247,7 +247,7 @@ def build_cli(args):
 
     plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
                                     version, matrix_base_dir=matrix_base_dir,
-                                    vars=data, public=args.public)
+                                    config_vars=data, public=args.public)
 
     output_folder = 'output'
     try:

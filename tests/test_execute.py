@@ -119,9 +119,9 @@ def test_get_test_package_job(testing_graph):
 
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
     with open(os.path.join(test_data_dir, 'config.yml')) as f:
-        vars = yaml.load(f)
+        config_vars = yaml.load(f)
     plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, '1.0.0',
-                                                test_data_dir, vars)
+                                                test_data_dir, config_vars)
     # s3-archive, a, b
     assert len(plan_dict['resources']) == 3
     # build a, test a, upload a, build b, test b, upload b, test c

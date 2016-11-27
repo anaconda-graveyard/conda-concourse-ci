@@ -18,6 +18,7 @@ from conda_build.utils import package_has_file
 # import six
 
 from .build_matrix import load_yaml_config_dir
+from .utils import HashableDict
 
 log = logging.getLogger(__file__)
 
@@ -29,6 +30,25 @@ def _get_package_subdir(package):
 
 def get_upload_job_name(test_job_name, upload_job_name):
     return test_job_name.replace('test', 'upload') + '-' + upload_job_name
+
+
+def _config_resources_and_task(config_vars):
+    # used to download arbitrary user configuration (credentials, platforms, and versions.yml)
+    types = [HashableDict(name="s3-simple",
+                          type="docker-image",
+                          source=HashableDict(repository="18fgsa/s3-resource-simple"))]
+    resources = [HashableDict(name="s3-config-base",
+                              type='s3-simple',
+                              trigger=True,
+                              source=HashableDict(bucket=config_vars['aws-bucket'],
+                                            secret_access_key=config_vars['aws-secret-key'],
+                                            access_key_id=config_vars['aws-key-id'],
+                                            region_name=config_vars['aws-region-name'],
+                                            options=("--exclude '*'",
+                                                     "--include '{0}'".format(
+                                                         config_vars['config-folder-star']))))]
+    tasks = [{'get': 's3-config-base'}]
+    return types, resources, tasks
 
 
 def _base_task(test_job_name, upload_job_name):
@@ -43,7 +63,7 @@ def _base_task(test_job_name, upload_job_name):
             }}
 
 
-def upload_anaconda(test_job_name, package_path, token, user=None, label=None):
+def upload_anaconda(s3_resource_name, package_path, token, user=None, label=None):
     """
     Upload to anaconda.org using a token.  Tokens are associated with a channel, so the channel
     need not be specified.  You may specify a label to install to a label other than main.
@@ -55,20 +75,22 @@ def upload_anaconda(test_job_name, package_path, token, user=None, label=None):
 
     upload-<task name>-anaconda-<user name or first 4 letters of token if no user provided>
     """
-    cmd = ['--token', token, '--force', 'upload', os.path.join(test_job_name, package_path)]
+    cmd = ['--token', token, '--force', 'upload', os.path.join(s3_resource_name, package_path)]
     identifier = token[-4:]
     if user:
         cmd.extend(['--user', user])
         identifier = user
     if label:
         cmd.extend(['--label', label])
-    upload_job_name = get_upload_job_name(test_job_name, 'anaconda-' + identifier)
-    task = _base_task(test_job_name, upload_job_name)
+    upload_job_name = get_upload_job_name(s3_resource_name, 'anaconda-' + identifier)
+    task = _base_task(s3_resource_name, upload_job_name)
     task['config']['run'].update({'path': 'anaconda', 'args': cmd})
-    return [task]
+    # resource_types, resources, tasks
+    return [], [], [task]
 
 
-def upload_scp(test_job_name, package_path, server, destination_path, auth_dict, worker, port=22):
+def upload_scp(s3_resource_name, package_path, server, destination_path, auth_dict, worker,
+               config_vars, port=22):
     """
     Upload using scp (using paramiko).  Authentication can be done via key or username/password.
 
@@ -85,68 +107,85 @@ def upload_scp(test_job_name, package_path, server, destination_path, auth_dict,
       package would be unavailable.
     """
     identifier = server
-    tasks = []
+
+    # first task is to get the config, which includes any private keys in the uploads.d folder
+    resource_types, resources, tasks = _config_resources_and_task(config_vars)
+
     for task in ('scp', 'chmod', 'index'):
-        job_name = get_upload_job_name(test_job_name, task + '-' + identifier)
-        tasks.append(_base_task(test_job_name, job_name))
+        job_name = get_upload_job_name(s3_resource_name, task + '-' + identifier)
+        tasks.append(_base_task(s3_resource_name, job_name))
     key = os.path.join('config', 'uploads.d', auth_dict['key_file'])
 
-    package_path = os.path.join(test_job_name, package_path)
+    package_path = os.path.join(s3_resource_name, package_path)
     subdir = "-".join([worker['platform'], str(worker['arch'])])
 
     server = "{user}@{server}".format(user=auth_dict['user'], server=server)
     destination_path = destination_path.format(subdir=subdir)
     remote = server + ":" + destination_path
 
-    scp_args = [package_path, remote, '-i', key]
-    chmod_args = ['-i', key, server,
+    scp_args = [package_path, remote, '-i', key, '-P', port]
+    tasks[1]['config']['run'].update({'path': 'scp', 'args': scp_args})
+    chmod_args = ['-i', key, '-p', port, server,
         'chmod 664 {0}/{1}'.format(destination_path, os.path.basename(package_path))]
-    index_args = ['-i', key, server, 'conda index {0}'.format(destination_path)]
+    tasks[2]['config']['run'].update({'path': 'ssh', 'args': chmod_args})
+    index_args = ['-i', key, '-p', port, server, 'conda index {0}'.format(destination_path)]
+    tasks[3]['config']['run'].update({'path': 'ssh', 'args': index_args})
 
-    # scp
-    tasks[0]['config']['run'].update({'path': 'scp', 'args': scp_args})
-    tasks[0]['config']['outputs'] = [{'name': tasks[0]['task']}]
-    # chmod
-    tasks[1]['config']['run'].update({'path': 'ssh', 'args': chmod_args})
-    tasks[1]['config']['inputs'] = [{'name': tasks[0]['task']}]
-    tasks[1]['config']['outputs'] = [{'name': tasks[1]['task']}]
-    # index
-    tasks[2]['config']['run'].update({'path': 'ssh', 'args': index_args})
-    tasks[2]['config']['inputs'] = [{'name': tasks[1]['task']}]
-    return tasks
+    return resource_types, resources, tasks
 
 
-def upload_command(test_job_name, package_path, command):
-    """Execute an arbitrary upload command.  Input string is expected to have a placeholder for
+def upload_commands(s3_resource_name, package_path, commands, config_vars):
+    """Execute arbitrary upload commands.
+
+    Command input strings are expected to have a placeholder for
     the package to upload.  For example:
 
-    command = "scp {package} someuser@someserver:somefolder"
+    commands = ["scp {package} someuser@someserver:somefolder", ]
 
-    package is the filename of the output package, only.  Subfoldering is handled with the
-    test_job_name.
+    ``package`` is the relative path to the output package, in Concourse terms.
+    The contents of the config.yml file are provided in config_vars.  The config files are present
+        in the ``config`` relative folder.
+
+    WARNING: abuse of this feature can expose your private keys.  Do not allow any commands that
+        expose the contents of your files.
     """
-    raise NotImplementedError
-    # command = command.format(package=os.path.join(test_job_name, package)).split()
-    # # TODO: need to finish this
-    # task = _base_task(test_job_name, 'custom')
 
-    # task['config']['run'].update({'path': command[0], 'args': command[1:]})
-    # return [task]
+    # first task is to get the config, which includes any private keys in the uploads.d folder
+    resource_types, resources, tasks = _config_resources_and_task(config_vars)
+
+    package = os.path.join(s3_resource_name, package_path)
+    commands = [command.format(package=package, **config_vars) for command in commands]
+
+    for command in commands:
+        task = _base_task(s3_resource_name, 'custom')
+        task['config']['run'].update({'path': command[0], 'args': command[1:]})
+        tasks.append(task)
+    return resource_types, resources, tasks
 
 
-def get_upload_tasks(test_job_name, package_path, upload_config_dir, worker):
-    tasks = []
+def get_upload_tasks(s3_resource_name, package_path, upload_config_dir, worker, config_vars):
+    upload_tasks = []
+    upload_types = set()
+    upload_resources = set()
     configurations = load_yaml_config_dir(upload_config_dir)
 
     for config in configurations:
         if 'token' in config:
-            tasks.extend(upload_anaconda(test_job_name, package_path, **config))
+            types, resources, tasks = upload_anaconda(s3_resource_name, package_path, **config)
         elif 'server' in config:
-            tasks.extend(upload_scp(test_job_name=test_job_name, package_path=package_path,
-                                    worker=worker, **config))
-        elif 'command' in config:
-            tasks.extend(upload_command(test_job_name, package_path, **config))
+            types, resources, tasks = upload_scp(s3_resource_name=s3_resource_name,
+                                                        package_path=package_path,
+                                                        worker=worker, config_vars=config_vars,
+                                                        **config)
+        elif 'commands' in config:
+            types, resources, tasks = upload_commands(s3_resource_name, package_path,
+                                                             config_vars=config_vars,
+                                                             **config)
         else:
             raise ValueError("Unrecognized upload configuration.  Each file needs one of: "
                              "'token', 'server', or 'command'")
-    return tasks
+        upload_types.update(types)
+        upload_resources.update(resources)
+        upload_tasks.extend(tasks)
+
+    return upload_types, upload_resources, upload_tasks
