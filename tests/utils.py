@@ -3,6 +3,7 @@ import os
 import subprocess
 
 from conda_build.conda_interface import Resolve
+from conda_build.api import render
 from conda_build.metadata import MetaData
 import networkx as nx
 import pytest
@@ -13,18 +14,6 @@ graph_data_dir = os.path.join(test_data_dir, 'graph_data')
 default_worker = {"platform": 'linux',
                   'arch': '64',
                   'label': 'linux'}
-
-
-def default_metadata(name='steve', version=1.0, dependencies=None):
-    metadata = {
-                 'package': {
-                     'name': name,
-                     'version': version,
-                   }
-                }
-    if dependencies:
-        metadata.update({'requirements': dependencies})
-    return MetaData.fromdict(metadata)
 
 
 @pytest.fixture(scope='function')
@@ -94,18 +83,23 @@ def testing_git_repo(testing_workdir, request):
 @pytest.fixture(scope='function')
 def testing_graph(request):
     g = nx.DiGraph()
-    g.add_node('build-b-0-linux', meta=default_metadata('b', dependencies={'build': 'a'}), env={},
-               worker=default_worker)
-    g.add_node('test-b-0-linux', meta=default_metadata('b'), env={}, worker=default_worker)
+    a, _, _ = render(os.path.join(graph_data_dir, 'a'))
+    g.add_node('build-a-0-linux', meta=a, env={}, worker=default_worker)
+    g.add_node('test-a-0-linux', meta=a, env={}, worker=default_worker)
+    g.add_edge('test-a-0-linux', 'build-a-0-linux')
+    g.add_node('upload-a-0-linux', meta=a, env={}, worker=default_worker)
+    g.add_edge('upload-a-0-linux', 'test-a-0-linux')
+    b, _, _ = render(os.path.join(graph_data_dir, 'b'))
+    g.add_node('build-b-0-linux', meta=b, env={}, worker=default_worker)
+    g.add_edge('build-b-0-linux', 'build-a-0-linux')
+    g.add_node('test-b-0-linux', meta=b, env={}, worker=default_worker)
     g.add_edge('test-b-0-linux', 'build-b-0-linux')
-    g.add_node('upload-b-0-linux', meta=default_metadata('b'), env={}, worker=default_worker)
+    g.add_node('upload-b-0-linux', meta=b, env={}, worker=default_worker)
     g.add_edge('upload-b-0-linux', 'test-b-0-linux')
+    c, _, _ = render(os.path.join(graph_data_dir, 'c'))
+    g.add_node('test-c-0-linux', meta=c, env={}, worker=default_worker)
+    g.add_edge('test-c-0-linux', 'test-b-0-linux')
     return g
-
-
-def add_testing_node(graph, name, run):
-    graph.add_node('{0}-{1}-0-linux'.format(run, name), meta=default_metadata(name),
-                   env={}, worker=default_worker)
 
 
 @pytest.fixture(scope='function')

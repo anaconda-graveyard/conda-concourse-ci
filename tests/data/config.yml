@@ -9,3 +9,4 @@ concourse-password: your-user
 recipe-repo: your-repo
 # TODO: these need to be dynamically definable based on PR info
 recipe-repo-commit: master
+base-name: frank

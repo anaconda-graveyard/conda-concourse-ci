@@ -27,9 +27,8 @@ def test_default_args(mocker):
             test_data_dir]
     mocker.patch.object(cli, 'collect_tasks')
     cli.collect_tasks.return_value = 'steve'
-    mocker.patch.object(cli, 'graph_to_plan_with_tasks')
-    cli.graph_to_plan_with_tasks.return_value = ("abc: weee")
-    mocker.patch.object(cli, 'write_tasks')
+    mocker.patch.object(cli, 'graph_to_plan_with_jobs')
+    cli.graph_to_plan_with_jobs.return_value = ("abc: weee")
     cli.main(args)
     # cli.collect_tasks.assert_called_with(graph_data_dir, folders=['a'], steps=0,
     #                                      test=False, max_downstream=5,

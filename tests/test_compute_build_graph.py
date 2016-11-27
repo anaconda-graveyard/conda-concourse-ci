@@ -150,7 +150,8 @@ def test_add_dependency_nodes_and_edges(mocker, testing_graph, testing_conda_res
                                                             'build', {}, dummy_worker,
                                                             testing_conda_resolve)
     assert set(testing_graph.nodes()) == {'build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
-                                          'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux'}
+                                          'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux',
+                                          'test-c-0-linux'}
 
 
 def test_buildable(monkeypatch, testing_metadata):
@@ -303,7 +304,9 @@ def test_expand_run_build_non_installable_prereq(mocker, testing_conda_resolve):
 
 def test_order_build(testing_graph):
     order = compute_build_graph.order_build(testing_graph)
-    assert order == ['build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux']
+    assert order == ['build-a-0-linux', 'test-a-0-linux', 'upload-a-0-linux',
+                     'build-b-0-linux', 'test-b-0-linux', 'upload-b-0-linux',
+                     'test-c-0-linux']
 
 
 def test_get_base_folders(testing_workdir):

@@ -11,7 +11,7 @@ import yaml
 
 import conda_concourse_ci
 from .compute_build_graph import git_changed_recipes
-from .execute import collect_tasks, write_tasks, graph_to_plan_with_tasks
+from .execute import collect_tasks, graph_to_plan_with_jobs
 
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
@@ -245,7 +245,7 @@ def build_cli(args):
     data['recipe-repo-commit'] = repo_commit
     data['version'] = version
 
-    plan = graph_to_plan_with_tasks(os.path.abspath(path), task_graph,
+    plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
                                     version, matrix_base_dir=matrix_base_dir,
                                     vars=data, public=args.public)
 
@@ -255,7 +255,7 @@ def build_cli(args):
     except:
         pass
     with open(os.path.join(output_folder, 'plan.yml'), 'w') as f:
-        f.write(plan)
+        yaml.dump(plan, f, default_flow_style=False)
     archive_recipes(output_folder, path, folders, args.base_name, version)
 
 
