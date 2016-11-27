@@ -1,0 +1,6 @@
+package:
+  name: skipped
+  version: 1.0
+
+build:
+  skip: True

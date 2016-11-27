@@ -1,0 +1,5 @@
+server: your-server
+destination_path: "test-pkgs-someuser/{subdir}"
+auth_dict:
+  user: username-for-login
+  key_file: key_path

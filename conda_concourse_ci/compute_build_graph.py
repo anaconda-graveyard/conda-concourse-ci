@@ -103,11 +103,12 @@ def get_run_test_deps(meta):
 def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resolve,
                         recipes_dir=None):
     with set_conda_env_vars(env_var_set):
-        rendered = api.render(recipe_dir, platform=worker['platform'],
-                              arch=worker['arch'])
-    # directories passed may not be valid recipes.  Skip them if they aren't
-    if not rendered:
-        return
+        try:
+            rendered = api.render(recipe_dir, platform=worker['platform'],
+                                  arch=worker['arch'])
+        except (IOError, SystemExit):
+            log.debug('invalid recipe dir: %s - skipping', recipe_dir)
+            return None
 
     metadata, _, _ = rendered
     name = package_key(run, metadata, worker['label'])
@@ -123,7 +124,11 @@ def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resol
     if run == 'build':
         add_recipe_to_graph(recipe_dir, graph, 'test', env_var_set, worker, conda_resolve,
                             recipes_dir=recipes_dir)
-        graph.add_edge(package_key('test', metadata, worker['label']), name)
+        test_key = package_key('test', metadata, worker['label'])
+        graph.add_edge(test_key, name)
+        upload_key = package_key('upload', metadata, worker['label'])
+        graph.add_node(upload_key, meta=metadata, env=env_var_set, worker=worker)
+        graph.add_edge(upload_key, test_key)
 
     return name
 
@@ -164,15 +169,15 @@ def _fix_any(value):
     return value
 
 
-def _installable(metadata, conda_resolve):
+def _installable(metadata, version, conda_resolve):
     """Can Conda install the package we need?"""
     return conda_resolve.valid(conda_interface.MatchSpec(" ".join([metadata.name(),
-                                                                   _fix_any(metadata.version()),
+                                                                   _fix_any(version),
                                                                    _fix_any(metadata.build_id())])),
                                filter=conda_resolve.default_filter())
 
 
-def _buildable(metadata, recipes_dir=None):
+def _buildable(metadata, version, recipes_dir=None):
     """Does the recipe that we have available produce the package we need?"""
     # best: metadata comes from a real recipe, and we have a path to it.  Version may still
     #    not match.
@@ -187,15 +192,12 @@ def _buildable(metadata, recipes_dir=None):
         return False
 
     # this is our target match
-    match_dict = {'name': metadata.name(),
-                  'version': _fix_any(metadata.version()),
-                  'build': _fix_any(metadata.build_number()), }
-    # we don't care about version, so just make it match.
-    if not match_dict['version']:
-        match_dict['version'] = recipe_metadata.version()
+    ms = conda_interface.MatchSpec(" ".join([metadata.name(),
+                                             _fix_any(version)]))
     # this is what we have available from the recipe
-    ms = conda_interface.MatchSpec(" ".join([recipe_metadata.name(),
-                                             recipe_metadata.version()]))
+    match_dict = {'name': recipe_metadata.name(),
+                  'version': recipe_metadata.version(),
+                  'build': _fix_any(metadata.build_number()), }
     available = ms.match(match_dict)
     return recipe_metadata.meta_path if available else False
 
@@ -213,10 +215,12 @@ def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_
             'package': {'name': dep,
                         'version': version},
             'build': {'string': build_str}})
+        # version is passed literally here because constraints may make it an invalid version
+        #    for metadata.
         dep_name = package_key('build', dummy_meta, worker['label'])
-        if not _installable(dummy_meta, conda_resolve):
+        if not _installable(dummy_meta, version, conda_resolve):
             if dep_name not in graph.nodes():
-                recipe_dir = _buildable(dummy_meta, recipes_dir)
+                recipe_dir = _buildable(dummy_meta, version, recipes_dir)
                 if not recipe_dir:
                     raise ValueError("Dependency %s is not installable, and recipe (if "
                                         " available) can't produce desired version.", dep)

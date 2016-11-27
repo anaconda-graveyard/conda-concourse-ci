@@ -7,7 +7,7 @@ import six
 import yaml
 
 
-def load_platforms(platforms_dir):
+def load_yaml_config_dir(platforms_dir):
     platforms = []
     for f in os.listdir(platforms_dir):
         if f.endswith('.yml'):
