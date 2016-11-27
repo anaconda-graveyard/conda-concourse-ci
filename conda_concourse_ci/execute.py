@@ -240,7 +240,7 @@ def _resource_to_dict(resource):
     return out
 
 
-def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_vars, public=True):
+def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_vars):
     upload_resource_types = set()
     upload_resources = set()
     jobs = []

@@ -7,15 +7,8 @@ Each function here returns a list of task dictionaries.  This is because some ta
 to run additional tasks (for example, to update the index on the remote side)
 """
 
-import json
 import logging
 import os
-# import subprocess
-
-from conda_build.utils import package_has_file
-# import paramiko
-# from paramiko_scp import SCPClient
-# import six
 
 from .build_matrix import load_yaml_config_dir
 from .utils import HashableDict, ensure_list
