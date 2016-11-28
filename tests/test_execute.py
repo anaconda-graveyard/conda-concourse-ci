@@ -132,6 +132,7 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert len(plan_dict['resources']) == 3
     # build a, test a, upload a, build b, test b, upload b, test c
     assert len(plan_dict['jobs']) == 7
+    assert plan_dict['resources'][0]['source']['regexp'] == "recipes-test-(.*).tar.bz2"
 
 
 def test_get_upload_job(mocker, testing_graph):

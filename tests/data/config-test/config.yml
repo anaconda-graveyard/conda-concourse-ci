@@ -9,9 +9,9 @@ concourse-password: your-user
 recipe-repo: your-repo
 # TODO: these need to be dynamically definable based on PR info
 recipe-repo-commit: master
-base-name: frank
-config-folder: config-frank
-config-folder-star: config-frank/*
-tarball-glob: output/recipes-frank-*.tar.bz2
-tarball-regex: recipes-frank-(.*).tar.bz2
-version-file: version-frank
+base-name: test
+config-folder: config-test
+config-folder-star: config-test/*
+tarball-glob: output/recipes-test-*.tar.bz2
+tarball-regex: recipes-test-(.*).tar.bz2
+version-file: version-test
