@@ -97,7 +97,7 @@ def get_s3_resource_name(base_name, worker, package_name):
     return "s3-{0}-{1}-{2}".format(base_name, worker['label'], package_name)
 
 
-def get_build_job(base_path, graph, node, base_name, recipe_archive_version):
+def get_build_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
     tasks = [{'get': 's3-archive',
               'trigger': True,
               'params': {'version': recipe_archive_version},
@@ -130,10 +130,10 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version):
     tasks.append({'task': node, 'config': task_dict})
     tasks.append({'put': get_s3_resource_name(base_name, graph.node[node]['worker'], meta.name()),
                   'params': {'from': os.path.join(node, '*.tar.bz2')}})
-    return {'name': node, 'plan': tasks}
+    return {'name': node, 'plan': tasks, 'public': public}
 
 
-def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_version):
+def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
     tasks = [{'get': 's3-archive',
               'trigger': 'true',
               'params': {'version': recipe_archive_version},
@@ -161,10 +161,10 @@ def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_versio
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
     tasks.append({'task': node, 'config': task_dict})
 
-    return {'name': node, 'plan': tasks}
+    return {'name': node, 'plan': tasks, 'public': public}
 
 
-def get_test_package_job(graph, node, base_name):
+def get_test_package_job(graph, node, base_name, public=True):
     meta = graph.node[node]['meta']
     worker = graph.node[node]['worker']
     s3_resource_name = get_s3_resource_name(base_name, worker, meta.name())
@@ -194,10 +194,10 @@ def get_test_package_job(graph, node, base_name):
 
     tasks.append({'task': node, 'config': task_dict})
 
-    return {'name': node, 'plan': tasks}
+    return {'name': node, 'plan': tasks, 'public': public}
 
 
-def get_upload_job(graph, node, upload_config_path, config_vars):
+def get_upload_job(graph, node, upload_config_path, config_vars, public=True):
     meta = graph.node[node]['meta']
     worker = graph.node[node]['worker']
     base_name = config_vars['base-name']
@@ -215,7 +215,7 @@ def get_upload_job(graph, node, upload_config_path, config_vars):
                                                         worker=graph.node[node]['worker'],
                                                         config_vars=config_vars)
     plan.extend(tasks)
-    job = {'name': node, 'plan': plan}
+    job = {'name': node, 'plan': plan, 'public': public}
     return resource_types, resources, job
 
 
@@ -240,14 +240,16 @@ def _resource_to_dict(resource):
     return out
 
 
-def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_vars):
+def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_vars, public=True):
     upload_resource_types = set()
     upload_resources = set()
     jobs = []
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
 
-    s3_resources = [_s3_resource("s3-archive", "recipes-{base-name}-(.*).tar.bz2", config_vars)]
+    s3_resources = [_s3_resource("s3-archive",
+                                 "recipes-{base-name}-(.*).tar.bz2".format(**config_vars),
+                                 config_vars)]
     for node in order:
         package_name = graph.node[node]['meta'].name()
         worker = graph.node[node]['worker']
@@ -261,18 +263,19 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
                                              get_s3_package_regex(config_vars['base-name'],
                                                                   worker, package_name),
                                              config_vars=config_vars))
-            jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'], version))
+            jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
+                                      version, public))
 
         # test jobs need to get the package from either the temporary s3 store or test using the
         #     recipe (download package from available channels) and run a test task
         elif node.startswith('test'):
             if node.replace('test', 'build') in graph.nodes():
                 # we build the package in this plan.  Get it from s3.
-                jobs.append(get_test_package_job(graph, node, config_vars['base-name']))
+                jobs.append(get_test_package_job(graph, node, config_vars['base-name'], public))
             else:
                 # we are only testing this package in this plan.  Get it from configured channels.
                 jobs.append(get_test_recipe_job(base_path, graph, node, config_vars['base-name'],
-                                                version))
+                                                version, public))
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
@@ -283,7 +286,7 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
         # need to be able to access private keys, which are stored in the config uploads.d folder.
         elif node.startswith('upload'):
             resource_types, resources, job = get_upload_job(graph, node, upload_config_path,
-                                                            config_vars)
+                                                            config_vars, public)
             upload_resource_types.update(resource_types)
             upload_resources.update(resources)
             jobs.append(job)

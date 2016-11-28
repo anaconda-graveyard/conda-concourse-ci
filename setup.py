@@ -24,7 +24,10 @@ setup(
         ]
     },
     package_data={
-        'bootstrap': ['bootstrap/*'],
+        'conda_concourse_ci': ['bootstrap/*', 'bootstrap/config/*',
+                               'bootstrap/config/uploads.d/*',
+                               'bootstrap/config/build_platforms.d/*',
+                               'bootstrap/config/test_platforms.d/*'],
     },
     include_package_data=True,
     license="BSD 3-clause",
