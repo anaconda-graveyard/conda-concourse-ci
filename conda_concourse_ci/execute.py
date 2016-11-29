@@ -1,18 +1,25 @@
 from __future__ import print_function, division
+import contextlib
 import logging
 import os
 import re
+import shutil
+import subprocess
+import tarfile
 
+import boto3
 import conda_build.api
 from conda_build.conda_interface import Resolve, get_index
 import networkx as nx
+import yaml
 
-from .compute_build_graph import construct_graph, expand_run, order_build
+from .compute_build_graph import construct_graph, expand_run, order_build, git_changed_recipes
 from .build_matrix import load_yaml_config_dir
 from .uploads import get_upload_tasks
 from .utils import HashableDict
 
 log = logging.getLogger(__file__)
+bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
 
 
 def _s3_resource(s3_name, regexp, config_vars):
@@ -301,3 +308,219 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
     resources = [_resource_to_dict(r) for r in resources]
 
     return {'resource_types': upload_resource_types, 'resources': resources, 'jobs': jobs}
+
+
+def _get_current_git_rev(path):
+    out = 'master'
+    try:
+        out = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+                                      cwd=path).rstrip()
+    except subprocess.CalledProcessError:
+        # not in a git repo.  Return master as placebo.
+        pass
+    return out
+
+
+@contextlib.contextmanager
+def checkout_git_rev(checkout_rev, path):
+    checkout_ok = False
+    try:
+        git_current_rev = _get_current_git_rev(path)
+        subprocess.check_call(['git', 'checkout', checkout_rev], cwd=path)
+        checkout_ok = True
+    except subprocess.CalledProcessError:    # pragma: no cover
+        log.warn("failed to check out git revision.  "
+                 "Source may not be a git repo (that's OK, "
+                 "but you need to specify --folders.)")  # pragma: no cover
+    yield
+    if checkout_ok:
+        subprocess.check_call(['git', 'checkout', git_current_rev], cwd=path)
+
+
+def _archive_recipes(output_folder, recipe_root, recipe_folders, base_name, version):
+    filename = 'recipes-{0}-{1}.tar.bz2'.format(base_name, version)
+    with tarfile.TarFile(filename, 'w') as tar:
+        for folder in recipe_folders:
+            tar.add(os.path.join(recipe_root, folder))
+
+    # this move into output is because that's the folder that concourse finds output in
+    dest = os.path.join(output_folder, filename)
+    if os.path.exists(dest):
+        os.remove(dest)
+    shutil.move(filename, dest)
+
+
+def _upload_to_s3(local_location, remote_location, bucket, key_id, secret_key,
+                 region_name='us-west-2'):
+    s3 = boto3.resource('s3', aws_access_key_id=key_id,
+                        aws_secret_access_key=secret_key,
+                        region_name=region_name)
+
+    bucket = s3.Bucket(bucket)
+    bucket.upload_file(local_location, remote_location)
+
+
+def _get_git_identifier():
+    try:
+        # set by pullrequest-resource, but probably doesn't exist locally
+        id = 'PR_{0}'.format(subprocess.check_output('git config --get pullrequest.id'))
+    except subprocess.CalledProcessError:
+        id = _get_current_git_rev
+    return id
+
+
+def submit(pipeline_file, base_name, pipeline_name, public=True, **kw):
+    """submit task that will monitor changes and trigger other build tasks
+
+    This gets the ball rolling.  Once submitted, you don't need to manually trigger
+    builds.  This is creating the task that monitors git changes and triggers regeneration
+    of the dynamic job.
+    """
+    pipeline_name = pipeline_name.format(base_name=base_name, git_identifer=_get_git_identifier())
+    root = os.path.dirname(pipeline_file)
+    config_folder = 'config' + ('-' + base_name) if base_name else ""
+    config_folder = os.path.join(root, config_folder)
+    config_path = os.path.join(config_folder, 'config.yml')
+    with open(os.path.join(config_path)) as src:
+        data = yaml.load(src)
+
+    for root, dirnames, files in os.walk(config_folder):
+        for f in files:
+            local_path = os.path.join(root, f)
+            remote_path = local_path.replace(config_folder, 'config-' + base_name)
+            _upload_to_s3(local_path, remote_path, bucket=data['aws-bucket'],
+                         key_id=data['aws-key-id'], secret_key=data['aws-secret-key'],
+                         region_name=data['aws-region-name'])
+
+    # make sure we are logged in to the configured server
+    login_args = ['fly', '-t', 'conda-concourse-server', 'login',
+                  '--concourse-url', data['concourse-url'],
+                  '--team-name', data['concourse-team']]
+    if 'concourse-username' in data:
+        # auth is optional.  With Github OAuth, there's an interactive prompt that asks
+        #   the user to go log in with a web browser.  This should not interfere with that.
+        login_args.extend(['--username', data['concourse-username'],
+                           '--password', data['concourse-password']])
+
+    subprocess.check_call(login_args)
+
+    # sync (possibly update our client version)
+    subprocess.check_call('fly -t conda-concourse-server sync'.split())
+
+    # set the new pipeline details
+    subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'sp',
+                           '-c', pipeline_file,
+                           '-p', pipeline_name, '-n', '-l', config_path])
+    # unpause the pipeline
+    subprocess.check_call(['fly', '-t', 'conda-concourse-server',
+                           'up', '-p', pipeline_name])
+    # trigger the job to actually run
+    subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'tj', '-j',
+                           '{0}/collect-tasks'.format(pipeline_name)])
+
+    if public:
+        subprocess.check_call(['fly', '-t', 'conda-concourse-server',
+                               'expose-pipeline', '-p', pipeline_name])
+
+
+def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix_base_dir=None,
+                   steps=0, max_downstream=5, test=False, public=True, **kw):
+    checkout_rev = stop_rev or git_rev
+    folders = folders
+    path = path.replace('"', '')
+    if not folders:
+        folders = git_changed_recipes(git_rev, stop_rev, git_root=path)
+    if not folders:
+        print("No folders specified to build, and nothing changed in git.  Exiting.")
+        return
+    matrix_base_dir = matrix_base_dir or path
+    # clean up quoting from concourse template evaluation
+    matrix_base_dir = matrix_base_dir.replace('"', '')
+
+    with checkout_git_rev(checkout_rev, path):
+        task_graph = collect_tasks(path, folders=folders, steps=steps,
+                                   max_downstream=max_downstream, test=test,
+                                   matrix_base_dir=matrix_base_dir)
+        try:
+            repo_commit = _get_current_git_rev(path)
+        except subprocess.CalledProcessError:
+            repo_commit = 'master'
+
+    # this file is created and updated by the semver resource
+    with open('version/version') as f:
+        version = f.read().rstrip()
+    with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
+        data = yaml.load(src)
+    data['recipe-repo-commit'] = repo_commit
+    data['version'] = version
+
+    plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
+                                           version, matrix_base_dir=matrix_base_dir,
+                                           config_vars=data, public=public)
+
+    output_folder = 'output'
+    try:
+        os.makedirs(output_folder)
+    except:
+        pass
+    with open(os.path.join(output_folder, 'plan.yml'), 'w') as f:
+        yaml.dump(plan, f, default_flow_style=False)
+    _archive_recipes(output_folder, path, folders, base_name, version)
+
+
+def _copy_yaml_if_not_there(path):
+    bootstrap_config_path = os.path.join(bootstrap_path, 'config')
+    path_without_config = [p for p in path.split('/') if not p.startswith('config-')]
+    original = os.path.join(bootstrap_config_path, *path_without_config)
+    try:
+        os.makedirs(os.path.dirname(path))
+    except:
+        pass
+    # write config
+    if not os.path.isfile(path):
+        print("writing new file: ")
+        print(path)
+        shutil.copyfile(original, path)
+
+
+def bootstrap(base_name, **kw):
+    """Generate template files and folders to help set up CI for a new location"""
+    _copy_yaml_if_not_there('config-{0}/config.yml'.format(base_name))
+    # this is one that we add the base_name to for future purposes
+    with open('config-{0}/config.yml'.format(base_name)) as f:
+        config = yaml.load(f)
+    config['base-name'] = base_name
+    config['config-folder'] = 'config-' + base_name
+    config['config-folder-star'] = 'config-' + base_name + '/*'
+    config['version-file'] = 'version-' + base_name
+    config['execute-job-name'] = 'execute-' + base_name
+    config['tarball-regex'] = 'recipes-{0}-(.*).tar.bz2'.format(base_name)
+    config['tarball-glob'] = 'output/recipes-{0}-*.tar.bz2'.format(base_name)
+    with open('config-{0}/config.yml'.format(base_name), 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
+    # create platform.d folders
+    for run_type in ('build', 'test'):
+        if not os.path.exists('config-{0}/{1}_platforms.d'.format(base_name, run_type)):
+            _copy_yaml_if_not_there('config-{0}/{1}_platforms.d/example.yml'.format(base_name,
+                                                                                    run_type))
+    if not os.path.exists('config-{0}/uploads.d'.format(base_name)):
+        _copy_yaml_if_not_there('config-{0}/uploads.d/anaconda-example.yml'.format(base_name))
+        _copy_yaml_if_not_there('config-{0}/uploads.d/scp-example.yml'.format(base_name))
+        _copy_yaml_if_not_there('config-{0}/uploads.d/custom-example.yml'.format(base_name))
+    # create basic versions.yml files
+    _copy_yaml_if_not_there('config-{0}/versions.yml'.format(base_name))
+    # create initial plan that runs c3i to determine further plans
+    #    This one is safe to overwrite, as it is dynamically generated.
+    shutil.copyfile(os.path.join(bootstrap_path, 'plan_director.yml'), 'plan_director.yml')
+    # advise user on what to edit and how to submit this job
+    print("""Greetings, earthling.
+
+    Wrote bootstrap config files into 'config-{0}' folder.
+
+Overview:
+    - set your passwords and access keys in config-{0}/config.yml
+    - edit target build and test platforms in config-{0}/*_platforms.d.  Note that 'connector' key
+      is optional.
+    - edit config-{0}/versions.yml to your liking.  Defaults should work out of the box.
+    - Finally, submit this configuration with 'c3i submit {0}'
+    """.format(base_name))

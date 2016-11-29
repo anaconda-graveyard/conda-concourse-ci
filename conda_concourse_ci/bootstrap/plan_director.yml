@@ -1,9 +1,4 @@
 resource_types:
-- name: concourse-pipeline
-  type: docker-image
-  source:
-    repository: robdimsdale/concourse-pipeline-resource
-    tag: latest-final
 # used to download arbitrary user configuration (credentials, platforms, and versions.yml)
 - name: s3-simple
   type: docker-image
@@ -53,16 +48,6 @@ resources:
     region_name: {{aws-region-name}}
     options: [--exclude '*', --include {{config-folder-star}}]
 
-- name: set-execute-pipelines
-  type: concourse-pipeline
-  source:
-    target: {{concourse-url}}
-    teams:
-    - name: {{concourse-team}}
-      username: {{concourse-user}}
-      password: {{concourse-password}}
-
-
 jobs:
 - name: collect-tasks
   public: True
@@ -97,12 +82,6 @@ jobs:
       run:
         path: c3i
         args: [examine, recipe-repo-source, {{base-name}}, --matrix-base-dir, s3-config-base/{{config-folder}}]
-  - put: set-execute-pipelines
-    params:
-      pipelines:
-      - name: {{execute-job-name}}
-        team: {{concourse-team}}
-        config_file: output/plan.yml
   - put: version
     params:
       file: version/version
@@ -111,3 +90,24 @@ jobs:
     params:
       # this is the relative location on local disk
       file: {{tarball-glob}}
+  - put: recipe-repo-source
+    params:
+      path: recipe-repo-source
+      status: pending
+  - task: set-execute-pipeline
+    config:
+      inputs:
+        - name: s3-config-base
+        - name: output
+        - name: version
+      image_resource:
+        type: docker-image
+        source:
+          repository: msarahan/conda-concourse-ci
+      platform: linux
+      run:
+        path: c3i
+        # TODO: need to determine what private/public status is, and set child accordingly
+        args: [submit, {{base-name}}, --pipeline-file, output/plan.yml, --pipeline-name,
+        # these template variables are filled in by the c3i program, NOT concourse.
+               "{base_name}-execute-{git_identifier}"]

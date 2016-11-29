@@ -11,7 +11,7 @@ from pytest_mock import mocker
 import yaml
 
 from .utils import (testing_graph, test_data_dir, testing_conda_resolve, testing_metadata,
-                    graph_data_dir, default_worker, test_config_dir)
+                    graph_data_dir, default_worker, test_config_dir, testing_workdir)
 
 
 def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
@@ -162,3 +162,50 @@ def test_resource_to_dict():
     out = execute._resource_to_dict(resource)
     assert type(out['source']['options']) == list
     assert type(out['source']) == dict
+
+
+def test_default_args(mocker):
+    try:
+        os.makedirs('version')
+    except:
+        pass
+    try:
+        os.makedirs('config-out')
+    except:
+        pass
+    try:
+        os.makedirs('output')
+    except:
+        pass
+
+    with open('version/version', 'w') as f:
+        f.write("1.0.0")
+    mocker.patch.object(execute, 'collect_tasks')
+    execute.collect_tasks.return_value = 'steve'
+    mocker.patch.object(execute, 'graph_to_plan_with_jobs')
+    execute.graph_to_plan_with_jobs.return_value = ("abc: weee")
+    execute.compute_builds(graph_data_dir, git_rev='master', base_name='anaconda', folders='a',
+                           matrix_base_dir=test_config_dir)
+    # cli.collect_tasks.assert_called_with(graph_data_dir, folders=['a'], steps=0,
+    #                                      test=False, max_downstream=5,
+    #                                      matrix_base_dir=test_config_dir)
+    # cli.graph_to_plan_and_tasks.assert_called_with(graph_data_dir, "steve", "1.0.0",
+    #                                                matrix_base_dir=test_config_dir, public=True)
+    # cli.write_tasks.assert_called_with({}, 'output')
+
+
+def test_submit(mocker):
+    mocker.patch.object(execute, '_upload_to_s3')
+    mocker.patch.object(execute, 'subprocess')
+    execute.submit(os.path.join(test_config_dir, 'plan_director.yml'), "", "")
+
+
+def test_bootstrap(mocker, testing_workdir):
+    execute.bootstrap('frank')
+    assert os.path.isfile('plan_director.yml')
+    assert os.path.isdir('config-frank')
+    assert os.path.isfile('config-frank/config.yml')
+    assert os.path.isfile('config-frank/versions.yml')
+    assert os.path.isdir('config-frank/uploads.d')
+    assert os.path.isdir('config-frank/build_platforms.d')
+    assert os.path.isdir('config-frank/test_platforms.d')
