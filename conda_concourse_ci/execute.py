@@ -96,8 +96,9 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
     return task_graph
 
 
-def get_s3_package_regex(base_name, worker, package_name):
-    return "pkg_tmp_{0}_{1}/{2}-(.*).tar.bz2".format(base_name, worker['label'], package_name)
+def get_s3_package_regex(base_name, worker, package_name, package_version):
+    return "pkg_tmp_{0}_{1}/{2}-{3}.tar.bz(.*)".format(base_name, worker['label'], package_name,
+                                                       package_version)
 
 
 def get_s3_resource_name(base_name, worker, package_name):
@@ -107,7 +108,6 @@ def get_s3_resource_name(base_name, worker, package_name):
 def get_build_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
     tasks = [{'get': 's3-archive',
               'trigger': True,
-              'params': {'version': recipe_archive_version},
               'passed': graph.successors(node)},
              _extract_task(base_name, recipe_archive_version)]
     meta = graph.node[node]['meta']
@@ -124,7 +124,7 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
         'run': {
              'path': 'conda',
              'args': ['build', '--no-test', '--no-anaconda-upload', '--output-folder', node,
-                      os.path.join('recipe-repo-source', recipe_folder_name)],
+                      recipe_folder_name],
              'dir': 'extracted-archive',
                 }
          }
@@ -143,13 +143,11 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
 def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
     tasks = [{'get': 's3-archive',
               'trigger': 'true',
-              'params': {'version': recipe_archive_version},
               'passed': graph.successors(node)},
              _extract_task(base_name, recipe_archive_version)]
     recipe_folder_name = graph.node[node]['meta'].meta_path.replace(base_path, '')
     if '\\' in recipe_folder_name or '/' in recipe_folder_name:
         recipe_folder_name = list(filter(None, re.split("[\\/]+", recipe_folder_name)))[0]
-    input_path = os.path.join('recipe-repo-source', recipe_folder_name)
 
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
@@ -157,7 +155,7 @@ def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_versio
         'params': graph.node[node]['env'],
         'run': {
              'path': 'conda',
-             'args': ['build', '--test', input_path],
+             'args': ['build', '--test', recipe_folder_name],
              'dir': 'extracted-archive',
                 }
          }
@@ -175,10 +173,8 @@ def get_test_package_job(graph, node, base_name, public=True):
     meta = graph.node[node]['meta']
     worker = graph.node[node]['worker']
     s3_resource_name = get_s3_resource_name(base_name, worker, meta.name())
-    pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
     tasks = [{'get': s3_resource_name,
               'trigger': True,
-              'params': {'version': pkg_version},
               'passed': graph.successors(node)},
              ]
 
@@ -248,28 +244,31 @@ def _resource_to_dict(resource):
 
 
 def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_vars, public=True):
-    upload_resource_types = set()
-    upload_resources = set()
     jobs = []
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
 
-    s3_resources = [_s3_resource("s3-archive",
-                                 "recipes-{base-name}-(.*).tar.bz2".format(**config_vars),
-                                 config_vars)]
+    resource_types = set()
+    resources = set([_s3_resource("s3-archive",
+                                  # crappy hack.  s3-resource doesn't allow us to specify version
+                                  # to get.  Only latest.  This hack might work.
+                                  "recipes-{base-name}-{version}(.*)".format(**config_vars),
+                                  config_vars)])
     for node in order:
-        package_name = graph.node[node]['meta'].name()
+        meta = graph.node[node]['meta']
+        package_name = meta.name()
         worker = graph.node[node]['worker']
         # build jobs need to get the recipes from s3, extract them, and run a build task
         #    same is true for test jobs that do not have a preceding test job.  These use the
         #    recipe for determining which package to download from available channels.
         if node.startswith('build'):
             # need to define an s3 resource for each built package
-            s3_resources.append(_s3_resource(get_s3_resource_name(config_vars['base-name'],
-                                                                  worker, package_name),
-                                             get_s3_package_regex(config_vars['base-name'],
-                                                                  worker, package_name),
-                                             config_vars=config_vars))
+            pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
+            resources.add(_s3_resource(get_s3_resource_name(config_vars['base-name'],
+                                                            worker, package_name),
+                                       get_s3_package_regex(config_vars['base-name'],
+                                                            worker, package_name, pkg_version),
+                                       config_vars=config_vars))
             jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
                                       version, public))
 
@@ -292,17 +291,17 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
         # resources that are not used for build/test.  For example, the scp and commands uploads
         # need to be able to access private keys, which are stored in the config uploads.d folder.
         elif node.startswith('upload'):
-            resource_types, resources, job = get_upload_job(graph, node, upload_config_path,
-                                                            config_vars, public)
-            upload_resource_types.update(resource_types)
-            upload_resources.update(resources)
+            upload_resource_types, upload_resources, job = get_upload_job(graph, node,
+                                                                          upload_config_path,
+                                                                          config_vars, public)
+            resource_types.update(upload_resource_types)
+            resources.update(upload_resources)
             jobs.append(job)
 
         else:
             raise NotImplementedError("Don't know how to handle task.  Currently, tasks must start "
                                       "with 'build', 'test', or 'upload'")
 
-    resources = s3_resources + list(upload_resources)
     # convert types for smoother output to yaml
     upload_resource_types = [_resource_type_to_dict(t) for t in upload_resource_types]
     resources = [_resource_to_dict(r) for r in resources]
@@ -360,29 +359,44 @@ def _upload_to_s3(local_location, remote_location, bucket, key_id, secret_key,
     bucket.upload_file(local_location, remote_location)
 
 
-def _get_git_identifier():
+def _get_git_identifier(path):
     try:
         # set by pullrequest-resource, but probably doesn't exist locally
-        id = 'PR_{0}'.format(subprocess.check_output('git config --get pullrequest.id'))
+        id = 'PR_{0}'.format(subprocess.check_output('git config --get pullrequest.id'.split()))
     except subprocess.CalledProcessError:
-        id = _get_current_git_rev
+        id = _get_current_git_rev(path)
     return id
 
 
-def submit(pipeline_file, base_name, pipeline_name, public=True, **kw):
+def submit(pipeline_file, base_name, pipeline_name, src_dir, recipe_pkg=None, public=True, **kw):
     """submit task that will monitor changes and trigger other build tasks
 
     This gets the ball rolling.  Once submitted, you don't need to manually trigger
     builds.  This is creating the task that monitors git changes and triggers regeneration
     of the dynamic job.
     """
-    pipeline_name = pipeline_name.format(base_name=base_name, git_identifer=_get_git_identifier())
+    pipeline_name = pipeline_name.format(base_name=base_name,
+                                         git_identifer=_get_git_identifier(src_dir))
+
     root = os.path.dirname(pipeline_file)
     config_folder = 'config' + ('-' + base_name) if base_name else ""
-    config_folder = os.path.join(root, config_folder)
+    config_folder = os.path.join(os.path.dirname(root), config_folder)
     config_path = os.path.join(config_folder, 'config.yml')
-    with open(os.path.join(config_path)) as src:
+    with open(config_path) as src:
         data = yaml.load(src)
+
+    # TODO: need to be able to upload arbitrary recipe packages and fill in the filename
+    #     for these into the plan.  This will facilitate one-off builds that are not computed
+    #     by the central facility
+    # if not recipe_pkg:
+    #     # extract the version from the pipeline file
+    #     with open(pipeline_file) as f:
+    #         pipeline_data = yaml.load(f)
+
+    #     recipe_pkg = 'recipes-{0}-{1}.tar.bz2'.format(base_name, pipeline_data)
+    # _upload_to_s3(recipe_pkg, os.path.basename(recipe_pkg), bucket=data['aws-bucket'],
+    #                      key_id=data['aws-key-id'], secret_key=data['aws-secret-key'],
+    #                      region_name=data['aws-region-name'])
 
     for root, dirnames, files in os.walk(config_folder):
         for f in files:
@@ -414,9 +428,10 @@ def submit(pipeline_file, base_name, pipeline_name, public=True, **kw):
     # unpause the pipeline
     subprocess.check_call(['fly', '-t', 'conda-concourse-server',
                            'up', '-p', pipeline_name])
+
     # trigger the job to actually run
-    subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'tj', '-j',
-                           '{0}/collect-tasks'.format(pipeline_name)])
+    # subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'tj', '-j',
+    #                        '{0}/collect-tasks'.format(pipeline_name)])
 
     if public:
         subprocess.check_call(['fly', '-t', 'conda-concourse-server',
@@ -455,8 +470,8 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
     data['version'] = version
 
     plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
-                                           version, matrix_base_dir=matrix_base_dir,
-                                           config_vars=data, public=public)
+                                   version, matrix_base_dir=matrix_base_dir,
+                                   config_vars=data, public=public)
 
     output_folder = 'output'
     try:

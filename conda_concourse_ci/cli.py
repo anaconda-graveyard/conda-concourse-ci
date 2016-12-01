@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 
 from conda_concourse_ci import execute, __version__
 
@@ -13,10 +14,10 @@ def parse_args(parse_this=None):
                         default=[],
                         nargs="+",
                         help="Rather than determine tree from git, specify folders to build")
+    examine_parser.add_argument('base_name',
+                                help="name of your project, to distinguish it from other projects")
     examine_parser.add_argument("path", default='.', nargs='?',
                         help="path in which to examine/build/test recipes")
-    examine_parser.add_argument('base-name',
-                                help="name of your project, to distinguish it from other projects")
     examine_parser.add_argument('--steps',
                         type=int,
                         help=("Number of downstream steps to follow in the DAG when "
@@ -47,20 +48,22 @@ def parse_args(parse_this=None):
         version='conda-concourse-ci %s' % __version__)
 
     submit_parser = sp.add_parser('submit', help="submit plan director to configured server")
-    submit_parser.add_argument('base-name',
-                               help="name of your project, to distinguish it from other projects",)
+    submit_parser.add_argument('base_name',
+                               help="name of your project, to distinguish it from other projects")
     submit_parser.add_argument('--pipeline-name', help="name for the submitted pipeline",
                                default='{base_name} plan director')
     submit_parser.add_argument('--pipeline-file', default='plan_director.yml',
                                help="path to pipeline .yml file containing plan")
+    submit_parser.add_argument('--src-dir', help="folder where git repo of source code lives",
+                               default=os.getcwd())
     submit_parser.add_argument('--private', action='store_false',
                         help='hide build logs (overall graph still shown in Concourse web view)',
                         dest='public')
 
     bootstrap_parser = sp.add_parser('bootstrap',
                                      help="create default configuration files to help you start")
-    bootstrap_parser.add_argument('base-name',
-                               help="name of your project, to distinguish it from other projects")
+    bootstrap_parser.add_argument('base_name',
+                            help="name of your project, to distinguish it from other projects")
     return parser.parse_args(parse_this)
 
 
