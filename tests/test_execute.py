@@ -62,7 +62,6 @@ def test_get_build_job(testing_graph):
                                 node='build-b-0-linux', base_name="frank",
                                 recipe_archive_version="1.0.0")
     # download the recipe tarball
-    assert job['plan'][0]['params']['version'] == '1.0.0'
     assert job['plan'][0]['get'] == 's3-archive'
     assert job['plan'][0]['passed'] == ['build-a-0-linux']
 
@@ -75,7 +74,7 @@ def test_get_build_job(testing_graph):
     assert job['plan'][2]['config']['platform'] == 'linux'
     assert job['plan'][2]['config']['inputs'] == [{'name': 'extracted-archive'}]
     assert job['plan'][2]['config']['outputs'] == [{'name': 'build-b-0-linux'}]
-    assert job['plan'][2]['config']['run']['args'][-1] == os.path.join('recipe-repo-source', 'b')
+    assert job['plan'][2]['config']['run']['args'][-1] == 'b'
 
     # upload the built package to temporary s3 storage
     assert job['plan'][3]['put'] == "s3-frank-linux-b"
@@ -87,7 +86,6 @@ def test_get_test_recipe_job(testing_graph):
                                       node='test-b-0-linux', base_name="frank",
                                       recipe_archive_version="1.0.0")
     # download the recipe tarball
-    assert job['plan'][0]['params']['version'] == '1.0.0'
     assert job['plan'][0]['get'] == 's3-archive'
     assert job['plan'][0]['passed'] == ['build-b-0-linux']
 
@@ -99,14 +97,13 @@ def test_get_test_recipe_job(testing_graph):
     # run the test
     assert job['plan'][2]['config']['platform'] == 'linux'
     assert job['plan'][2]['config']['inputs'] == [{'name': 'extracted-archive'}]
-    assert job['plan'][2]['config']['run']['args'][-1] == os.path.join('recipe-repo-source', 'b')
+    assert job['plan'][2]['config']['run']['args'][-1] == 'b'
 
 
 def test_get_test_package_job(testing_graph):
     job = execute.get_test_package_job(graph=testing_graph, node='test-b-0-linux',
                                        base_name="frank")
     # download the package tarball
-    assert job['plan'][0]['params']['version'] == '1.0-0'
     assert job['plan'][0]['get'] == 's3-frank-linux-b'
     assert job['plan'][0]['passed'] == ['build-b-0-linux']
 
@@ -132,7 +129,8 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert len(plan_dict['resources']) == 3
     # build a, test a, upload a, build b, test b, upload b, test c
     assert len(plan_dict['jobs']) == 7
-    assert plan_dict['resources'][0]['source']['regexp'] == "recipes-test-(.*).tar.bz2"
+    assert plan_dict['resources'][0]['source']['regexp'] in ("s3-test-linux-a/a-1.0-0.tar.bz(.*)",
+                                                             "s3-test-linux-b/b-1.0-0.tar.bz(.*)")
 
 
 def test_get_upload_job(mocker, testing_graph):
@@ -197,7 +195,7 @@ def test_default_args(mocker):
 def test_submit(mocker):
     mocker.patch.object(execute, '_upload_to_s3')
     mocker.patch.object(execute, 'subprocess')
-    execute.submit(os.path.join(test_config_dir, 'plan_director.yml'), "", "")
+    execute.submit(os.path.join(test_config_dir, 'plan_director.yml'), "test", "test-pipeline", '.')
 
 
 def test_bootstrap(mocker, testing_workdir):

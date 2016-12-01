@@ -97,8 +97,9 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 
 def get_s3_package_regex(base_name, worker, package_name, package_version):
-    return "pkg_tmp_{0}_{1}/{2}-{3}.tar.bz(.*)".format(base_name, worker['label'], package_name,
-                                                       package_version)
+    resource_name = get_s3_resource_name(base_name, worker, package_name)
+    return "{resource_name}/{package_name}-{package_version}.tar.bz(.*)".format(
+        resource_name=resource_name, package_name=package_name, package_version=package_version)
 
 
 def get_s3_resource_name(base_name, worker, package_name):
@@ -249,10 +250,11 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
     order = order_build(graph)
 
     resource_types = set()
+    config_vars['version'] = version
     resources = set([_s3_resource("s3-archive",
                                   # crappy hack.  s3-resource doesn't allow us to specify version
                                   # to get.  Only latest.  This hack might work.
-                                  "recipes-{base-name}-{version}(.*)".format(**config_vars),
+                                  "recipes-{base-name}-{version}.tar.bz(.*)".format(**config_vars),
                                   config_vars)])
     for node in order:
         meta = graph.node[node]['meta']
@@ -264,11 +266,13 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
         if node.startswith('build'):
             # need to define an s3 resource for each built package
             pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
-            resources.add(_s3_resource(get_s3_resource_name(config_vars['base-name'],
-                                                            worker, package_name),
-                                       get_s3_package_regex(config_vars['base-name'],
-                                                            worker, package_name, pkg_version),
-                                       config_vars=config_vars))
+            resource = _s3_resource(get_s3_resource_name(config_vars['base-name'],
+                                                         worker, package_name),
+                                    get_s3_package_regex(config_vars['base-name'],
+                                                         worker, package_name, pkg_version),
+                                    config_vars=config_vars)
+            if resource['name'] not in (r['name'] for r in resources):
+                resources.add(resource)
             jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
                                       version, public))
 
@@ -509,6 +513,8 @@ def bootstrap(base_name, **kw):
     config['config-folder-star'] = 'config-' + base_name + '/*'
     config['version-file'] = 'version-' + base_name
     config['execute-job-name'] = 'execute-' + base_name
+    # these don't match the download side in the generated execution pipeline.  The download side
+    #    has to hack this to fix the version.  For the sake of uploading, this is the right way.
     config['tarball-regex'] = 'recipes-{0}-(.*).tar.bz2'.format(base_name)
     config['tarball-glob'] = 'output/recipes-{0}-*.tar.bz2'.format(base_name)
     with open('config-{0}/config.yml'.format(base_name), 'w') as f:
