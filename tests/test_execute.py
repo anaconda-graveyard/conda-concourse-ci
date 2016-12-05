@@ -63,22 +63,26 @@ def test_get_build_job(testing_graph):
                                 recipe_archive_version="1.0.0")
     # download the recipe tarball
     assert job['plan'][0]['get'] == 's3-archive'
-    assert job['plan'][0]['passed'] == ['build-a-0-linux']
 
     # extract the recipe tarball
     assert job['plan'][1]['config']['inputs'] == [{'name': 's3-archive'}]
     assert job['plan'][1]['config']['run']['path'] == 'tar'
     assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
 
+    # get upstream dependency
+    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-0'
+    assert job['plan'][2]['passed'] == ['build-a-0-linux']
+
     # run the build
-    assert job['plan'][2]['config']['platform'] == 'linux'
-    assert job['plan'][2]['config']['inputs'] == [{'name': 'extracted-archive'}]
-    assert job['plan'][2]['config']['outputs'] == [{'name': 'build-b-0-linux'}]
-    assert job['plan'][2]['config']['run']['args'][-1] == 'b'
+    assert job['plan'][-2]['config']['platform'] == 'linux'
+    assert job['plan'][-2]['config']['inputs'] == [{'name': 'extracted-archive'},
+                                                   {'name': 'packages'}]
+    assert job['plan'][-2]['config']['outputs'] == [{'name': 'build-b-0-linux'}]
+    assert job['plan'][-2]['config']['run']['args'][-1] == 'extracted-archive/b'
 
     # upload the built package to temporary s3 storage
-    assert job['plan'][3]['put'] == "s3-frank-linux-b"
-    assert job['plan'][3]['params']['from'] == "build-b-0-linux/*.tar.bz2"
+    assert job['plan'][-1]['put'] == "s3-frank-linux-b-1.0-0"
+    assert job['plan'][-1]['params']['file'] == "build-b-0-linux/*.tar.bz2"
 
 
 def test_get_test_recipe_job(testing_graph):
@@ -87,33 +91,42 @@ def test_get_test_recipe_job(testing_graph):
                                       recipe_archive_version="1.0.0")
     # download the recipe tarball
     assert job['plan'][0]['get'] == 's3-archive'
-    assert job['plan'][0]['passed'] == ['build-b-0-linux']
 
     # extract the recipe tarball
     assert job['plan'][1]['config']['inputs'] == [{'name': 's3-archive'}]
     assert job['plan'][1]['config']['run']['path'] == 'tar'
     assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
 
+    # get upstream dependency
+    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-0'
+    assert job['plan'][2]['passed'] == ['build-a-0-linux']
+    assert job['plan'][3]['get'] == 's3-frank-linux-b-1.0-0'
+    assert job['plan'][3]['passed'] == ['build-b-0-linux']
+
     # run the test
-    assert job['plan'][2]['config']['platform'] == 'linux'
-    assert job['plan'][2]['config']['inputs'] == [{'name': 'extracted-archive'}]
-    assert job['plan'][2]['config']['run']['args'][-1] == 'b'
+    assert job['plan'][-1]['config']['platform'] == 'linux'
+    assert job['plan'][-1]['config']['inputs'] == [{'name': 'extracted-archive'},
+                                                   {'name': 'packages'}]
+    assert job['plan'][-1]['config']['run']['args'][-1] == 'b'
+    assert job['plan'][-1]['config']['run']['dir'] == 'extracted-archive'
 
 
 def test_get_test_package_job(testing_graph):
     job = execute.get_test_package_job(graph=testing_graph, node='test-b-0-linux',
                                        base_name="frank")
     # download the package tarball
-    assert job['plan'][0]['get'] == 's3-frank-linux-b'
-    assert job['plan'][0]['passed'] == ['build-b-0-linux']
+    assert job['plan'][0]['get'] == 's3-frank-linux-b-1.0-0'
+    assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-0'
+    assert job['plan'][1]['passed'] == ['build-a-0-linux']
 
     # run the test
-    assert job['plan'][1]['config']['platform'] == 'linux'
-    assert job['plan'][1]['config']['inputs'] == [{'name': 's3-frank-linux-b'}]
+    assert job['plan'][-1]['config']['platform'] == 'linux'
+    assert job['plan'][-1]['config']['inputs'] == [{'name': 's3-frank-linux-b-1.0-0'},
+                                                   {'name': 'packages'}]
     output_pkg = api.get_output_file_path(testing_graph.node['test-b-0-linux']['meta'])
     output_pkg = os.path.basename(output_pkg)
-    assert job['plan'][1]['config']['run']['args'][-1] == os.path.join('s3-frank-linux-b',
-                                                                       output_pkg)
+    assert job['plan'][-1]['config']['run']['args'][-1] == os.path.join('s3-frank-linux-b-1.0-0',
+                                                                        output_pkg)
 
 
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
@@ -129,8 +142,9 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert len(plan_dict['resources']) == 3
     # build a, test a, upload a, build b, test b, upload b, test c
     assert len(plan_dict['jobs']) == 7
-    assert plan_dict['resources'][0]['source']['regexp'] in ("s3-test-linux-a/a-1.0-0.tar.bz(.*)",
-                                                             "s3-test-linux-b/b-1.0-0.tar.bz(.*)")
+    assert plan_dict['resources'][0]['source']['regexp'] in ('recipes-test-1.0.0.tar.bz(.*)',
+                                                             "s3-test-linux-a-1.0-0/a-1.0-0.tar.bz(.*)",
+                                                             "s3-test-linux-b-1.0-0/b-1.0-0.tar.bz(.*)")
 
 
 def test_get_upload_job(mocker, testing_graph):
@@ -152,7 +166,7 @@ def test_unknown_job_type():
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
         config_vars = yaml.load(f)
     with pytest.raises(NotImplementedError):
-        execute.graph_to_plan_with_jobs('', graph, '1.0.0', test_data_dir, config_vars)
+        execute.graph_to_plan_with_jobs('', graph, '1.0.0', test_config_dir, config_vars)
 
 
 def test_resource_to_dict():
@@ -195,7 +209,8 @@ def test_default_args(mocker):
 def test_submit(mocker):
     mocker.patch.object(execute, '_upload_to_s3')
     mocker.patch.object(execute, 'subprocess')
-    execute.submit(os.path.join(test_config_dir, 'plan_director.yml'), "test", "test-pipeline", '.')
+    execute.submit(os.path.join(test_config_dir, 'plan_director.yml'), "test", "test-pipeline", '.',
+                   test_data_dir)
 
 
 def test_bootstrap(mocker, testing_workdir):

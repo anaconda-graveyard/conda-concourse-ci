@@ -10,6 +10,8 @@ to run additional tasks (for example, to update the index on the remote side)
 import logging
 import os
 
+from six.moves.urllib import parse
+
 from .build_matrix import load_yaml_config_dir
 from .utils import HashableDict, ensure_list
 
@@ -45,7 +47,8 @@ def _base_task(s3_resource_name, upload_job_name):
                 'inputs': [{'name': s3_resource_name}],
                 'image_resource': {
                     'type': 'docker-image',
-                    'source': {'repository': 'busybox'}},
+                    'source': {'repository': 'msarahan/centos5_conda_build',
+                               'tag': 'latest'}},
                 'platform': 'linux',
                 'run': {}
             }}
@@ -63,13 +66,14 @@ def upload_anaconda(s3_resource_name, package_path, token, user=None, label=None
 
     upload-<task name>-anaconda-<user name or first 4 letters of token if no user provided>
     """
-    cmd = ['--token', token, '--force', 'upload', os.path.join(s3_resource_name, package_path)]
+    cmd = ['-t', token, 'upload', '--force']
     identifier = token[-4:]
     if user:
         cmd.extend(['--user', user])
         identifier = user
     if label:
         cmd.extend(['--label', label])
+    cmd.append(os.path.join(s3_resource_name, package_path))
     upload_job_name = get_upload_job_name(s3_resource_name, 'anaconda-' + identifier)
     task = _base_task(s3_resource_name, upload_job_name)
     task['config']['run'].update({'path': 'anaconda', 'args': cmd})
@@ -111,7 +115,7 @@ def upload_scp(s3_resource_name, package_path, server, destination_path, auth_di
     destination_path = destination_path.format(subdir=subdir)
     remote = server + ":" + destination_path
 
-    scp_args = [package_path, remote, '-i', key, '-P', port]
+    scp_args = ['-i', key, '-P', port, package_path, remote]
     tasks[1]['config']['run'].update({'path': 'scp', 'args': scp_args})
     chmod_args = ['-i', key, '-p', port, server,
         'chmod 664 {0}/{1}'.format(destination_path, os.path.basename(package_path))]
@@ -183,3 +187,18 @@ def get_upload_tasks(s3_resource_name, package_path, upload_config_dir, worker, 
         upload_tasks.extend(task for task in tasks if task not in upload_tasks)
 
     return upload_types, upload_resources, upload_tasks
+
+
+def get_upload_channels(upload_config_dir, subdir):
+    configurations = load_yaml_config_dir(upload_config_dir)
+    channels = []
+
+    for config in configurations:
+        if 'token' in config:
+            channels.append(config['user'])
+        elif 'server' in config:
+            channels.append(parse.urljoin('http://' + config['server'],
+                            config['destination_path'].format(subdir=subdir)))
+        elif 'channel' in config:
+            channels.append(config['channel'])
+    return channels

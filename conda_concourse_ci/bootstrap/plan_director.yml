@@ -20,7 +20,7 @@ resources:
 - name: recipe-repo-source
   type: git
   source:
-    url: {{recipe-repo}}
+    uri: {{recipe-repo}}
 
 
 - name: version
@@ -88,7 +88,7 @@ jobs:
       platform: linux
       run:
         path: c3i
-        args: [examine, recipe-repo-source, {{base-name}}, --matrix-base-dir, s3-config-base/{{config-folder}}]
+        args: [examine, {{base-name}}, recipe-repo-source, --matrix-base-dir, s3-config-base/{{config-folder}}]
   - put: version
     params:
       file: version/version
@@ -97,10 +97,10 @@ jobs:
     params:
       # this is the relative location on local disk
       file: {{tarball-glob}}
-  - put: recipe-repo-source
-    params:
-      path: recipe-repo-source
-      status: pending
+  # - put: recipe-repo-source
+  #   params:
+  #     path: recipe-repo-source
+  #     status: pending
   - task: set-execute-pipeline
     config:
       inputs:
@@ -126,3 +126,5 @@ jobs:
           - "{base_name}-execute-{git_identifier}"
           - --src-dir
           - recipe-repo-source
+          - --config-root-dir
+          - s3-config-base
