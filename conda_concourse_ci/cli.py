@@ -97,4 +97,6 @@ def main(args=None):
     elif args.subparser_name == 'consolidate':
         execute.consolidate_packages(**args.__dict__)
     else:
+        # this is here so that if future subcommands are added, you don't forget to add a bit
+        #     here to enable them.
         raise NotImplementedError

@@ -5,6 +5,7 @@ import conda_concourse_ci
 from conda_concourse_ci.utils import HashableDict
 
 from conda_build import api
+from conda_build.conda_interface import subdir
 import networkx as nx
 import pytest
 from pytest_mock import mocker
@@ -222,3 +223,16 @@ def test_bootstrap(mocker, testing_workdir):
     assert os.path.isdir('config-frank/uploads.d')
     assert os.path.isdir('config-frank/build_platforms.d')
     assert os.path.isdir('config-frank/test_platforms.d')
+
+
+def test_consolidate_packages(testing_workdir, testing_metadata):
+    del testing_metadata.meta['requirements']
+    del testing_metadata.meta['test']
+    testing_metadata.config.croot = testing_workdir
+    testing_metadata.config.anaconda_upload = False
+    api.build(testing_metadata)
+    assert os.path.isfile(os.path.join(testing_workdir, subdir, 'test_consolidate_packages-1.0-1.tar.bz2'))
+    execute.consolidate_packages(testing_workdir, subdir)
+    assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'test_consolidate_packages-1.0-1.tar.bz2'))
+    assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json'))
+    assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json.bz2'))

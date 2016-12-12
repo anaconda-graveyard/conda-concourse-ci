@@ -108,15 +108,18 @@ def get_s3_resource_name(base_name, worker, package_name, version):
 
 def consolidate_packages(path, subdir, **kwargs):
     print("consolidating package resources into 'packages' folder")
-    dest_dir = os.path.join(path, 'packages', subdir)
+    packages_subdir = os.path.join('packages', subdir)
+    dest_dir = os.path.join(path, packages_subdir)
     try:
         os.makedirs(dest_dir)
     except:
         pass
     for root, dirs, files in os.walk(path):
         for f in files:
-            if f.endswith('.tar.bz2'):
-                print("copying package {0} to packages folder".format(f))
+            if f.endswith('.tar.bz2') and not root.endswith(packages_subdir):
+                log.debug("copying package {0} to packages folder".format(os.path.join(root, f)))
+                if os.path.exists(os.path.join(dest_dir, f)):
+                    os.remove(os.path.join(dest_dir, f))
                 shutil.copyfile(os.path.join(root, f), os.path.join(dest_dir, f))
     conda_build.api.update_index(dest_dir)
 

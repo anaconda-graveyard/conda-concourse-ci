@@ -126,7 +126,7 @@ def upload_scp(s3_resource_name, package_path, server, destination_path, auth_di
     return resource_types, resources, tasks
 
 
-def upload_commands(s3_resource_name, package_path, commands, config_vars):
+def upload_commands(s3_resource_name, package_path, commands, config_vars, **file_contents):
     """Execute arbitrary upload commands.
 
     Command input strings are expected to have a placeholder for
@@ -199,6 +199,6 @@ def get_upload_channels(upload_config_dir, subdir):
         elif 'server' in config:
             channels.append(parse.urljoin('http://' + config['server'],
                             config['destination_path'].format(subdir=subdir)))
-        elif 'channel' in config:
+        else:
             channels.append(config['channel'])
     return channels
