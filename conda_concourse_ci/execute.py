@@ -412,11 +412,17 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
     return {'resource_types': upload_resource_types, 'resources': resources, 'jobs': jobs}
 
 
-def _get_current_git_rev(path):
+def _get_current_git_rev(path, branch=False):
     out = 'HEAD'
+    args = ['git', 'rev-parse']
+
+    if branch:
+        args.append("--abbrev-ref")
+
+    args.append('HEAD')
+
     try:
-        out = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
-                                      cwd=path).rstrip()
+        out = subprocess.check_output(args, cwd=path).rstrip()
         if hasattr(out, 'decode'):
             out = out.decode()
     except subprocess.CalledProcessError:
@@ -429,7 +435,7 @@ def _get_current_git_rev(path):
 def checkout_git_rev(checkout_rev, path):
     checkout_ok = False
     try:
-        git_current_rev = _get_current_git_rev(path)
+        git_current_rev = _get_current_git_rev(path, branch=True)
         subprocess.check_call(['git', 'checkout', checkout_rev], cwd=path)
         checkout_ok = True
     except subprocess.CalledProcessError:    # pragma: no cover
