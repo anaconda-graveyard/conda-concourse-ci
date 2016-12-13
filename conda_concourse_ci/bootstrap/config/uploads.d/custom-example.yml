@@ -1,2 +1,3 @@
 commands:
   - "ls -lR"
+channel: https://url.that.conda.can/find.your.package.at

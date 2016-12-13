@@ -11,6 +11,7 @@ concourse-web:
   links: [concourse-db]
   command: web
   ports: ["8080:8080", "2222:2222"]
+  # if on Linux, you probably need to add the :Z mode to the end here.
   volumes: ["./keys/web:/concourse-keys"]
   environment:
     CONCOURSE_BASIC_AUTH_USERNAME: concourse
@@ -24,6 +25,7 @@ concourse-worker:
   privileged: true
   links: [concourse-web]
   command: worker
+  # if on Linux, you probably need to add the :Z mode to the end here.
   volumes: ["./keys/worker:/concourse-keys"]
   environment:
     CONCOURSE_TSA_HOST: concourse-web

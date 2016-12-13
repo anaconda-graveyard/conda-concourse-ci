@@ -1,2 +1,3 @@
 commands:
   - "ls -lR"
+channel: http://weeee.org

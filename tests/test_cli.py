@@ -1,63 +1,90 @@
+import logging
 import os
-from conda_concourse_ci import cli
 
 import pytest
 from pytest_mock import mocker
 
+from conda_concourse_ci import cli
+
 from .utils import test_config_dir, testing_workdir, graph_data_dir
 
 
-def test_default_args(mocker):
-    try:
-        os.makedirs('version')
-    except:
-        pass
-    try:
-        os.makedirs('config-out')
-    except:
-        pass
-    try:
-        os.makedirs('output')
-    except:
-        pass
-
-    with open('version/version', 'w') as f:
-        f.write("1.0.0")
-    args = ['examine', graph_data_dir, 'anaconda', '--folders', 'a', '--matrix-base-dir',
-            test_config_dir]
-    mocker.patch.object(cli, 'collect_tasks')
-    cli.collect_tasks.return_value = 'steve'
-    mocker.patch.object(cli, 'graph_to_plan_with_jobs')
-    cli.graph_to_plan_with_jobs.return_value = ("abc: weee")
-    cli.main(args)
-    # cli.collect_tasks.assert_called_with(graph_data_dir, folders=['a'], steps=0,
-    #                                      test=False, max_downstream=5,
-    #                                      matrix_base_dir=test_config_dir)
-    # cli.graph_to_plan_and_tasks.assert_called_with(graph_data_dir, "steve", "1.0.0",
-    #                                                matrix_base_dir=test_config_dir, public=True)
-    # cli.write_tasks.assert_called_with({}, 'output')
-
-
-def test_argparse_input(mocker):
+def test_argparse_input():
     # calling with no arguments goes to look at sys.argv, which is our arguments to py.test.
     with pytest.raises(SystemExit):
         cli.main()
 
 
 def test_submit(mocker):
-    mocker.patch.object(cli, 'upload_to_s3')
-    mocker.patch.object(cli, 'subprocess')
-    args = ['submit', '--plan-director-path', os.path.join(test_config_dir, 'plan_director.yml'), ""]
+    mocker.patch.object(cli.execute, 'submit')
+    args = ['submit', 'frank']
     cli.main(args)
+    cli.execute.submit.assert_called_once_with(base_name='frank', config_root_dir=None, debug=False,
+                                               pipeline_file='plan_director.yml',
+                                               pipeline_name='{base_name} plan director',
+                                               public=True, src_dir=os.getcwd(),
+                                               subparser_name='submit')
 
 
-def test_bootstrap(mocker, testing_workdir):
-    args = ['bootstrap', "frank"]
+def test_submit_without_base_name_raises():
+    with pytest.raises(SystemExit):
+        args = ['submit']
+        cli.main(args)
+
+
+def test_bootstrap(mocker):
+    mocker.patch.object(cli.execute, 'bootstrap')
+    args = ['bootstrap', 'frank']
     cli.main(args)
-    assert os.path.isfile('plan_director.yml')
-    assert os.path.isdir('config-frank')
-    assert os.path.isfile('config-frank/config.yml')
-    assert os.path.isfile('config-frank/versions.yml')
-    assert os.path.isdir('config-frank/uploads.d')
-    assert os.path.isdir('config-frank/build_platforms.d')
-    assert os.path.isdir('config-frank/test_platforms.d')
+    cli.execute.bootstrap.assert_called_once_with(base_name='frank', debug=False,
+                                                  subparser_name='bootstrap')
+
+
+def test_bootstrap_without_base_name_raises():
+    with pytest.raises(SystemExit):
+        args = ['bootstrap']
+        cli.main(args)
+
+
+def test_examine(mocker):
+    mocker.patch.object(cli.execute, 'compute_builds')
+    args = ['examine', 'frank']
+    cli.main(args)
+    cli.execute.compute_builds.assert_called_once_with(base_name='frank', debug=False, folders=[],
+                                                       git_rev='HEAD', matrix_base_dir=None,
+                                                       max_downstream=5, path='.', steps=0,
+                                                       stop_rev=None, subparser_name='examine',
+                                                       test=False)
+
+
+def test_examine_without_base_name_raises():
+    with pytest.raises(SystemExit):
+        args = ['examine']
+        cli.main(args)
+
+
+def test_consolidate(mocker):
+    mocker.patch.object(cli.execute, 'consolidate_packages')
+    args = ['consolidate', 'linux-64']
+    cli.main(args)
+    cli.execute.consolidate_packages.assert_called_once_with(subdir='linux-64', debug=False,
+                                                             path='.', subparser_name='consolidate')
+
+
+def test_consolidate_without_subdir_raises():
+    with pytest.raises(SystemExit):
+        args = ['consolidate']
+        cli.main(args)
+
+
+# not sure what the right syntax for this is yet.  TODO.
+@pytest.mark.xfail
+def test_logger_sets_debug_level(mocker):
+    mocker.patch.object(cli.execute, 'submit')
+    cli.main(['--debug', 'submit', 'frank'])
+    assert logging.getLogger().isEnabledFor(logging.DEBUG)
+
+
+def test_bad_command_raises():
+    with pytest.raises(SystemExit):
+        cli.main([''])
