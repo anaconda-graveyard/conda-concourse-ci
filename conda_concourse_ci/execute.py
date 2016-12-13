@@ -428,7 +428,7 @@ def _get_current_git_rev(path, branch=False):
     except subprocess.CalledProcessError:
         # not in a git repo.  Return master as placebo.
         pass
-    return out[:8]
+    return out[:8] if not branch else out
 
 
 @contextlib.contextmanager
