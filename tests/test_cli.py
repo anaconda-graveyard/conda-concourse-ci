@@ -19,7 +19,11 @@ def test_submit(mocker):
     mocker.patch.object(cli.execute, 'submit')
     args = ['submit', 'frank']
     cli.main(args)
-    cli.execute.submit.assert_called_once()
+    cli.execute.submit.assert_called_once_with(base_name='frank', config_root_dir=None, debug=False,
+                                               pipeline_file='plan_director.yml',
+                                               pipeline_name='{base_name} plan director',
+                                               public=True, src_dir=os.getcwd(),
+                                               subparser_name='submit')
 
 
 def test_submit_without_base_name_raises():
@@ -32,7 +36,8 @@ def test_bootstrap(mocker):
     mocker.patch.object(cli.execute, 'bootstrap')
     args = ['bootstrap', 'frank']
     cli.main(args)
-    cli.execute.bootstrap.assert_called_once()
+    cli.execute.bootstrap.assert_called_once_with(base_name='frank', debug=False,
+                                                  subparser_name='bootstrap')
 
 
 def test_bootstrap_without_base_name_raises():
@@ -45,7 +50,11 @@ def test_examine(mocker):
     mocker.patch.object(cli.execute, 'compute_builds')
     args = ['examine', 'frank']
     cli.main(args)
-    cli.execute.compute_builds.assert_called_once()
+    cli.execute.compute_builds.assert_called_once_with(base_name='frank', debug=False, folders=[],
+                                                       git_rev='HEAD', matrix_base_dir=None,
+                                                       max_downstream=5, path='.', steps=0,
+                                                       stop_rev=None, subparser_name='examine',
+                                                       test=False)
 
 
 def test_examine_without_base_name_raises():
@@ -58,7 +67,8 @@ def test_consolidate(mocker):
     mocker.patch.object(cli.execute, 'consolidate_packages')
     args = ['consolidate', 'linux-64']
     cli.main(args)
-    cli.execute.consolidate_packages.assert_called_once()
+    cli.execute.consolidate_packages.assert_called_once_with(subdir='linux-64', debug=False,
+                                                             path='.', subparser_name='consolidate')
 
 
 def test_consolidate_without_subdir_raises():
