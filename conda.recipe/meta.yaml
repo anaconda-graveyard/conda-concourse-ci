@@ -18,6 +18,7 @@ requirements:
   run:
     - boto3
     - conda-build >=2.0.9
+    - conda <4.3
     - contextlib2
     - networkx
     - python
@@ -31,7 +32,7 @@ test:
     - pytest-cov
   commands:
     - pip install pytest-mock
-    - py.test tests --cov conda_concourse_ci -vv
+    - py.test tests --cov conda_concourse_ci -vvx
   source_files:
     - tests
 
