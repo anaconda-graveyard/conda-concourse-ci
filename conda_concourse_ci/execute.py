@@ -122,6 +122,12 @@ def consolidate_packages(path, subdir, **kwargs):
                     os.remove(os.path.join(dest_dir, f))
                 shutil.copyfile(os.path.join(root, f), os.path.join(dest_dir, f))
     conda_build.api.update_index(dest_dir)
+    noarch_dir = os.path.join(os.path.dirname(dest_dir), 'noarch')
+    try:
+        os.makedirs(noarch_dir)
+    except OSError:
+        pass
+    conda_build.api.update_index(noarch_dir)
 
 
 def consolidate_packages_task(inputs, subdir):
