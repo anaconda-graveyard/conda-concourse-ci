@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 
 import networkx as nx
 from conda_build import api, conda_interface
@@ -222,7 +223,11 @@ def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_
         dep_re = dep_name
         if '-any-' in dep_name:
             dep_re = dep_re.replace('-any-', '.*')
-        dep_re = re.compile(dep_re.encode('unicode-escape'))
+        if sys.version_info.major < 3:
+            dep_re = re.compile(dep_re.encode('unicode-escape'))
+        else:
+            dep_re = re.compile(dep_re)
+
         if not _installable(dummy_meta, version, conda_resolve):
             nodes_in_graph = [dep_re.match(_n) for _n in graph.nodes()]
             node_in_graph = [_n for _n in nodes_in_graph if _n]

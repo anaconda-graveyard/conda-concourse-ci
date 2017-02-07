@@ -99,4 +99,4 @@ def main(args=None):
     else:
         # this is here so that if future subcommands are added, you don't forget to add a bit
         #     here to enable them.
-        raise NotImplementedError
+        raise NotImplementedError("Command {} is not implemented".format(args.subparser_name))
