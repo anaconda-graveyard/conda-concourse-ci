@@ -3,6 +3,7 @@ from __future__ import print_function, division
 
 import logging
 import os
+import re
 import subprocess
 
 import networkx as nx
@@ -218,8 +219,14 @@ def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_
         # version is passed literally here because constraints may make it an invalid version
         #    for metadata.
         dep_name = package_key('build', dummy_meta, worker['label'])
+        dep_re = dep_name
+        if '-any-' in dep_name:
+            dep_re = dep_re.replace('-any-', '.*')
+        dep_re = re.compile(dep_re.encode('unicode-escape'))
         if not _installable(dummy_meta, version, conda_resolve):
-            if dep_name not in graph.nodes():
+            nodes_in_graph = [dep_re.match(_n) for _n in graph.nodes()]
+            node_in_graph = [_n for _n in nodes_in_graph if _n]
+            if not node_in_graph:
                 recipe_dir = _buildable(dummy_meta, version, recipes_dir)
                 if not recipe_dir:
                     raise ValueError("Dependency %s is not installable, and recipe (if "
@@ -229,6 +236,9 @@ def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_
                 if not dep_name:
                     raise ValueError("Tried to build recipe {0} as dependency, which is skipped "
                                      "in meta.yaml".format(recipe_dir))
+            else:
+                dep_name = node_in_graph[0].string
+
             graph.add_edge(node, dep_name)
 
 

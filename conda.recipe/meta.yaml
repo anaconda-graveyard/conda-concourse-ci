@@ -31,7 +31,7 @@ test:
     - pytest-cov
   commands:
     - pip install pytest-mock
-    - py.test tests --cov conda_concourse_ci
+    - py.test tests --cov conda_concourse_ci -vv
   source_files:
     - tests
 
