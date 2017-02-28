@@ -32,7 +32,7 @@ test:
     - pytest-cov
   commands:
     - pip install pytest-mock
-    - py.test tests --cov conda_concourse_ci -vvx
+    - py.test tests --cov conda_concourse_ci
   source_files:
     - tests
 

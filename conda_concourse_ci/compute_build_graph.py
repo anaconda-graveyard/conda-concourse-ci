@@ -106,31 +106,32 @@ def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resol
                         recipes_dir=None):
     with set_conda_env_vars(env_var_set):
         try:
-            rendered = api.render(recipe_dir, platform=worker['platform'],
-                                  arch=worker['arch'])
+            rendered = api.render(recipe_dir, host_platform=worker['platform'],
+                                  host_arch=worker['arch'])
         except (IOError, SystemExit):
             log.debug('invalid recipe dir: %s - skipping', recipe_dir)
             return None
 
-    metadata, _, _ = rendered
-    name = package_key(run, metadata, worker['label'])
+    metadata_tuples = rendered
+    for (metadata, _, _) in metadata_tuples:
+        name = package_key(run, metadata, worker['label'])
 
-    if metadata.skip():
-        return None
+        if metadata.skip():
+            return None
 
-    graph.add_node(name, meta=metadata, env=env_var_set, worker=worker)
-    add_dependency_nodes_and_edges(name, graph, run, env_var_set, worker, conda_resolve,
-                                   recipes_dir=recipes_dir)
+        graph.add_node(name, meta=metadata, env=env_var_set, worker=worker)
+        add_dependency_nodes_and_edges(name, graph, run, env_var_set, worker, conda_resolve,
+                                    recipes_dir=recipes_dir)
 
-    # add the test equivalent at the same time.  This is so that expanding can find it.
-    if run == 'build':
-        add_recipe_to_graph(recipe_dir, graph, 'test', env_var_set, worker, conda_resolve,
-                            recipes_dir=recipes_dir)
-        test_key = package_key('test', metadata, worker['label'])
-        graph.add_edge(test_key, name)
-        upload_key = package_key('upload', metadata, worker['label'])
-        graph.add_node(upload_key, meta=metadata, env=env_var_set, worker=worker)
-        graph.add_edge(upload_key, test_key)
+        # add the test equivalent at the same time.  This is so that expanding can find it.
+        if run == 'build':
+            add_recipe_to_graph(recipe_dir, graph, 'test', env_var_set, worker, conda_resolve,
+                                recipes_dir=recipes_dir)
+            test_key = package_key('test', metadata, worker['label'])
+            graph.add_edge(test_key, name)
+            upload_key = package_key('upload', metadata, worker['label'])
+            graph.add_node(upload_key, meta=metadata, env=env_var_set, worker=worker)
+            graph.add_edge(upload_key, test_key)
 
     return name
 

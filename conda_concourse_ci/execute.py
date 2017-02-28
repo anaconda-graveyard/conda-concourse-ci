@@ -98,8 +98,10 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 def get_s3_package_regex(base_name, worker, package_name, package_version):
     resource_name = get_s3_resource_name(base_name, worker, package_name, package_version)
-    return "{resource_name}/{package_name}-{package_version}.tar.bz(.*)".format(
-        resource_name=resource_name, package_name=package_name, package_version=package_version)
+    subdir = '-'.join((worker['platform'], str(worker['arch'])))
+    return "{resource_name}/{subdir}/{package_name}-{package_version}.tar.bz(.*)".format(
+        resource_name=resource_name, subdir=subdir, package_name=package_name,
+        package_version=package_version)
 
 
 def get_s3_resource_name(base_name, worker, package_name, version):
@@ -218,9 +220,10 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
     tasks.append({'task': node, 'config': task_dict})
 
     pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
+    subdir = meta.config.host_subdir
     tasks.append({'put': get_s3_resource_name(base_name, graph.node[node]['worker'],
                                               meta.name(), pkg_version),
-                  'params': {'file': os.path.join(node, '*.tar.bz2')}})
+                  'params': {'file': os.path.join(node, subdir, '*.tar.bz2')}})
 
     return {'name': node, 'plan': tasks, 'public': public}
 
@@ -270,34 +273,36 @@ def get_test_package_job(graph, node, base_name, public=True, uploaded_channels=
               'trigger': True,
               'passed': [node.replace('test', 'build')]}]
 
-    package_filename = os.path.basename(conda_build.api.get_output_file_path(meta))
     inputs = [{'name': s3_resource_name}, {'name': 'packages'}]
 
     # mutate tasks in place; build up list of resources used
     resources = []
     append_consolidate_package_tasks(tasks, graph, node, base_name, resources)
-    inputs.extend([{'name': resource} for resource in resources])
 
-    args = ['--test', '-c', 'packages']
-    for channel in uploaded_channels:
-        args.extend(['-c', channel])
-    args.append(os.path.join(s3_resource_name, package_filename))
+    for pkg in conda_build.api.get_output_file_path(meta):
+        subdir = os.path.basename(os.path.dirname(pkg))
+        filename = os.path.basename(pkg)
 
-    task_dict = {
-        'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
-        # dependency inputs are down below
-        'inputs': inputs,
-        'params': graph.node[node]['env'],
-        'run': {
-             'path': 'conda-build',
-             'args': args,
-                }
-         }
-    # this has details on what image or image_resource to use.
-    #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
-    #   feature right now.
-    task_dict.update(graph.node[node]['worker'].get('connector', {}))
-    tasks.append({'task': node, 'config': task_dict})
+        args = ['--test', '-c', 'packages']
+        for channel in uploaded_channels:
+            args.extend(['-c', channel])
+        args.append(os.path.join('packages', subdir, filename))
+
+        task_dict = {
+            'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],  # NOQA
+            # dependency inputs are down below
+            'inputs': inputs,
+            'params': graph.node[node]['env'],
+            'run': {
+                'path': 'conda-build',
+                'args': args,
+                    }
+            }
+        # this has details on what image or image_resource to use.
+        #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
+        #   feature right now.
+        task_dict.update(graph.node[node]['worker'].get('connector', {}))
+        tasks.append({'task': node, 'config': task_dict})
 
     return {'name': node, 'plan': tasks, 'public': public}
 
@@ -313,13 +318,14 @@ def get_upload_job(graph, node, upload_config_path, config_vars, public=True):
     plan = [{'get': s3_resource_name,
              'trigger': True,
              'passed': [node.replace('upload', 'test')]}]
-    filename = os.path.basename(conda_build.api.get_output_file_path(meta))
 
-    resource_types, resources, tasks = get_upload_tasks(s3_resource_name, filename,
-                                                        upload_config_path,
-                                                        worker=graph.node[node]['worker'],
-                                                        config_vars=config_vars)
-    plan.extend(tasks)
+    for package in conda_build.api.get_output_file_path(meta):
+        filename = os.path.basename(package)
+        resource_types, resources, tasks = get_upload_tasks(s3_resource_name, filename,
+                                                            upload_config_path,
+                                                            worker=graph.node[node]['worker'],
+                                                            config_vars=config_vars)
+        plan.extend(tasks)
     job = {'name': node, 'plan': plan, 'public': public}
     return resource_types, resources, job
 
