@@ -14,9 +14,8 @@ import networkx as nx
 import yaml
 
 from .compute_build_graph import construct_graph, expand_run, order_build, git_changed_recipes
-from .build_matrix import load_yaml_config_dir
 from .uploads import get_upload_tasks, get_upload_channels
-from .utils import HashableDict
+from .utils import HashableDict, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')

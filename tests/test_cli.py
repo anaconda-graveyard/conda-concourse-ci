@@ -2,11 +2,8 @@ import logging
 import os
 
 import pytest
-from pytest_mock import mocker
 
 from conda_concourse_ci import cli
-
-from .utils import test_config_dir, testing_workdir, graph_data_dir
 
 
 def test_argparse_input():

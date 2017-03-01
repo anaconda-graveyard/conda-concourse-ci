@@ -9,18 +9,16 @@ import sys
 
 import networkx as nx
 from conda_build import api, conda_interface
-from conda_build.metadata import MetaData, find_recipe, build_string_from_metadata
-
-from .build_matrix import expand_build_matrix, set_conda_env_vars
+from conda_build.metadata import MetaData, find_recipe
 
 log = logging.getLogger(__file__)
 CONDA_BUILD_CACHE = os.environ.get("CONDA_BUILD_CACHE")
+hash_length = api.Config().hash_length
 
 
 def package_key(run, metadata, label):
     # get the build string from whatever conda-build makes of the configuration
-    configuration = build_string_from_metadata(metadata)
-    return "-".join([run, metadata.name(), configuration, label])
+    return "-".join([run, metadata.name(), metadata.build_id(), label])
 
 
 def _git_changed_files(git_rev, stop_rev=None, git_root=''):
@@ -102,15 +100,14 @@ def get_run_test_deps(meta):
     return _deps_to_version_dict(run_reqs + test_reqs)
 
 
-def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resolve,
+def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                         recipes_dir=None):
-    with set_conda_env_vars(env_var_set):
-        try:
-            rendered = api.render(recipe_dir, host_platform=worker['platform'],
-                                  host_arch=worker['arch'])
-        except (IOError, SystemExit):
-            log.debug('invalid recipe dir: %s - skipping', recipe_dir)
-            return None
+
+    try:
+        rendered = api.render(recipe_dir, platform=worker['platform'], arch=worker['arch'])
+    except (IOError, SystemExit):
+        log.debug('invalid recipe dir: %s - skipping', recipe_dir)
+        return None
 
     metadata_tuples = rendered
     for (metadata, _, _) in metadata_tuples:
@@ -119,18 +116,18 @@ def add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resol
         if metadata.skip():
             return None
 
-        graph.add_node(name, meta=metadata, env=env_var_set, worker=worker)
-        add_dependency_nodes_and_edges(name, graph, run, env_var_set, worker, conda_resolve,
+        graph.add_node(name, meta=metadata, worker=worker)
+        add_dependency_nodes_and_edges(name, graph, run, worker, conda_resolve,
                                     recipes_dir=recipes_dir)
 
         # add the test equivalent at the same time.  This is so that expanding can find it.
         if run == 'build':
-            add_recipe_to_graph(recipe_dir, graph, 'test', env_var_set, worker, conda_resolve,
+            add_recipe_to_graph(recipe_dir, graph, 'test', worker, conda_resolve,
                                 recipes_dir=recipes_dir)
             test_key = package_key('test', metadata, worker['label'])
             graph.add_edge(test_key, name)
             upload_key = package_key('upload', metadata, worker['label'])
-            graph.add_node(upload_key, meta=metadata, env=env_var_set, worker=worker)
+            graph.add_node(upload_key, meta=metadata, worker=worker)
             graph.add_edge(upload_key, test_key)
 
     return name
@@ -158,25 +155,21 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
     graph = nx.DiGraph()
     for folder in folders:
         recipe_dir = os.path.join(recipes_dir, folder)
-        env_var_sets = expand_build_matrix(recipe_dir, matrix_base_dir)
-
-        for env_var_set in env_var_sets:
-            add_recipe_to_graph(recipe_dir, graph, run, env_var_set, worker, conda_resolve,
-                                recipes_dir)
+        add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
+                            recipes_dir)
     return graph
 
 
-def _fix_any(value):
-    if value == 'any':
-        value = ""
+def _fix_any(value, config):
+    value = re.sub('any(?:h[0-9a-f]{%d})?' % config.hash_length, '', value)
     return value
 
 
 def _installable(metadata, version, conda_resolve):
     """Can Conda install the package we need?"""
-    return conda_resolve.valid(conda_interface.MatchSpec(" ".join([metadata.name(),
-                                                                   _fix_any(version),
-                                                                   _fix_any(metadata.build_id())])),
+    return conda_resolve.valid(conda_interface.MatchSpec(" ".join([
+        metadata.name(), _fix_any(version, metadata.config),
+        _fix_any(metadata.build_id(), metadata.config)])),
                                filter=conda_resolve.default_filter())
 
 
@@ -187,26 +180,26 @@ def _buildable(metadata, version, recipes_dir=None):
     recipes_dir = recipes_dir or os.getcwd()
     path = os.path.join(recipes_dir, metadata.name())
     if os.path.exists(metadata.meta_path):
-        recipe_metadata, _, _ = api.render(metadata.meta_path)
+        metadata_tuples = api.render(metadata.meta_path)
     # next best: matching name recipe folder in cwd
     elif os.path.isdir(path):
-        recipe_metadata, _, _ = api.render(path)
+        metadata_tuples = api.render(path)
     else:
         return False
 
     # this is our target match
     ms = conda_interface.MatchSpec(" ".join([metadata.name(),
-                                             _fix_any(version)]))
-    # this is what we have available from the recipe
-    match_dict = {'name': recipe_metadata.name(),
-                  'version': recipe_metadata.version(),
-                  'build': _fix_any(metadata.build_number()), }
-    available = ms.match(match_dict)
-    return recipe_metadata.meta_path if available else False
+                                             _fix_any(version, metadata.config)]))
+    for (m, _, _) in metadata_tuples:
+        # this is what we have available from the recipe
+        match_dict = {'name': m.name(),
+                    'version': m.version(),
+                    'build': _fix_any(metadata.build_id(), metadata.config), }
+        available = ms.match(match_dict)
+    return m.meta_path if available else False
 
 
-def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_resolve,
-                                   recipes_dir=None):
+def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, recipes_dir=None):
     '''add build nodes for any upstream deps that are not yet installable
 
     changes graph in place.
@@ -221,9 +214,7 @@ def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_
         # version is passed literally here because constraints may make it an invalid version
         #    for metadata.
         dep_name = package_key('build', dummy_meta, worker['label'])
-        dep_re = dep_name
-        if '-any-' in dep_name:
-            dep_re = dep_re.replace('-any-', '.*')
+        dep_re = re.sub(r'anyh[0-9a-f]{%d}' % metadata.config.hash_length, '.*', dep_name)
         if sys.version_info.major < 3:
             dep_re = re.compile(dep_re.encode('unicode-escape'))
         else:
@@ -237,8 +228,8 @@ def add_dependency_nodes_and_edges(node, graph, run, env_var_set, worker, conda_
                 if not recipe_dir:
                     raise ValueError("Dependency %s is not installable, and recipe (if "
                                         " available) can't produce desired version.", dep)
-                dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', env_var_set,
-                                               worker, conda_resolve, recipes_dir)
+                dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', worker,
+                                               conda_resolve, recipes_dir)
                 if not dep_name:
                     raise ValueError("Tried to build recipe {0} as dependency, which is skipped "
                                      "in meta.yaml".format(recipe_dir))
@@ -273,9 +264,8 @@ def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
                 if max_downstream < 0 or (downstream - initial_nodes) < max_downstream:
                     add_recipe_to_graph(
                         os.path.dirname(full_graph.node[predecessor]['meta'].meta_path),
-                        task_graph,
-                        run=run, env_var_set=task_graph.node[node]['env'],
-                        worker=worker, conda_resolve=conda_resolve, recipes_dir=recipes_dir)
+                        task_graph, run=run, worker=worker, conda_resolve=conda_resolve,
+                        recipes_dir=recipes_dir)
                     downstream += 1
         return len(graph.nodes())
 
