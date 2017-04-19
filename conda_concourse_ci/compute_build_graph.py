@@ -167,10 +167,9 @@ def _fix_any(value, config):
 
 def _installable(metadata, version, conda_resolve):
     """Can Conda install the package we need?"""
-    return conda_resolve.valid(conda_interface.MatchSpec(" ".join([
-        metadata.name(), _fix_any(version, metadata.config),
-        _fix_any(metadata.build_id(), metadata.config)])),
-                               filter=conda_resolve.default_filter())
+    ms = conda_interface.MatchSpec(" ".join([metadata.name(), _fix_any(version, metadata.config),
+                                             _fix_any(metadata.build_id(), metadata.config)]))
+    return conda_resolve.valid(ms, filter=conda_resolve.default_filter())
 
 
 def _buildable(metadata, version, recipes_dir=None):
@@ -194,7 +193,16 @@ def _buildable(metadata, version, recipes_dir=None):
         # this is what we have available from the recipe
         match_dict = {'name': m.name(),
                     'version': m.version(),
-                    'build': _fix_any(metadata.build_id(), metadata.config), }
+                    'build': _fix_any(m.build_id(), m.config), }
+        if conda_interface.conda_43:
+            match_dict = conda_interface.Dist(name=match_dict['name'],
+                                              dist_name='-'.join((match_dict['name'],
+                                                                  match_dict['version'],
+                                                                  match_dict['build'])),
+                                              version=match_dict['version'],
+                                              build_string=match_dict['build'],
+                                              build_number=int(m.build_number() or 0),
+                                              channel=None)
         available = ms.match(match_dict)
     return m.meta_path if available else False
 

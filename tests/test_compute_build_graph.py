@@ -212,9 +212,11 @@ def test_installable(testing_conda_resolve, testing_metadata):
     # default build number is 0
     testing_metadata.meta['package']['version'] = '920'
     testing_metadata.meta['build']['string'] = 'h68c14d1_0'
+    testing_metadata.meta['build']['number'] = 0
     assert compute_build_graph._installable(testing_metadata, '920', testing_conda_resolve)
     testing_metadata.meta['package']['version'] = '920'
     testing_metadata.meta['build']['string'] = 'h68c14d1_1'
+    testing_metadata.meta['build']['number'] = 1
     assert not compute_build_graph._installable(testing_metadata, '920', testing_conda_resolve)
 
     # package not in index
