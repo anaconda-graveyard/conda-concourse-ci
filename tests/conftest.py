@@ -99,7 +99,7 @@ def testing_conda_resolve(request):
                         build_number=0, depends=None,
                         license='GNU Lesser General Public License (LGPL)',
                         md5='7268f7dcc075e615af758d1243ed4f1d', name=pkg,
-                        platform=sys.platform, requires=(), size=192170,
+                        platform=conda_interface.cc_platform, requires=(), size=192170,
                         subdir=conda_interface.subdir,
                         version='920', fn=pkg + '-920-h68c14d1_0.tar.bz2', schannel='r',
                         channel='https://conda.anaconda.org/r/' + conda_interface.subdir,
