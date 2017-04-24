@@ -13,6 +13,8 @@ dummy_worker = {'platform': 'linux', 'arch': '64', 'label': 'linux',
 a_hash = 'a-hbf21a9e_0-linux'
 b_hash = 'b-hd248202_0-linux'
 c_hash = 'c-h4598f22_0-linux'
+d_hash = 'd-h2d8cd19_0-linux'
+e_hash = 'e-haa5f1d0_0-linux'
 
 
 def test_get_build_deps(testing_metadata):
@@ -84,23 +86,23 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
                                             conda_resolve=testing_conda_resolve)
     deps = {('build-' + b_hash, 'build-a-heeecd18_0-linux'),
             ('build-' + c_hash, 'build-' + b_hash),
-            ('build-d-h2d8cd19_0-linux', 'build-' + c_hash),
-            ('build-e-haa5f1d0_0-linux', 'build-d-h2d8cd19_0-linux'),
+            ('build-' + d_hash, 'build-' + c_hash),
+            ('build-' + e_hash, 'build-d-h2d8cd19_0-linux'),
             # run deps
-            ('test-d-h2d8cd19_0-linux', 'build-e-haa5f1d0_0-linux'),
+            ('test-' + d_hash, 'build-' + e_hash),
             ('test-a-heeecd18_0-linux', 'build-' + c_hash),
             # test deps on builds
             ('test-a-heeecd18_0-linux', 'build-a-heeecd18_0-linux'),
             ('test-' + b_hash, 'build-' + b_hash),
             ('test-' + c_hash, 'build-' + c_hash),
-            ('test-d-h2d8cd19_0-linux', 'build-d-h2d8cd19_0-linux'),
-            ('test-e-haa5f1d0_0-linux', 'build-e-haa5f1d0_0-linux'),
+            ('test-' + d_hash, 'build-' + d_hash),
+            ('test-' + e_hash, 'build-' + e_hash),
             # uploads for the builds
             ('upload-a-heeecd18_0-linux', 'test-a-heeecd18_0-linux'),
             ('upload-' + b_hash, 'test-' + b_hash),
             ('upload-' + c_hash, 'test-' + c_hash),
-            ('upload-d-h2d8cd19_0-linux', 'test-d-h2d8cd19_0-linux'),
-            ('upload-e-haa5f1d0_0-linux', 'test-e-haa5f1d0_0-linux'),
+            ('upload-' + d_hash, 'test-' + d_hash),
+            ('upload-' + e_hash, 'test-' + e_hash),
             }
     assert set(g.edges()) == deps
     worker['arch'] = '64'
@@ -110,24 +112,24 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
                                             conda_resolve=testing_conda_resolve)
     deps = {('build-' + b_hash, 'build-a-haebf014_0-linux'),
             ('build-' + c_hash, 'build-' + b_hash),
-            ('build-d-h2d8cd19_0-linux', 'build-' + c_hash),
-            ('build-e-haa5f1d0_0-linux', 'build-d-h2d8cd19_0-linux'),
+            ('build-' + d_hash, 'build-' + c_hash),
+            ('build-' + e_hash, 'build-' + d_hash),
             # run deps (note new dependency of a on d - this is the selector-enabled dep.)
-            ('test-d-h2d8cd19_0-linux', 'build-e-haa5f1d0_0-linux'),
+            ('test-' + d_hash, 'build-' + e_hash),
             ('test-a-haebf014_0-linux', 'build-' + c_hash),
-            ('test-a-haebf014_0-linux', 'build-d-h2d8cd19_0-linux'),
+            ('test-a-haebf014_0-linux', 'build-' + d_hash),
             # test deps on builds
             ('test-a-haebf014_0-linux', 'build-a-haebf014_0-linux'),
             ('test-' + b_hash, 'build-' + b_hash),
             ('test-' + c_hash, 'build-' + c_hash),
-            ('test-d-h2d8cd19_0-linux', 'build-d-h2d8cd19_0-linux'),
-            ('test-e-haa5f1d0_0-linux', 'build-e-haa5f1d0_0-linux'),
+            ('test-' + d_hash, 'build-' + d_hash),
+            ('test-' + e_hash, 'build-' + e_hash),
             # uploads for the builds
             ('upload-a-haebf014_0-linux', 'test-a-haebf014_0-linux'),
             ('upload-' + b_hash, 'test-' + b_hash),
             ('upload-' + c_hash, 'test-' + c_hash),
-            ('upload-d-h2d8cd19_0-linux', 'test-d-h2d8cd19_0-linux'),
-            ('upload-e-haa5f1d0_0-linux', 'test-e-haa5f1d0_0-linux'),
+            ('upload-' + d_hash, 'test-' + d_hash),
+            ('upload-' + e_hash, 'test-' + e_hash),
             }
     assert set(g.edges()) == deps
 
@@ -276,6 +278,14 @@ def test_expand_run_two_steps_down(mocker, testing_graph, testing_conda_resolve)
 
 
 def test_expand_run_all_steps_down(mocker, testing_graph, testing_conda_resolve):
+    """
+    Should build/test/upload all of the recipes.
+    Start with B
+    B depends on A, so build A
+    Step down the tree from B to C
+    Step down the tree from C to D
+    Step down the tree from D to E
+    """
     mocker.patch.object(compute_build_graph, '_installable')
     compute_build_graph._installable.return_value = False
     g = compute_build_graph.construct_graph(graph_data_dir, dummy_worker,
@@ -292,6 +302,8 @@ def test_expand_run_all_steps_down(mocker, testing_graph, testing_conda_resolve)
         'build-' + a_hash, 'test-' + a_hash, 'upload-' + a_hash,
         'build-' + b_hash, 'test-' + b_hash, 'upload-' + b_hash,
         'build-' + c_hash, 'test-' + c_hash, 'upload-' + c_hash,
+        'build-' + d_hash, 'test-' + d_hash, 'upload-' + d_hash,
+        'build-' + e_hash, 'test-' + e_hash, 'upload-' + e_hash,
         }
 
 
