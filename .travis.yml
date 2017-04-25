@@ -3,7 +3,7 @@ matrix:
   include:
     - python: '2.7'
       os: linux
-    - python: '3.5'
+    - python: '3.6'
       os: linux
 
 install:

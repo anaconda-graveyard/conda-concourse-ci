@@ -297,7 +297,7 @@ def test_expand_run_all_steps_down(mocker, testing_graph, testing_conda_resolve)
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_config_dir,
-                                   steps=-1)
+                                   max_downstream=-1, steps=-1)
     assert set(g.nodes()) == {
         'build-' + a_hash, 'test-' + a_hash, 'upload-' + a_hash,
         'build-' + b_hash, 'test-' + b_hash, 'upload-' + b_hash,
