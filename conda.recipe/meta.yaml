@@ -1,8 +1,6 @@
-{% set version="0.1.0" %}
-
 package:
   name: conda-concourse-ci
-  version: {{ version }}
+  version: {{ GIT_DESCRIBE_TAG }}
 
 source:
   path: ../
@@ -17,7 +15,8 @@ requirements:
     - python
   run:
     - boto3
-    - conda-build >=2.0.9
+    - conda-build >=3
+    - conda
     - contextlib2
     - networkx
     - python

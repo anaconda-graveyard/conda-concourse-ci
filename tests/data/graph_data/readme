@@ -1,0 +1,20 @@
+             build  |  run
+
+                a<<<<---
+                ^       |
+                |       |
+                |       |
+                b       | a depends on c for win at runtime
+                ^       |
+                |       |
+                |       |
+                c-------
+                ^       |
+                |       | a depends on d for win64 at runtime
+                |       |
+                d-------
+                ^       |
+                |       | d depend on e at runtime, e depends on d at build time
+                |       |
+                |       |
+                e<<<<---

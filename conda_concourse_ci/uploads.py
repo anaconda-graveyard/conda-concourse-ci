@@ -12,8 +12,7 @@ import os
 
 from six.moves.urllib import parse
 
-from .build_matrix import load_yaml_config_dir
-from .utils import HashableDict, ensure_list
+from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
 

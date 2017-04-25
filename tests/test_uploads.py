@@ -1,15 +1,11 @@
 import os
 
 from conda_concourse_ci import uploads
-import conda_concourse_ci
 
-from conda_build import api
 import pytest
-from pytest_mock import mocker
 import yaml
 
-from .utils import (testing_graph, test_config_dir, testing_conda_resolve, testing_metadata,
-                    graph_data_dir, default_worker)
+from .utils import test_config_dir, default_worker
 
 
 def test_get_upload_job_name():
