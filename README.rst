@@ -44,8 +44,6 @@ where you want your configuration to live. From here:
     - set your passwords and access keys in config/config.yml
     - edit target build and test platforms in config/*_platforms.d. Note that
       'connector' key is optional.
-    - edit config/versions.yml to your liking. Defaults should work out of the
-      box.
     - upload
     - Finally, submit this configuration with 'c3i submit'. This sends your
       configuration files to your s3 bucket, establishing the foundation which

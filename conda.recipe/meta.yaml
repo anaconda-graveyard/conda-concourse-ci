@@ -13,6 +13,7 @@ build:
 requirements:
   build:
     - python
+    - setuptools
   run:
     - boto3
     - conda-build >2.9

@@ -102,7 +102,6 @@ def get_run_test_deps(meta):
 
 def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                         recipes_dir=None):
-
     try:
         rendered = api.render(recipe_dir, platform=worker['platform'], arch=worker['arch'])
     except (IOError, SystemExit):
@@ -204,6 +203,8 @@ def _buildable(metadata, version, recipes_dir=None):
                                               build_number=int(m.build_number() or 0),
                                               channel=None)
         available = ms.match(match_dict)
+        if available:
+            break
     return m.meta_path if available else False
 
 

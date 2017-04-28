@@ -1,0 +1,45 @@
+jobs:
+- name: build-c3i
+  public: true
+  serial: true
+  plan:
+  - get: recipe-repo-source
+    trigger: true
+  - task: build-conda-package
+    config:
+      image_resource:
+        source:
+          # can't template just part of a line: https://github.com/concourse/concourse/issues/545
+          repository: msarahan/conda-concourse-ci
+          tag: latest
+        type: docker-image
+      inputs:
+      - name: recipe-repo-source
+        trigger: True
+      platform: linux
+      run:
+        path: conda-build
+        args:
+          - --no-test
+          - -c
+          - msarahan
+          - --token
+          - {{anaconda_org_upload_token}}
+          - recipe-repo-source/conda.recipe
+  - put: docker-image
+    params:
+      build: recipe-repo-source/docker
+
+resources:
+- name: docker-image
+  type: docker-image
+  source:
+    username: {{docker-hub-username}}
+    password: {{docker-hub-password}}
+    # can't template just part of a line: https://github.com/concourse/concourse/issues/545
+    repository: msarahan/conda-concourse-ci
+
+- name: recipe-repo-source
+  type: git
+  source:
+    uri: {{recipe-repo}}

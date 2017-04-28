@@ -90,3 +90,6 @@ ENV/
 
 # unit test results
 junit.xml
+
+# credentials for building docker images with Concourse
+build_credentials.yml

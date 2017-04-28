@@ -222,7 +222,6 @@ def test_bootstrap(mocker, testing_workdir):
     assert os.path.isfile('plan_director.yml')
     assert os.path.isdir('config-frank')
     assert os.path.isfile('config-frank/config.yml')
-    assert os.path.isfile('config-frank/versions.yml')
     assert os.path.isdir('config-frank/uploads.d')
     assert os.path.isdir('config-frank/build_platforms.d')
     assert os.path.isdir('config-frank/test_platforms.d')

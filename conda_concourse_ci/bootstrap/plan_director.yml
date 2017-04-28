@@ -1,5 +1,5 @@
 resource_types:
-# used to download arbitrary user configuration (credentials, platforms, and versions.yml)
+# used to download arbitrary user configuration (credentials, platforms)
 - name: s3-simple
   type: docker-image
   source:

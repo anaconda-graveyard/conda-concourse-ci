@@ -22,7 +22,7 @@ def get_upload_job_name(s3_resource_name, upload_job_name):
 
 
 def _config_resources_and_task(config_vars):
-    # used to download arbitrary user configuration (credentials, platforms, and versions.yml)
+    # used to download arbitrary user configuration (credentials, platforms)
     types = [HashableDict(name="s3-simple",
                           type="docker-image",
                           source=HashableDict(repository="18fgsa/s3-resource-simple"))]

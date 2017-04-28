@@ -14,7 +14,7 @@ import networkx as nx
 import yaml
 
 from .compute_build_graph import construct_graph, expand_run, order_build, git_changed_recipes
-from .uploads import get_upload_tasks, get_upload_channels
+from .uploads import get_upload_tasks
 from .utils import HashableDict, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
@@ -178,7 +178,7 @@ def append_consolidate_package_tasks(tasks, graph, node, base_name, resources=No
 
 
 def get_build_job(base_path, graph, node, base_name, recipe_archive_version, public=True,
-                  uploaded_channels=()):
+                  channels=()):
     # we append each individual s3 resource in the graph successors loop below
     tasks = [{'get': 's3-archive',
               'trigger': True},
@@ -195,7 +195,7 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
 
     build_args = ['--no-test', '--no-anaconda-upload', '--output-folder', node,
                   '-c', 'packages']
-    for channel in uploaded_channels:
+    for channel in channels:
         build_args.extend(['-c', channel])
     build_args.append(os.path.join('extracted-archive', recipe_folder_name))
 
@@ -228,7 +228,7 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
 
 
 def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_version, public=True,
-                        uploaded_channels=()):
+                        channels=()):
     tasks = [{'get': 's3-archive',
               'trigger': 'true'},
              _extract_task(base_name, recipe_archive_version)]
@@ -240,7 +240,7 @@ def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_versio
     append_consolidate_package_tasks(tasks, graph, node, base_name)
 
     args = ['--test', '-c', 'packages']
-    for channel in uploaded_channels:
+    for channel in channels:
         args.extend(['-c', channel])
     args.append(recipe_folder_name)
     task_dict = {
@@ -263,7 +263,7 @@ def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_versio
     return {'name': node, 'plan': tasks, 'public': public}
 
 
-def get_test_package_job(graph, node, base_name, public=True, uploaded_channels=()):
+def get_test_package_job(graph, node, base_name, public=True, channels=()):
     meta = graph.node[node]['meta']
     worker = graph.node[node]['worker']
     pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
@@ -283,7 +283,7 @@ def get_test_package_job(graph, node, base_name, public=True, uploaded_channels=
         filename = os.path.basename(pkg)
 
         args = ['--test', '-c', 'packages']
-        for channel in uploaded_channels:
+        for channel in channels:
             args.extend(['-c', channel])
         args.append(os.path.join('packages', subdir, filename))
 
@@ -354,6 +354,7 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
     jobs = []
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
+    channels = config_vars.get('channels', [])
 
     resource_types = set()
     config_vars['version'] = version
@@ -367,8 +368,6 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
         meta = graph.node[node]['meta']
         package_name = meta.name()
         worker = graph.node[node]['worker']
-        uploaded_channels = get_upload_channels(upload_config_path, '-'.join([worker['platform'],
-                                                                              str(worker['arch'])]))
         # build jobs need to get the recipes from s3, extract them, and run a build task
         #    same is true for test jobs that do not have a preceding test job.  These use the
         #    recipe for determining which package to download from available channels.
@@ -383,7 +382,7 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
             if resource['name'] not in (r['name'] for r in resources):
                 resources.add(resource)
             jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
-                                      version, public, uploaded_channels))
+                                      version, public, channels))
 
         # test jobs need to get the package from either the temporary s3 store or test using the
         #     recipe (download package from available channels) and run a test task
@@ -391,11 +390,11 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
             if node.replace('test', 'build') in graph.nodes():
                 # we build the package in this plan.  Get it from s3.
                 jobs.append(get_test_package_job(graph, node, config_vars['base-name'], public,
-                                                 uploaded_channels))
+                                                 channels))
             else:
                 # we are only testing this package in this plan.  Get it from configured channels.
                 jobs.append(get_test_recipe_job(base_path, graph, node, config_vars['base-name'],
-                                                version, public, uploaded_channels))
+                                                version, public, channels))
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
@@ -648,6 +647,7 @@ def bootstrap(base_name, **kw):
     #    has to hack this to fix the version.  For the sake of uploading, this is the right way.
     config['tarball-regex'] = 'recipes-{0}-(.*).tar.bz2'.format(base_name)
     config['tarball-glob'] = 'output/recipes-{0}-*.tar.bz2'.format(base_name)
+    config['channels'] = []
     with open('config-{0}/config.yml'.format(base_name), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
     # create platform.d folders
@@ -659,8 +659,6 @@ def bootstrap(base_name, **kw):
         _copy_yaml_if_not_there('config-{0}/uploads.d/anaconda-example.yml'.format(base_name))
         _copy_yaml_if_not_there('config-{0}/uploads.d/scp-example.yml'.format(base_name))
         _copy_yaml_if_not_there('config-{0}/uploads.d/custom-example.yml'.format(base_name))
-    # create basic versions.yml files
-    _copy_yaml_if_not_there('config-{0}/versions.yml'.format(base_name))
     # create initial plan that runs c3i to determine further plans
     #    This one is safe to overwrite, as it is dynamically generated.
     shutil.copyfile(os.path.join(bootstrap_path, 'plan_director.yml'), 'plan_director.yml')
@@ -673,6 +671,5 @@ Overview:
     - set your passwords and access keys in config-{0}/config.yml
     - edit target build and test platforms in config-{0}/*_platforms.d.  Note that 'connector' key
       is optional.
-    - edit config-{0}/versions.yml to your liking.  Defaults should work out of the box.
     - Finally, submit this configuration with 'c3i submit {0}'
     """.format(base_name))
