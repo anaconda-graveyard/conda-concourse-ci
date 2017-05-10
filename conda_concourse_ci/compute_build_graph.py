@@ -236,7 +236,8 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
                 recipe_dir = _buildable(dummy_meta, version, recipes_dir)
                 if not recipe_dir:
                     raise ValueError("Dependency %s is not installable, and recipe (if "
-                                        " available) can't produce desired version.", dep)
+                                     " available) can't produce desired version (%s).",
+                                     dep, version)
                 dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', worker,
                                                conda_resolve, recipes_dir)
                 if not dep_name:
