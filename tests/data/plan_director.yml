@@ -80,7 +80,7 @@ jobs:
     params:
       bump: patch
 
-  - task: install-run-c3i
+  - task: c3i-examine
     config:
       # seems redundant, but you need this in order to have the repo source code folder show up
       inputs:

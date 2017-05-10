@@ -480,6 +480,22 @@ def _upload_to_s3(local_location, remote_location, bucket, key_id, secret_key,
     bucket.upload_file(local_location, remote_location)
 
 
+def _remove_bucket_folder(folder_name, bucket, key_id, secret_key, region_name='us-west-2'):
+    s3 = boto3.resource('s3', aws_access_key_id=key_id,
+                        aws_secret_access_key=secret_key,
+                        region_name=region_name)
+
+    bucket = s3.Bucket(bucket)
+    objects_to_delete = []
+    for obj in bucket.objects.filter(Prefix='{}/'.format(folder_name)):
+        objects_to_delete.append({'Key': obj.key})
+    bucket.delete_objects(
+        Delete={
+            'Objects': objects_to_delete
+        }
+    )
+
+
 def _get_git_identifier(path):
     try:
         # set by pullrequest-resource, but probably doesn't exist locally
@@ -522,6 +538,11 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir=Non
     #                      region_name=data['aws-region-name'])
 
     for root, dirnames, files in os.walk(config_folder):
+        for dirname in dirnames:
+            _remove_bucket_folder(os.path.join(base_name, dirname), bucket=data['aws-bucket'],
+                                key_id=data['aws-key-id'], secret_key=data['aws-secret-key'],
+                                region_name=data['aws-region-name'])
+
         for f in files:
             local_path = os.path.join(root, f)
             remote_path = local_path.replace(config_folder, 'config-' + base_name)
