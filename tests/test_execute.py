@@ -18,7 +18,7 @@ b_hash = 'b-hd248202_0-linux'
 
 def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
     mocker.patch.object(execute, 'Resolve')
-    mocker.patch.object(execute, 'get_index')
+    mocker.patch.object(execute, 'get_build_index')
     mocker.patch.object(conda_concourse_ci.compute_build_graph, '_installable')
     execute.Resolve.return_value = testing_conda_resolve
     conda_concourse_ci.compute_build_graph._installable.return_value = True

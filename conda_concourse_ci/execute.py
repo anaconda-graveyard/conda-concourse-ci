@@ -9,7 +9,8 @@ import tarfile
 
 import boto3
 import conda_build.api
-from conda_build.conda_interface import Resolve, get_index
+from conda_build.conda_interface import Resolve
+from conda_build.index import get_build_index
 import networkx as nx
 import yaml
 
@@ -73,21 +74,20 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
     if not test:
         runs.insert(0, 'build')
 
-    indexes = {}
     task_graph = nx.DiGraph()
+    config = conda_build.api.Config()
     for run in runs:
         platforms = parse_platforms(matrix_base_dir, run)
         # loop over platforms here because each platform may have different dependencies
         # each platform will be submitted with a different label
         for platform in platforms:
             index_key = '-'.join([platform['platform'], str(platform['arch'])])
-            if index_key not in indexes:
-                indexes[index_key] = Resolve(get_index(platform=index_key))
+            conda_resolve = Resolve(get_build_index(config, subdir=index_key))
             # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
-                                matrix_base_dir=matrix_base_dir, conda_resolve=indexes[index_key])
+                                matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve)
             # Apply the build label to any nodes that need (re)building or testing
-            expand_run(g, conda_resolve=indexes[index_key], worker=platform, run=run,
+            expand_run(g, conda_resolve=conda_resolve, worker=platform, run=run,
                        steps=steps, max_downstream=max_downstream, recipes_dir=path,
                        matrix_base_dir=matrix_base_dir)
             # merge this graph with the main one
