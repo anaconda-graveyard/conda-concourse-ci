@@ -82,7 +82,7 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
         # each platform will be submitted with a different label
         for platform in platforms:
             index_key = '-'.join([platform['platform'], str(platform['arch'])])
-            conda_resolve = Resolve(get_build_index(config, subdir=index_key))
+            conda_resolve = Resolve(get_build_index(config, subdir=index_key)[0])
             # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
                                 matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve)
