@@ -88,7 +88,8 @@ jobs:
       platform: linux
       run:
         path: c3i
-        args: [examine, {{base-name}}, recipe-repo-source, --matrix-base-dir, s3-config-base/{{config-folder}}]
+        args: [examine, {{base-name}}, ., --matrix-base-dir, ../s3-config-base/{{config-folder}}]
+        dir: recipe-repo-source
   - put: version
     params:
       file: version/version

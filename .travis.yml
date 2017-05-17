@@ -22,6 +22,7 @@ install:
   - conda install -q pytest-cov networkx boto3
   # pull conda-build 3 from canary until it is fully released
   - conda install -c conda-canary conda-build
+  - pip install pytest-xdist
   - $HOME/miniconda/bin/pip install pytest-mock
   - pip install --no-deps .
   - conda info -a
@@ -31,7 +32,7 @@ script:
   # tests utilize automated git repo creation and commits.  Need to set this up.
   - git config --global user.email "you@example.com"
   - git config --global user.name "Your Name"
-  - $HOME/miniconda/bin/py.test -v --cov conda_concourse_ci --cov-report xml tests
+  - $HOME/miniconda/bin/py.test -v --cov conda_concourse_ci --cov-report xml tests -n 4
   - flake8
 
 notifications:

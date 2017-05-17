@@ -516,10 +516,10 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir=Non
     pipeline_name = pipeline_name.format(base_name=base_name,
                                          git_identifier=_get_git_identifier(src_dir))
 
-    config_folder = 'config' + ('-' + base_name) if base_name else ""
+    config_folder_name = 'config' + ('-' + base_name) if base_name else ""
     if not config_root_dir:
         config_root_dir = os.path.dirname(pipeline_file)
-    config_folder = os.path.join(config_root_dir, config_folder)
+    config_folder = os.path.join(config_root_dir, config_folder_name)
     config_path = os.path.join(config_folder, 'config.yml')
     with open(config_path) as src:
         data = yaml.load(src)
@@ -539,9 +539,10 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir=Non
 
     for root, dirnames, files in os.walk(config_folder):
         for dirname in dirnames:
-            _remove_bucket_folder(os.path.join(base_name, dirname), bucket=data['aws-bucket'],
-                                key_id=data['aws-key-id'], secret_key=data['aws-secret-key'],
-                                region_name=data['aws-region-name'])
+            _remove_bucket_folder(os.path.join(config_folder_name, dirname),
+                                  bucket=data['aws-bucket'],
+                                  key_id=data['aws-key-id'], secret_key=data['aws-secret-key'],
+                                  region_name=data['aws-region-name'])
 
         for f in files:
             local_path = os.path.join(root, f)
