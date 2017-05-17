@@ -212,6 +212,7 @@ def test_default_args(mocker):
 
 def test_submit(mocker):
     mocker.patch.object(execute, '_upload_to_s3')
+    mocker.patch.object(execute, '_remove_bucket_folder')
     mocker.patch.object(execute, 'subprocess')
     execute.submit(os.path.join(test_config_dir, 'plan_director.yml'), "test", "test-pipeline", '.',
                    test_data_dir)

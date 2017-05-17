@@ -11,6 +11,8 @@ import networkx as nx
 from conda_build import api, conda_interface
 from conda_build.metadata import MetaData, find_recipe
 
+from .utils import HashableDict
+
 log = logging.getLogger(__file__)
 CONDA_BUILD_CACHE = os.environ.get("CONDA_BUILD_CACHE")
 hash_length = api.Config().hash_length
@@ -100,10 +102,23 @@ def get_run_test_deps(meta):
     return _deps_to_version_dict(run_reqs + test_reqs)
 
 
+_rendered_recipes = {}
+
+
+def _get_or_render_metadata(meta_file_or_recipe_dir, worker):
+    global _rendered_recipes
+    worker = HashableDict(worker)
+    if (meta_file_or_recipe_dir, worker) not in _rendered_recipes:
+        _rendered_recipes[(meta_file_or_recipe_dir, worker)] = api.render(meta_file_or_recipe_dir,
+                                                                platform=worker['platform'],
+                                                                arch=worker['arch'])
+    return _rendered_recipes[(meta_file_or_recipe_dir, worker)]
+
+
 def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                         recipes_dir=None):
     try:
-        rendered = api.render(recipe_dir, platform=worker['platform'], arch=worker['arch'])
+        rendered = _get_or_render_metadata(recipe_dir, worker)
     except (IOError, SystemExit):
         log.debug('invalid recipe dir: %s - skipping', recipe_dir)
         return None
@@ -164,24 +179,25 @@ def _fix_any(value, config):
     return value
 
 
-def _installable(metadata, version, conda_resolve):
+@conda_interface.memoized
+def _installable(name, version, build_string, config, conda_resolve):
     """Can Conda install the package we need?"""
-    ms = conda_interface.MatchSpec(" ".join([metadata.name(), _fix_any(version, metadata.config),
-                                             _fix_any(metadata.build_id(), metadata.config)]))
+    ms = conda_interface.MatchSpec(" ".join([name, _fix_any(version, config),
+                                             _fix_any(build_string, config)]))
     return conda_resolve.valid(ms, filter=conda_resolve.default_filter())
 
 
-def _buildable(metadata, version, recipes_dir=None):
+def _buildable(metadata, version, worker, recipes_dir=None):
     """Does the recipe that we have available produce the package we need?"""
     # best: metadata comes from a real recipe, and we have a path to it.  Version may still
     #    not match.
     recipes_dir = recipes_dir or os.getcwd()
     path = os.path.join(recipes_dir, metadata.name())
     if os.path.exists(metadata.meta_path):
-        metadata_tuples = api.render(metadata.meta_path)
+        metadata_tuples = _get_or_render_metadata(metadata.meta_path, worker)
     # next best: matching name recipe folder in cwd
     elif os.path.isdir(path):
-        metadata_tuples = api.render(path)
+        metadata_tuples = _get_or_render_metadata(path, worker)
     else:
         return False
 
@@ -229,11 +245,12 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
         else:
             dep_re = re.compile(dep_re)
 
-        if not _installable(dummy_meta, version, conda_resolve):
+        # we don't need worker info in _installable because it is already part of conda_resolve
+        if not _installable(dep, version, build_str, dummy_meta.config, conda_resolve):
             nodes_in_graph = [dep_re.match(_n) for _n in graph.nodes()]
             node_in_graph = [_n for _n in nodes_in_graph if _n]
             if not node_in_graph:
-                recipe_dir = _buildable(dummy_meta, version, recipes_dir)
+                recipe_dir = _buildable(dummy_meta, version, worker, recipes_dir)
                 if not recipe_dir:
                     raise ValueError("Dependency %s is not installable, and recipe (if "
                                      " available) can't produce desired version (%s).",
