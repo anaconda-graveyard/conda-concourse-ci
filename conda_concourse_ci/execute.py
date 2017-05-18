@@ -204,7 +204,6 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
         # dependency inputs are down below
         'inputs': inputs,
         'outputs': [{'name': node}, ],
-        'params': graph.node[node]['env'],
         'run': {
              'path': 'conda-build',
              'args': build_args,
@@ -246,7 +245,6 @@ def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_versio
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         'inputs': [{'name': 'extracted-archive'}, {'name': 'packages'}],
-        'params': graph.node[node]['env'],
         'run': {
              'path': 'conda-build',
              'args': args,
@@ -291,7 +289,6 @@ def get_test_package_job(graph, node, base_name, public=True, channels=()):
             'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],  # NOQA
             # dependency inputs are down below
             'inputs': inputs,
-            'params': graph.node[node]['env'],
             'run': {
                 'path': 'conda-build',
                 'args': args,
