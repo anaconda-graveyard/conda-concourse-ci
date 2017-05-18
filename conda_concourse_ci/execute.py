@@ -607,7 +607,7 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
             repo_commit = 'master'
 
     # this file is created and updated by the semver resource
-    with open('version/version') as f:
+    with open(os.path.join(matrix_base_dir, '..', '..', 'version', 'version')) as f:
         version = f.read().rstrip()
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         data = yaml.load(src)
