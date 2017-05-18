@@ -180,36 +180,6 @@ def test_resource_to_dict():
     assert type(out['source']) == dict
 
 
-def test_default_args(mocker):
-    try:
-        os.makedirs('version')
-    except:
-        pass
-    try:
-        os.makedirs('config-out')
-    except:
-        pass
-    try:
-        os.makedirs('output')
-    except:
-        pass
-
-    with open('version/version', 'w') as f:
-        f.write("1.0.0")
-    mocker.patch.object(execute, 'collect_tasks')
-    execute.collect_tasks.return_value = 'steve'
-    mocker.patch.object(execute, 'graph_to_plan_with_jobs')
-    execute.graph_to_plan_with_jobs.return_value = ("abc: weee")
-    execute.compute_builds(graph_data_dir, git_rev='master', base_name='anaconda', folders='a',
-                           matrix_base_dir=test_config_dir)
-    # cli.collect_tasks.assert_called_with(graph_data_dir, folders=['a'], steps=0,
-    #                                      test=False, max_downstream=5,
-    #                                      matrix_base_dir=test_config_dir)
-    # cli.graph_to_plan_and_tasks.assert_called_with(graph_data_dir, "steve", "1.0.0",
-    #                                                matrix_base_dir=test_config_dir, public=True)
-    # cli.write_tasks.assert_called_with({}, 'output')
-
-
 def test_submit(mocker):
     mocker.patch.object(execute, '_upload_to_s3')
     mocker.patch.object(execute, '_remove_bucket_folder')
