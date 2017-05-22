@@ -11,7 +11,6 @@ import networkx as nx
 from conda_build import api, conda_interface
 from conda_build.metadata import MetaData, find_recipe
 
-from .utils import HashableDict
 
 log = logging.getLogger(__file__)
 CONDA_BUILD_CACHE = os.environ.get("CONDA_BUILD_CACHE")
@@ -107,12 +106,13 @@ _rendered_recipes = {}
 
 def _get_or_render_metadata(meta_file_or_recipe_dir, worker):
     global _rendered_recipes
-    worker = HashableDict(worker)
-    if (meta_file_or_recipe_dir, worker) not in _rendered_recipes:
-        _rendered_recipes[(meta_file_or_recipe_dir, worker)] = api.render(meta_file_or_recipe_dir,
-                                                                platform=worker['platform'],
-                                                                arch=worker['arch'])
-    return _rendered_recipes[(meta_file_or_recipe_dir, worker)]
+    platform = worker['platform']
+    arch = str(worker['arch'])
+    if (meta_file_or_recipe_dir, platform, arch) not in _rendered_recipes:
+        print("rendering {0} for {1}-{2}".format(meta_file_or_recipe_dir, platform, arch))
+        _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)] = \
+                            api.render(meta_file_or_recipe_dir, platform=platform, arch=arch)
+    return _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)]
 
 
 def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
@@ -184,7 +184,7 @@ def _installable(name, version, build_string, config, conda_resolve):
     """Can Conda install the package we need?"""
     ms = conda_interface.MatchSpec(" ".join([name, _fix_any(version, config),
                                              _fix_any(build_string, config)]))
-    return conda_resolve.valid(ms, filter=conda_resolve.default_filter())
+    return conda_resolve.find_matches(ms)
 
 
 def _buildable(metadata, version, worker, recipes_dir=None):
@@ -236,17 +236,17 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
             'package': {'name': dep,
                         'version': version},
             'build': {'string': build_str}})
-        # version is passed literally here because constraints may make it an invalid version
-        #    for metadata.
-        dep_name = package_key('build', dummy_meta, worker['label'])
-        dep_re = re.sub(r'anyh[0-9a-f]{%d}' % metadata.config.hash_length, '.*', dep_name)
-        if sys.version_info.major < 3:
-            dep_re = re.compile(dep_re.encode('unicode-escape'))
-        else:
-            dep_re = re.compile(dep_re)
 
         # we don't need worker info in _installable because it is already part of conda_resolve
         if not _installable(dep, version, build_str, dummy_meta.config, conda_resolve):
+            # version is passed literally here because constraints may make it an invalid version
+            #    for metadata.
+            dep_name = package_key('build', dummy_meta, worker['label'])
+            dep_re = re.sub(r'anyh[0-9a-f]{%d}' % metadata.config.hash_length, '.*', dep_name)
+            if sys.version_info.major < 3:
+                dep_re = re.compile(dep_re.encode('unicode-escape'))
+            else:
+                dep_re = re.compile(dep_re)
             nodes_in_graph = [dep_re.match(_n) for _n in graph.nodes()]
             node_in_graph = [_n for _n in nodes_in_graph if _n]
             if not node_in_graph:

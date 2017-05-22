@@ -189,6 +189,10 @@ def get_upload_tasks(s3_resource_name, package_path, upload_config_dir, worker, 
 
 
 def get_upload_channels(upload_config_dir, subdir):
+    """thought here was to provide whatever channel you have set as an output also to be an input
+
+    Killed this in favor of setting channels in condarc in the docker image.
+    """
     configurations = load_yaml_config_dir(upload_config_dir)
     channels = []
 

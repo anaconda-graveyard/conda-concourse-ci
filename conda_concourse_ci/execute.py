@@ -15,7 +15,7 @@ import networkx as nx
 import yaml
 
 from .compute_build_graph import construct_graph, expand_run, order_build, git_changed_recipes
-from .uploads import get_upload_tasks
+from .uploads import get_upload_tasks, get_upload_channels
 from .utils import HashableDict, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
@@ -70,6 +70,7 @@ def parse_platforms(matrix_base_dir, run):
 
 def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downstream=5):
     runs = ['test']
+    upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     # not testing means build and test
     if not test:
         runs.insert(0, 'build')
@@ -82,6 +83,7 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
         # each platform will be submitted with a different label
         for platform in platforms:
             index_key = '-'.join([platform['platform'], str(platform['arch'])])
+            config.channel_urls = get_upload_channels(upload_config_path, index_key)
             conda_resolve = Resolve(get_build_index(config, subdir=index_key)[0])
             # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
@@ -111,10 +113,8 @@ def consolidate_packages(path, subdir, **kwargs):
     print("consolidating package resources into 'packages' folder")
     packages_subdir = os.path.join('packages', subdir)
     dest_dir = os.path.join(path, packages_subdir)
-    try:
+    if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
-    except:
-        pass
     for root, dirs, files in os.walk(path):
         for f in files:
             if f.endswith('.tar.bz2') and not root.endswith(packages_subdir):
@@ -124,10 +124,8 @@ def consolidate_packages(path, subdir, **kwargs):
                 shutil.copyfile(os.path.join(root, f), os.path.join(dest_dir, f))
     conda_build.api.update_index(dest_dir)
     noarch_dir = os.path.join(os.path.dirname(dest_dir), 'noarch')
-    try:
+    if not os.path.exists(noarch_dir):
         os.makedirs(noarch_dir)
-    except OSError:
-        pass
     conda_build.api.update_index(noarch_dir)
 
 
@@ -177,8 +175,7 @@ def append_consolidate_package_tasks(tasks, graph, node, base_name, resources=No
     return resources
 
 
-def get_build_job(base_path, graph, node, base_name, recipe_archive_version, public=True,
-                  channels=()):
+def get_build_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
     # we append each individual s3 resource in the graph successors loop below
     tasks = [{'get': 's3-archive',
               'trigger': True},
@@ -195,7 +192,7 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
 
     build_args = ['--no-test', '--no-anaconda-upload', '--output-folder', node,
                   '-c', 'packages']
-    for channel in channels:
+    for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     build_args.append(os.path.join('extracted-archive', recipe_folder_name))
 
@@ -204,7 +201,6 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
         # dependency inputs are down below
         'inputs': inputs,
         'outputs': [{'name': node}, ],
-        'params': graph.node[node]['env'],
         'run': {
              'path': 'conda-build',
              'args': build_args,
@@ -227,8 +223,7 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
     return {'name': node, 'plan': tasks, 'public': public}
 
 
-def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_version, public=True,
-                        channels=()):
+def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
     tasks = [{'get': 's3-archive',
               'trigger': 'true'},
              _extract_task(base_name, recipe_archive_version)]
@@ -240,13 +235,13 @@ def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_versio
     append_consolidate_package_tasks(tasks, graph, node, base_name)
 
     args = ['--test', '-c', 'packages']
-    for channel in channels:
+    meta = graph.node[node]['meta']
+    for channel in meta.config.channel_urls:
         args.extend(['-c', channel])
     args.append(recipe_folder_name)
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         'inputs': [{'name': 'extracted-archive'}, {'name': 'packages'}],
-        'params': graph.node[node]['env'],
         'run': {
              'path': 'conda-build',
              'args': args,
@@ -263,7 +258,7 @@ def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_versio
     return {'name': node, 'plan': tasks, 'public': public}
 
 
-def get_test_package_job(graph, node, base_name, public=True, channels=()):
+def get_test_package_job(graph, node, base_name, public=True):
     meta = graph.node[node]['meta']
     worker = graph.node[node]['worker']
     pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
@@ -283,7 +278,7 @@ def get_test_package_job(graph, node, base_name, public=True, channels=()):
         filename = os.path.basename(pkg)
 
         args = ['--test', '-c', 'packages']
-        for channel in channels:
+        for channel in meta.config.channel_urls:
             args.extend(['-c', channel])
         args.append(os.path.join('packages', subdir, filename))
 
@@ -291,7 +286,6 @@ def get_test_package_job(graph, node, base_name, public=True, channels=()):
             'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],  # NOQA
             # dependency inputs are down below
             'inputs': inputs,
-            'params': graph.node[node]['env'],
             'run': {
                 'path': 'conda-build',
                 'args': args,
@@ -354,7 +348,6 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
     jobs = []
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
-    channels = config_vars.get('channels', [])
 
     resource_types = set()
     config_vars['version'] = version
@@ -382,19 +375,18 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
             if resource['name'] not in (r['name'] for r in resources):
                 resources.add(resource)
             jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
-                                      version, public, channels))
+                                      version, public))
 
         # test jobs need to get the package from either the temporary s3 store or test using the
         #     recipe (download package from available channels) and run a test task
         elif node.startswith('test'):
             if node.replace('test', 'build') in graph.nodes():
                 # we build the package in this plan.  Get it from s3.
-                jobs.append(get_test_package_job(graph, node, config_vars['base-name'], public,
-                                                 channels))
+                jobs.append(get_test_package_job(graph, node, config_vars['base-name'], public))
             else:
                 # we are only testing this package in this plan.  Get it from configured channels.
                 jobs.append(get_test_recipe_job(base_path, graph, node, config_vars['base-name'],
-                                                version, public, channels))
+                                                version, public))
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
@@ -435,9 +427,8 @@ def _get_current_git_rev(path, branch=False):
         out = subprocess.check_output(args, cwd=path).rstrip()
         if hasattr(out, 'decode'):
             out = out.decode()
-    except subprocess.CalledProcessError:
-        # not in a git repo.  Return master as placebo.
-        pass
+    except subprocess.CalledProcessError:   # pragma: no cover
+        pass   # pragma: no cover
     return out[:8] if not branch else out
 
 
@@ -474,10 +465,10 @@ def _upload_to_s3(local_location, remote_location, bucket, key_id, secret_key,
                  region_name='us-west-2'):
     s3 = boto3.resource('s3', aws_access_key_id=key_id,
                         aws_secret_access_key=secret_key,
-                        region_name=region_name)
+                        region_name=region_name)  # pragma: no cover
 
-    bucket = s3.Bucket(bucket)
-    bucket.upload_file(local_location, remote_location)
+    bucket = s3.Bucket(bucket)  # pragma: no cover
+    bucket.upload_file(local_location, remote_location)  # pragma: no cover
 
 
 def _remove_bucket_folder(folder_name, bucket, key_id, secret_key, region_name='us-west-2'):
@@ -485,15 +476,11 @@ def _remove_bucket_folder(folder_name, bucket, key_id, secret_key, region_name='
                         aws_secret_access_key=secret_key,
                         region_name=region_name)
 
-    bucket = s3.Bucket(bucket)
-    objects_to_delete = []
-    for obj in bucket.objects.filter(Prefix='{}/'.format(folder_name)):
-        objects_to_delete.append({'Key': obj.key})
-    bucket.delete_objects(
-        Delete={
-            'Objects': objects_to_delete
-        }
-    )
+    bucket = s3.Bucket(bucket)  # pragma: no cover
+    objects_to_delete = []  # pragma: no cover
+    for obj in bucket.objects.filter(Prefix='{}/'.format(folder_name)):  # pragma: no cover
+        objects_to_delete.append({'Key': obj.key})  # pragma: no cover
+    bucket.delete_objects(Delete={'Objects': objects_to_delete})  # pragma: no cover
 
 
 def _get_git_identifier(path):
