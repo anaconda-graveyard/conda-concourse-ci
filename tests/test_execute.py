@@ -211,3 +211,34 @@ def test_consolidate_packages(testing_workdir, testing_metadata):
                                        'test_consolidate_packages-1.0-hbf21a9e_1.tar.bz2'))
     assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json'))
     assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json.bz2'))
+
+
+def test_get_current_git_rev():
+    git_repo = os.path.join(os.path.dirname(__file__), '..', '..', 'conda_build_test_recipe')
+    assert execute._get_current_git_rev(git_repo) == '7e3525f4'
+    with execute.checkout_git_rev('1.21.0', git_repo):
+        assert execute._get_current_git_rev(git_repo) == '29bb0bd2'
+        assert execute._get_current_git_rev(git_repo, True) == 'HEAD'
+
+
+def test_archive_recipes(testing_workdir):
+    os.makedirs(os.path.join(testing_workdir, 'recipes', 'abc'))
+    with open(os.path.join('recipes', 'abc', 'meta.yaml'), 'w') as f:
+        f.write('wee')
+    os.makedirs('output')
+    # ensures that we test removal of any existing file
+    with open(os.path.join('output', 'recipes-steve-1.0.tar.bz2'), 'w') as f:
+        f.write('dummy')
+    execute._archive_recipes('output', 'recipes', ['abc'], 'steve', '1.0')
+    assert os.path.isfile(os.path.join('output', 'recipes-steve-1.0.tar.bz2'))
+
+
+def test_compute_builds(testing_workdir, mocker, testing_graph):
+    collect_tasks = mocker.patch.object(execute, 'collect_tasks')
+    collect_tasks.return_value = testing_graph
+    execute.compute_builds(graph_data_dir, 'config-name', 'master', folders=['a'],
+                           matrix_base_dir=os.path.join(test_data_dir, 'config-test'))
+    assert os.path.isdir('output')
+    files = os.listdir('output')
+    assert 'plan.yml' in files
+    assert 'recipes-config-name-1.0.0.tar.bz2' in files
