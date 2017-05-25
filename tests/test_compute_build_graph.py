@@ -10,7 +10,7 @@ from .utils import make_recipe, test_config_dir, graph_data_dir, default_worker,
 dummy_worker = {'platform': 'linux', 'arch': '64', 'label': 'linux',
                 'connector': {'image': 'msarahan/conda-concourse-ci'}}
 
-a_hash = 'a-hbf21a9e_0-linux'
+a_hash = 'a-h0bb54af_0-linux'
 b_hash = 'b-hd248202_0-linux'
 c_hash = 'c-h4598f22_0-linux'
 d_hash = 'd-h2d8cd19_0-linux'
@@ -44,15 +44,15 @@ def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
     assert set(g.nodes()) == set([
         'build-test_dir_3-h73cbcf4_0-linux', 'test-test_dir_3-h73cbcf4_0-linux', 'upload-test_dir_3-h73cbcf4_0-linux',
         'build-test_dir_2-h0a13e26_0-linux', 'test-test_dir_2-h0a13e26_0-linux', 'upload-test_dir_2-h0a13e26_0-linux',
-        'build-test_dir_1-hbf21a9e_0-linux', 'test-test_dir_1-hbf21a9e_0-linux', 'upload-test_dir_1-hbf21a9e_0-linux'])
-    assert set(g.edges()) == set([('build-test_dir_2-h0a13e26_0-linux', 'build-test_dir_1-hbf21a9e_0-linux'),
+        'build-test_dir_1-h0bb54af_0-linux', 'test-test_dir_1-h0bb54af_0-linux', 'upload-test_dir_1-h0bb54af_0-linux'])
+    assert set(g.edges()) == set([('build-test_dir_2-h0a13e26_0-linux', 'build-test_dir_1-h0bb54af_0-linux'),
                                   ('build-test_dir_3-h73cbcf4_0-linux', 'build-test_dir_2-h0a13e26_0-linux'),
                                   ('test-test_dir_2-h0a13e26_0-linux', 'build-test_dir_2-h0a13e26_0-linux'),
                                   ('test-test_dir_3-h73cbcf4_0-linux', 'build-test_dir_3-h73cbcf4_0-linux'),
-                                  ('test-test_dir_1-hbf21a9e_0-linux', 'build-test_dir_1-hbf21a9e_0-linux'),
+                                  ('test-test_dir_1-h0bb54af_0-linux', 'build-test_dir_1-h0bb54af_0-linux'),
                                   ('upload-test_dir_2-h0a13e26_0-linux', 'test-test_dir_2-h0a13e26_0-linux'),
                                   ('upload-test_dir_3-h73cbcf4_0-linux', 'test-test_dir_3-h73cbcf4_0-linux'),
-                                  ('upload-test_dir_1-hbf21a9e_0-linux', 'test-test_dir_1-hbf21a9e_0-linux')])
+                                  ('upload-test_dir_1-h0bb54af_0-linux', 'test-test_dir_1-h0bb54af_0-linux')])
 
 
 def test_package_key(testing_metadata):

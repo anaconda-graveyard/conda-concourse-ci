@@ -239,6 +239,11 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
 
         # we don't need worker info in _installable because it is already part of conda_resolve
         if not _installable(dep, version, build_str, dummy_meta.config, conda_resolve):
+            log.warn("Dependency {name}, version {ver} is not installable from your "
+                     "channels: {channels} with subdir {subdir}.  Seeing if we can build it..."
+                     .format(name=dep, ver=version, channels=metadata.config.channel_urls,
+                             subdir=(metadata.config.build_subdir if run == 'build' else
+                                     metadata.config.host_subdir)))
             # version is passed literally here because constraints may make it an invalid version
             #    for metadata.
             dep_name = package_key('build', dummy_meta, worker['label'])
