@@ -605,7 +605,7 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
                                    version, matrix_base_dir=matrix_base_dir,
                                    config_vars=data, public=public)
 
-    output_folder = 'output'
+    output_folder = '../output'
     try:
         os.makedirs(output_folder)
     except:

@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from conda_concourse_ci import execute
 import conda_concourse_ci
@@ -213,15 +214,16 @@ def test_consolidate_packages(testing_workdir, testing_metadata):
     assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json.bz2'))
 
 
-def test_get_current_git_rev():
-    git_repo = os.path.join(os.path.dirname(__file__), '..', '..', 'conda_build_test_recipe')
+def test_get_current_git_rev(testing_workdir):
+    subprocess.check_call('git clone https://github.com/conda/conda_build_test_recipe'.split())
+    git_repo = 'conda_build_test_recipe'
     assert execute._get_current_git_rev(git_repo) == '7e3525f4'
     with execute.checkout_git_rev('1.21.0', git_repo):
         assert execute._get_current_git_rev(git_repo) == '29bb0bd2'
         assert execute._get_current_git_rev(git_repo, True) == 'HEAD'
 
 
-def test_archive_recipes(testing_workdir):
+def test_archive_recipes(testing_workdir, monkeypatch):
     os.makedirs(os.path.join(testing_workdir, 'recipes', 'abc'))
     with open(os.path.join('recipes', 'abc', 'meta.yaml'), 'w') as f:
         f.write('wee')
@@ -229,16 +231,18 @@ def test_archive_recipes(testing_workdir):
     # ensures that we test removal of any existing file
     with open(os.path.join('output', 'recipes-steve-1.0.tar.bz2'), 'w') as f:
         f.write('dummy')
-    execute._archive_recipes('output', 'recipes', ['abc'], 'steve', '1.0')
-    assert os.path.isfile(os.path.join('output', 'recipes-steve-1.0.tar.bz2'))
+    monkeypatch.chdir(os.path.join(testing_workdir, 'recipes'))
+    execute._archive_recipes('../output', '.', ['abc'], 'steve', '1.0')
+    assert os.path.isfile(os.path.join('../output', 'recipes-steve-1.0.tar.bz2'))
 
 
-def test_compute_builds(testing_workdir, mocker, testing_graph):
+def test_compute_builds(testing_workdir, mocker, testing_graph, monkeypatch):
     collect_tasks = mocker.patch.object(execute, 'collect_tasks')
     collect_tasks.return_value = testing_graph
-    execute.compute_builds(graph_data_dir, 'config-name', 'master', folders=['a'],
+    monkeypatch.chdir(graph_data_dir)
+    execute.compute_builds('.', 'config-name', 'master', folders=['a'],
                            matrix_base_dir=os.path.join(test_data_dir, 'config-test'))
-    assert os.path.isdir('output')
-    files = os.listdir('output')
+    assert os.path.isdir('../output')
+    files = os.listdir('../output')
     assert 'plan.yml' in files
     assert 'recipes-config-name-1.0.0.tar.bz2' in files
