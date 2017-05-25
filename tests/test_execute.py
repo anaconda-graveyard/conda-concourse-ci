@@ -12,7 +12,7 @@ import yaml
 
 from .utils import test_data_dir, graph_data_dir, default_worker, test_config_dir
 
-a_hash = 'a-hbf21a9e_0-linux'
+a_hash = 'a-h0bb54af_0-linux'
 b_hash = 'b-hd248202_0-linux'
 
 
@@ -72,7 +72,7 @@ def test_get_build_job(testing_graph):
     assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
 
     # get upstream dependency
-    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
+    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-h0bb54af_0'
     assert job['plan'][2]['passed'] == ['build-' + a_hash]
 
     # run the build
@@ -101,7 +101,7 @@ def test_get_test_recipe_job(testing_graph):
     assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
 
     # get upstream dependency
-    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
+    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-h0bb54af_0'
     assert job['plan'][2]['passed'] == ['build-' + a_hash]
     assert job['plan'][3]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
     assert job['plan'][3]['passed'] == ['build-' + b_hash]
@@ -119,8 +119,8 @@ def test_get_test_package_job(testing_graph):
                                        base_name="frank")
     # download the package tarball
     assert job['plan'][0]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
-    assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
-    assert job['plan'][1]['passed'] == ['build-a-hbf21a9e_0-linux']
+    assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-h0bb54af_0'
+    assert job['plan'][1]['passed'] == ['build-a-h0bb54af_0-linux']
 
     # run the test
     assert job['plan'][-1]['config']['platform'] == 'linux'
@@ -147,7 +147,7 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert len(plan_dict['jobs']) == 7
     assert plan_dict['resources'][0]['source']['regexp'] in (
         'recipes-test-1.0.0.tar.bz(.*)',
-        os.path.join("s3-test-linux-a-1.0-hbf21a9e_0", 'linux-64', "a-1.0-hbf21a9e_0.tar.bz(.*)"),
+        os.path.join("s3-test-linux-a-1.0-h0bb54af_0", 'linux-64', "a-1.0-h0bb54af_0.tar.bz(.*)"),
         os.path.join("s3-test-linux-b-1.0-hd248202_0", 'linux-64', "b-1.0-hd248202_0.tar.bz(.*)"))
 
 
@@ -205,10 +205,10 @@ def test_consolidate_packages(testing_workdir, testing_metadata):
     testing_metadata.config.anaconda_upload = False
     api.build(testing_metadata)
     assert os.path.isfile(os.path.join(testing_workdir, subdir,
-                                       'test_consolidate_packages-1.0-hbf21a9e_1.tar.bz2'))
+                                       'test_consolidate_packages-1.0-h0bb54af_1.tar.bz2'))
     execute.consolidate_packages(testing_workdir, subdir)
     assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir,
-                                       'test_consolidate_packages-1.0-hbf21a9e_1.tar.bz2'))
+                                       'test_consolidate_packages-1.0-h0bb54af_1.tar.bz2'))
     assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json'))
     assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json.bz2'))
 

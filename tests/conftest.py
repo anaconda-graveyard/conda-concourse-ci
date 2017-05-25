@@ -67,21 +67,21 @@ def testing_git_repo(testing_workdir, request):
 def testing_graph(request):
     g = nx.DiGraph()
     a = render(os.path.join(graph_data_dir, 'a'))[0][0]
-    g.add_node('build-a-hbf21a9e_0-linux', meta=a, env={}, worker=default_worker)
-    g.add_node('test-a-hbf21a9e_0-linux', meta=a, env={}, worker=default_worker)
-    g.add_edge('test-a-hbf21a9e_0-linux', 'build-a-hbf21a9e_0-linux')
-    g.add_node('upload-a-hbf21a9e_0-linux', meta=a, env={}, worker=default_worker)
-    g.add_edge('upload-a-hbf21a9e_0-linux', 'test-a-hbf21a9e_0-linux')
+    g.add_node('build-a-{}-linux'.format(a.build_id()), meta=a, env={}, worker=default_worker)
+    g.add_node('test-a-{}-linux'.format(a.build_id()), meta=a, env={}, worker=default_worker)
+    g.add_edge('test-a-{}-linux'.format(a.build_id()), 'build-a-{}-linux'.format(a.build_id()))
+    g.add_node('upload-a-{}-linux'.format(a.build_id()), meta=a, env={}, worker=default_worker)
+    g.add_edge('upload-a-{}-linux'.format(a.build_id()), 'test-a-{}-linux'.format(a.build_id()))
     b = render(os.path.join(graph_data_dir, 'b'))[0][0]
-    g.add_node('build-b-hd248202_0-linux', meta=b, env={}, worker=default_worker)
-    g.add_edge('build-b-hd248202_0-linux', 'build-a-hbf21a9e_0-linux')
-    g.add_node('test-b-hd248202_0-linux', meta=b, env={}, worker=default_worker)
-    g.add_edge('test-b-hd248202_0-linux', 'build-b-hd248202_0-linux')
-    g.add_node('upload-b-hd248202_0-linux', meta=b, env={}, worker=default_worker)
-    g.add_edge('upload-b-hd248202_0-linux', 'test-b-hd248202_0-linux')
+    g.add_node('build-b-{}-linux'.format(b.build_id()), meta=b, env={}, worker=default_worker)
+    g.add_edge('build-b-{}-linux'.format(b.build_id()), 'build-a-{}-linux'.format(a.build_id()))
+    g.add_node('test-b-{}-linux'.format(b.build_id()), meta=b, env={}, worker=default_worker)
+    g.add_edge('test-b-{}-linux'.format(b.build_id()), 'build-b-{}-linux'.format(b.build_id()))
+    g.add_node('upload-b-{}-linux'.format(b.build_id()), meta=b, env={}, worker=default_worker)
+    g.add_edge('upload-b-{}-linux'.format(b.build_id()), 'test-b-{}-linux'.format(b.build_id()))
     c = render(os.path.join(graph_data_dir, 'c'))[0][0]
-    g.add_node('test-c-h4598f22_0-linux', meta=c, env={}, worker=default_worker)
-    g.add_edge('test-c-h4598f22_0-linux', 'test-b-hd248202_0-linux')
+    g.add_node('test-c-{}-linux'.format(c.build_id()), meta=c, env={}, worker=default_worker)
+    g.add_edge('test-c-{}-linux'.format(c.build_id()), 'test-b-{}-linux'.format(b.build_id()))
     return g
 
 
