@@ -90,10 +90,12 @@ def test_get_build_variants(config_file):
              'pin_run_as_build': {'python': {'max_pin': 'x.x', 'min_pin': 'x.x'}},
              'platform': 'linux',
              'python': 2.6,
-             'r_base': '3.3.2',
-             'target_platform': 'osx-109-x86_64'}
+             'r_base': '3.3.2',}
 
-    assert build in build_variants
+    for build_variant in build_variants:
+        if build_variant['python'] == 2.6 and build_variant['numpy'] == 1.12:
+            assert all(item in build_variant.items() for item in build.items())
+
     assert len(build_variants) == 10
 
 
@@ -109,7 +111,6 @@ def test_get_build_variants_with_zip_keys(another_config_file):
                  'platform': 'linux',
                  'python': '2.7',
                  'r_base': '3.3.2',
-                 'target_platform': 'osx-109-x86_64',
                  'zip_keys': ['python', 'numpy']}
 
     build_two = {'cpu_optimization_target': 'nocona',
@@ -120,11 +121,14 @@ def test_get_build_variants_with_zip_keys(another_config_file):
                  'platform': 'linux',
                  'python': '3.6',
                  'r_base': '3.3.2',
-                 'target_platform': 'osx-109-x86_64',
                  'zip_keys': ['python', 'numpy']}
 
-    assert build_one in build_variants
-    assert build_two in build_variants
+    for build in build_variants:
+        if build['python'] == '2.7' and build['numpy'] == '1.11':
+            assert all(item in build.items() for item in build_one.items())
+        elif build['python'] == '3.6' and build['numpy'] == '1.12':
+            assert all(item in build.items() for item in build_two.items())
+
     assert len(build_variants) == 2
 
 
@@ -139,10 +143,12 @@ def test_get_build_plan(config_file):
              'pin_run_as_build': {'python': {'max_pin': 'x.x', 'min_pin': 'x.x'}},
              'platform': 'linux',
              'python': 2.7,
-             'r_base': '3.3.2',
-             'target_platform': 'osx-109-x86_64'}
+             'r_base': '3.3.2'}
 
-    assert build in build_variants
+    for build_variant in build_variants:
+        if build_variant['python'] == 2.7 and build_variant['numpy'] == 1.12:
+            assert all(item in build_variant.items() for item in build.items())
+
     assert len(build_variants) == 2
 
 
