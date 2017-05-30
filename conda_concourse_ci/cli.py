@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 
-from conda_concourse_ci import execute, __version__
+from conda_concourse_ci import execute, installer, __version__
 
 
 def parse_args(parse_this=None):
@@ -74,6 +74,11 @@ def parse_args(parse_this=None):
     consolidate_parser.add_argument("path", default='.', nargs='?',
                                     help=("path in which to consolidate packages.  Dumps to "
                                           "'packages/{subdir}' subfolder of this directory."))
+
+    build_parser = sp.add_parser('build', help='Create a C3i build installer.')
+    build_parser.add_argument('-c', '--config', help='Path to the conda_build_config.yaml file.')
+    build_parser.add_argument('-p', '--platform', help="Path to the build_platforms.d yaml file.")
+
     return parser.parse_args(parse_this)
 
 
@@ -96,6 +101,8 @@ def main(args=None):
         execute.compute_builds(**args.__dict__)
     elif args.subparser_name == 'consolidate':
         execute.consolidate_packages(**args.__dict__)
+    elif args.subparser_name == 'build':
+        installer.create_jobs(**args.__dict__)
     else:
         # this is here so that if future subcommands are added, you don't forget to add a bit
         #     here to enable them.
