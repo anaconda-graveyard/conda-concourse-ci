@@ -85,3 +85,11 @@ def test_logger_sets_debug_level(mocker):
 def test_bad_command_raises():
     with pytest.raises(SystemExit):
         cli.main([''])
+
+
+def test_build_subcommand(mocker):
+    mocker.patch.object(cli.installer, 'create_jobs')
+    args = ['build', '-p', 'linux']
+    cli.main(args)
+    cli.installer.create_jobs.assert_called_once_with(platform='linux', config=None,
+                                                      debug=False, subparser_name='build')
