@@ -78,6 +78,7 @@ def get_build_plan(path=DIR):
 
     return useful_builds
 
+
 def get_platform_file(path=DIR):
     """Retrieve the platform yaml file from build_platforms.d."""
     build_path = None
@@ -159,13 +160,7 @@ def get_installer_job(platform=PLATFORM, py_ver=PYTHON3, np_ver=NUMPY, bits=BITS
                                      'python setup.py develop\n'
                                      'cd ibuild\n'
                                      'python shar.py\n'
-                                     'mv Miniconda*-*.sh ${cwd}/installer\n'
-                                    ]
-                           }
-                    }
-               },
-            ]
-          }
+                                     'mv Miniconda*-*.sh ${cwd}/installer\n']}}}, ]}
 
     # add the upload task to the plan key's list to make uploads part of the job
     job['plan'].append(get_upload_task(remote_destination, keyfile_path))
