@@ -9,7 +9,7 @@ import tarfile
 
 import boto3
 import conda_build.api
-from conda_build.conda_interface import Resolve
+from conda_build.conda_interface import Resolve, TemporaryDirectory
 from conda_build.index import get_build_index
 import networkx as nx
 import yaml
@@ -151,27 +151,30 @@ def append_consolidate_package_tasks(tasks, graph, node, base_name, resources=No
     if not resources:
         resources = []
 
-    worker = graph.node[node]['worker']
-    subdir = "-".join([worker['platform'], str(worker['arch'])])
+    # TODO: what to do about empty nodes?
+    if graph.node[node]:
+        worker = graph.node[node]['worker']
+        subdir = "-".join([worker['platform'], str(worker['arch'])])
 
-    # relate this package to dependencies that have been built
-    for dep in graph.successors(node):
+        # relate this package to dependencies that have been built
+        for dep in graph.successors(node):
 
-        # recurse, so that we include dependencies of dependencies also
-        append_consolidate_package_tasks(tasks, graph, dep, base_name, resources=resources,
-                                         append_task=False)
+            # recurse, so that we include dependencies of dependencies also
+            append_consolidate_package_tasks(tasks, graph, dep, base_name, resources=resources,
+                                            append_task=False)
 
-        dep_meta = graph.node[dep]['meta']
-        worker = graph.node[dep]['worker']
-        pkg_version = '{0}-{1}'.format(dep_meta.version(), dep_meta.build_id())
-        resource_name = get_s3_resource_name(base_name, worker, dep_meta.name(), pkg_version)
-        if not any('get' in task and task['get'] == resource_name for task in tasks):
-            tasks.append({'get': resource_name,
-                          'trigger': True,
-                          'passed': [dep]})
-        resources.append(resource_name)
-    if append_task:
-        tasks.append(consolidate_packages_task(resources, subdir))
+            if graph.node[dep]:
+                dep_meta = graph.node[dep]['meta']
+                worker = graph.node[dep]['worker']
+                pkg_version = '{0}-{1}'.format(dep_meta.version(), dep_meta.build_id())
+                resource_name = get_s3_resource_name(base_name, worker, dep_meta.name(), pkg_version)
+                if not any('get' in task and task['get'] == resource_name for task in tasks):
+                    tasks.append({'get': resource_name,
+                                'trigger': True,
+                                'passed': [dep]})
+                resources.append(resource_name)
+        if append_task:
+            tasks.append(consolidate_packages_task(resources, subdir))
     return resources
 
 
@@ -273,7 +276,7 @@ def get_test_package_job(graph, node, base_name, public=True):
     resources = []
     append_consolidate_package_tasks(tasks, graph, node, base_name, resources)
 
-    for pkg in conda_build.api.get_output_file_path(meta):
+    for pkg in conda_build.api.get_output_file_paths(meta):
         subdir = os.path.basename(os.path.dirname(pkg))
         filename = os.path.basename(pkg)
 
@@ -312,7 +315,7 @@ def get_upload_job(graph, node, upload_config_path, config_vars, public=True):
              'trigger': True,
              'passed': [node.replace('upload', 'test')]}]
 
-    for package in conda_build.api.get_output_file_path(meta):
+    for package in conda_build.api.get_output_file_paths(meta):
         filename = os.path.basename(package)
         resource_types, resources, tasks = get_upload_tasks(s3_resource_name, filename,
                                                             upload_config_path,
@@ -358,54 +361,60 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
                                   config_vars)])
 
     for node in order:
-        meta = graph.node[node]['meta']
-        package_name = meta.name()
-        worker = graph.node[node]['worker']
-        # build jobs need to get the recipes from s3, extract them, and run a build task
-        #    same is true for test jobs that do not have a preceding test job.  These use the
-        #    recipe for determining which package to download from available channels.
-        if node.startswith('build'):
-            # need to define an s3 resource for each built package
-            pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
-            resource = _s3_resource(get_s3_resource_name(config_vars['base-name'],
-                                                         worker, package_name, pkg_version),
-                                    get_s3_package_regex(config_vars['base-name'],
-                                                         worker, package_name, pkg_version),
-                                    config_vars=config_vars)
-            if resource['name'] not in (r['name'] for r in resources):
-                resources.add(resource)
-            jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
-                                      version, public))
-
-        # test jobs need to get the package from either the temporary s3 store or test using the
-        #     recipe (download package from available channels) and run a test task
-        elif node.startswith('test'):
-            if node.replace('test', 'build') in graph.nodes():
-                # we build the package in this plan.  Get it from s3.
-                jobs.append(get_test_package_job(graph, node, config_vars['base-name'], public))
-            else:
-                # we are only testing this package in this plan.  Get it from configured channels.
-                jobs.append(get_test_recipe_job(base_path, graph, node, config_vars['base-name'],
-                                                version, public))
-
-        # as far as the graph is concerned, there's only one upload job.  However, this job can
-        # represent several upload tasks.  This take the job from the graph, and creates tasks
-        # appropriately.
-        #
-        # This is also more complicated, because uploads may involve other resource types and
-        # resources that are not used for build/test.  For example, the scp and commands uploads
-        # need to be able to access private keys, which are stored in the config uploads.d folder.
-        elif node.startswith('upload'):
-            upload_resource_types, upload_resources, job = get_upload_job(graph, node,
-                                                                          upload_config_path,
-                                                                          config_vars, public)
-            resource_types.update(upload_resource_types)
-            resources.update(upload_resources)
-            jobs.append(job)
-
+        if 'meta' not in graph.node[node]:
+            log.warn("Skipping {}, it has no metadata to work with")
         else:
-            raise NotImplementedError("Don't know how to handle task.  Currently, tasks must start "
-                                      "with 'build', 'test', or 'upload'")
+            meta = graph.node[node]['meta']
+            package_name = meta.name()
+            worker = graph.node[node]['worker']
+            # build jobs need to get the recipes from s3, extract them, and run a build task
+            #    same is true for test jobs that do not have a preceding test job.  These use the
+            #    recipe for determining which package to download from available channels.
+            if node.startswith('build'):
+                # need to define an s3 resource for each built package
+                pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
+                resource = _s3_resource(get_s3_resource_name(config_vars['base-name'],
+                                                            worker, package_name, pkg_version),
+                                        get_s3_package_regex(config_vars['base-name'],
+                                                            worker, package_name, pkg_version),
+                                        config_vars=config_vars)
+                if resource['name'] not in (r['name'] for r in resources):
+                    resources.add(resource)
+                jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
+                                        version, public))
+
+            # test jobs need to get the package from either the temporary s3 store or test using the
+            #     recipe (download package from available channels) and run a test task
+
+            # TODO: currently tests for things that have no build are broken and skipped
+
+            elif node.startswith('test'):
+                if node.replace('test', 'build') in graph.nodes():
+                    # we build the package in this plan.  Get it from s3.
+                    jobs.append(get_test_package_job(graph, node, config_vars['base-name'], public))
+                else:
+                    # we are only testing this package in this plan.  Get from configured channels.
+                    jobs.append(get_test_recipe_job(base_path, graph, node,
+                                                    config_vars['base-name'], version, public))
+
+            # as far as the graph is concerned, there's only one upload job.  However, this job can
+            # represent several upload tasks.  This take the job from the graph, and creates tasks
+            # appropriately.
+            #
+            # This is also more complicated, because uploads may involve other resource types and
+            # resources that are not used for build/test.  For example, the scp and commands uploads
+            # need to be able to access private keys, which are stored in config uploads.d folder.
+            elif node.startswith('upload'):
+                upload_resource_types, upload_resources, job = get_upload_job(graph, node,
+                                                                            upload_config_path,
+                                                                            config_vars, public)
+                resource_types.update(upload_resource_types)
+                resources.update(upload_resources)
+                jobs.append(job)
+
+            else:
+                raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
+                                          "start with 'build', 'test', or 'upload'")
 
     # convert types for smoother output to yaml
     upload_resource_types = [_resource_type_to_dict(t) for t in upload_resource_types]
@@ -448,8 +457,9 @@ def checkout_git_rev(checkout_rev, path):
         subprocess.check_call(['git', 'checkout', git_current_rev], cwd=path)
 
 
-def _archive_recipes(output_folder, recipe_root, recipe_folders, base_name, version):
+def _archive_recipes(output_folder, recipe_root, base_name, version):
     filename = 'recipes-{0}-{1}.tar.bz2'.format(base_name, version)
+    recipe_folders = os.listdir(recipe_root)
     with tarfile.TarFile(filename, 'w') as tar:
         for folder in recipe_folders:
             tar.add(os.path.join(recipe_root, folder), arcname=folder)
@@ -614,16 +624,30 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
         yaml.dump(plan, f, default_flow_style=False)
 
     # expand folders to include any dependency builds or tests
-    folders = set(folders)
     if not os.path.isabs(path):
         path = os.path.normpath(os.path.join(os.getcwd(), path))
-    for node in task_graph:
-        if node.split('-')[0] in ('build', 'test'):
-            base_folder = task_graph.node[node]['meta'].path.replace(path + '/', '')
-            if '/' in base_folder:
-                base_folder = os.path.split(base_folder)[0]
-            folders.add(base_folder)
-    _archive_recipes(output_folder, path, list(folders), base_name, version)
+    with TemporaryDirectory() as tmp:
+        for node in task_graph:
+            if node.split('-')[0] == 'build':
+                meta = task_graph.node[node]['meta']
+                if meta.path:
+                    recipe = meta.path
+                else:
+                    recipe = meta.get('extra', {}).get('parent_recipe', {})
+                assert recipe, ("no parent recipe set, and no path associated "
+                                        "with this metadata")
+                recipe = recipe.replace(path + '/', '')
+                # compensate for conda-forge style recipe layout
+                if '/' in recipe:
+                    recipe = os.path.dirname(recipe)
+                # copy base recipe into a folder named for this node
+                out_folder = os.path.join(tmp, node)
+                shutil.copytree(os.path.join(path, recipe), out_folder)
+                # write the conda_build_config.yaml for this particular metadata into that recipe
+                with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
+                    yaml.dump(meta.config.variant, f, default_flow_style=False)
+
+        _archive_recipes(output_folder, tmp, base_name, version)
 
 
 def _copy_yaml_if_not_there(path):
