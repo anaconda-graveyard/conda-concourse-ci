@@ -84,7 +84,8 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
         for platform in platforms:
             index_key = '-'.join([platform['platform'], str(platform['arch'])])
             config.channel_urls = get_upload_channels(upload_config_path, index_key)
-            conda_resolve = Resolve(get_build_index(config, subdir=index_key)[0])
+            conda_resolve = Resolve(get_build_index(subdir=index_key,
+                                                    bldpkgs_dir=config.bldpkgs_dir)[0])
             # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
                                 matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve)
