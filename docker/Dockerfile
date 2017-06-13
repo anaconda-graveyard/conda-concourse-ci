@@ -7,6 +7,7 @@ RUN mkdir -p bin && curl -L https://github.com/concourse/concourse/releases/down
 RUN echo "export PATH=$PATH:~/bin" >> ~/.bashrc
 RUN echo "add_pip_as_python_dependency: False" >> ~/.condarc
 RUN conda config --add channels msarahan
+RUN conda config --add channels rdonnelly
 RUN conda config --set anaconda_upload True
 
 ENTRYPOINT [ "/usr/bin/tini", "--" ]
