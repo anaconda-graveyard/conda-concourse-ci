@@ -9,7 +9,7 @@ import sys
 
 import networkx as nx
 from conda_build import api, conda_interface
-from conda_build.metadata import MetaData, find_recipe
+from conda_build.metadata import find_recipe
 
 
 log = logging.getLogger(__file__)
@@ -17,9 +17,23 @@ CONDA_BUILD_CACHE = os.environ.get("CONDA_BUILD_CACHE")
 hash_length = api.Config().hash_length
 
 
-def package_key(run, metadata, label):
+def package_key(run, metadata, worker_label):
     # get the build string from whatever conda-build makes of the configuration
-    return "-".join([run, metadata.name(), metadata.build_id(), label])
+    variables = metadata.get_loop_vars()
+    used_variables = set()
+    requirements = (metadata.get_value('requirements/build') +
+                    metadata.get_value('requirements/host') +
+                    metadata.get_value('requirements/run'))
+
+    for v in variables:
+        if v in requirements or any(req.startswith(v + ' ') for req in requirements):
+            used_variables.add(v)
+    build_vars = ''.join([k + str(metadata.config.variant[k]) for k in used_variables])
+    key = [run, metadata.name()]
+    if build_vars:
+        key.append(build_vars)
+    key.append(worker_label)
+    return "-".join(key)
 
 
 def _git_changed_files(git_rev, stop_rev=None, git_root=''):
@@ -111,7 +125,8 @@ def _get_or_render_metadata(meta_file_or_recipe_dir, worker):
     if (meta_file_or_recipe_dir, platform, arch) not in _rendered_recipes:
         print("rendering {0} for {1}-{2}".format(meta_file_or_recipe_dir, platform, arch))
         _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)] = \
-                            api.render(meta_file_or_recipe_dir, platform=platform, arch=arch)
+                            api.render(meta_file_or_recipe_dir, platform=platform, arch=arch,
+                                       verbose=False)
     return _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)]
 
 
@@ -123,8 +138,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         log.debug('invalid recipe dir: %s - skipping', recipe_dir)
         return None
 
-    metadata_tuples = rendered
-    for (metadata, _, _) in metadata_tuples:
+    for (metadata, _, _) in rendered:
         name = package_key(run, metadata, worker['label'])
 
         if metadata.skip():
@@ -166,6 +180,7 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
             git_rev = 'HEAD'
         folders = git_changed_recipes(git_rev, stop_rev=stop_rev,
                                       git_root=recipes_dir)
+
     graph = nx.DiGraph()
     for folder in folders:
         recipe_dir = os.path.join(recipes_dir, folder)
@@ -232,10 +247,16 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
     metadata = graph.node[node]['meta']
     deps = get_build_deps(metadata) if run == 'build' else get_run_test_deps(metadata)
     for dep, (version, build_str) in deps.items():
-        dummy_meta = MetaData.fromdict({
-            'package': {'name': dep,
-                        'version': version},
-            'build': {'string': build_str}})
+        dummy_meta = metadata.copy()
+        dummy_meta.meta = {'package': {'name': dep,
+                                       'version': version},
+                           'build': {'string': build_str}}
+        dummy_meta.meta_path = ''
+        dummy_meta.path = ''
+
+        # TODO: need to check if any dependency is another node in the graph.
+        #     If so, we need to add the appropriate edge, so that builds in this batch
+        #     all use the newest possible builds (use builds from this batch where possible)
 
         # we don't need worker info in _installable because it is already part of conda_resolve
         if not _installable(dep, version, build_str, dummy_meta.config, conda_resolve):
@@ -257,9 +278,9 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
             if not node_in_graph:
                 recipe_dir = _buildable(dummy_meta, version, worker, recipes_dir)
                 if not recipe_dir:
-                    raise ValueError("Dependency %s is not installable, and recipe (if "
-                                     " available) can't produce desired version (%s).",
-                                     dep, version)
+                    raise ValueError("Dependency {} is not installable, and recipe (if "
+                                     " available) can't produce desired version ({})."
+                                     .format(dep, version))
                 dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', worker,
                                                conda_resolve, recipes_dir)
                 if not dep_name:
@@ -268,7 +289,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
             else:
                 dep_name = node_in_graph[0].string
 
-            graph.add_edge(node, dep_name)
+            graph.add_edge(node, package_key('test', dummy_meta, worker['label']))
 
 
 def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
@@ -347,7 +368,7 @@ def order_build(graph):
     Relevant nodes selected in a breadth first traversal sourced at each pkg
     in packages.
     '''
-
+    reorder_cyclical_test_dependencies(graph)
     try:
         order = nx.topological_sort(graph, reverse=True)
     except nx.exception.NetworkXUnfeasible:
@@ -355,3 +376,42 @@ def order_build(graph):
                                                                        orientation='ignore'))
 
     return order
+
+
+def reorder_cyclical_test_dependencies(graph):
+    """By default, we make things that depend on earlier outputs for build wait for tests of
+    the earlier thing to pass.  However, circular dependencies spread across run/test and
+    build/host can make this approach incorrect. For example:
+
+    A <-- B  : B depends on A at build time
+    B <-- A  : A depends on B at run time.  We can build A before B, but we cannot test A until B
+               is built.
+
+    To resolve this, we must reorder the graph edges:
+
+    build A <-- test A <--> build B  <-- test B
+
+    must become:
+
+    build A  <-- build B <-- test A <-- test B
+    """
+    # find all test nodes with edges to build nodes
+    test_nodes = [node for node in graph.nodes() if node.startswith('test-')]
+    edges_from_test_to_build = [edge for edge in graph.edges() if edge[0] in test_nodes and
+                                edge[1].startswith('build-')]
+
+    # find any of their inverses.  Entries here are of the form (test-A, build-B)
+    circular_deps = [edge for edge in edges_from_test_to_build
+                     if (edge[1], edge[0]) in graph.edges()]
+
+    for (testA, buildB) in circular_deps:
+        # remove build B dependence on test A
+        graph.remove_edge(testA, buildB)
+        # remove test B dependence on build B
+        testB = buildB.replace('build-', 'test-', 1)
+        graph.remove_edge(buildB, testB)
+        # Add test B dependence on test A
+        graph.add_edge(testA, testB)
+        # make sure that test A still depends on build B
+        assert (buildB, testA) in graph.edges()
+    # graph is modified in place.  No return necessary.

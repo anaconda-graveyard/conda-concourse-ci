@@ -66,22 +66,22 @@ def testing_git_repo(testing_workdir, request):
 @pytest.fixture(scope='function')
 def testing_graph(request):
     g = nx.DiGraph()
-    a = render(os.path.join(graph_data_dir, 'a'))[0][0]
-    g.add_node('build-a-{}-linux'.format(a.build_id()), meta=a, env={}, worker=default_worker)
-    g.add_node('test-a-{}-linux'.format(a.build_id()), meta=a, env={}, worker=default_worker)
-    g.add_edge('test-a-{}-linux'.format(a.build_id()), 'build-a-{}-linux'.format(a.build_id()))
-    g.add_node('upload-a-{}-linux'.format(a.build_id()), meta=a, env={}, worker=default_worker)
-    g.add_edge('upload-a-{}-linux'.format(a.build_id()), 'test-a-{}-linux'.format(a.build_id()))
-    b = render(os.path.join(graph_data_dir, 'b'))[0][0]
-    g.add_node('build-b-{}-linux'.format(b.build_id()), meta=b, env={}, worker=default_worker)
-    g.add_edge('build-b-{}-linux'.format(b.build_id()), 'build-a-{}-linux'.format(a.build_id()))
-    g.add_node('test-b-{}-linux'.format(b.build_id()), meta=b, env={}, worker=default_worker)
-    g.add_edge('test-b-{}-linux'.format(b.build_id()), 'build-b-{}-linux'.format(b.build_id()))
-    g.add_node('upload-b-{}-linux'.format(b.build_id()), meta=b, env={}, worker=default_worker)
-    g.add_edge('upload-b-{}-linux'.format(b.build_id()), 'test-b-{}-linux'.format(b.build_id()))
-    c = render(os.path.join(graph_data_dir, 'c'))[0][0]
-    g.add_node('test-c-{}-linux'.format(c.build_id()), meta=c, env={}, worker=default_worker)
-    g.add_edge('test-c-{}-linux'.format(c.build_id()), 'test-b-{}-linux'.format(b.build_id()))
+    a = render(os.path.join(graph_data_dir, 'a'), finalize=False)[0][0]
+    g.add_node('build-a-linux', meta=a, env={}, worker=default_worker)
+    g.add_node('test-a-linux', meta=a, env={}, worker=default_worker)
+    g.add_edge('test-a-linux', 'build-a-linux')
+    g.add_node('upload-a-linux', meta=a, env={}, worker=default_worker)
+    g.add_edge('upload-a-linux', 'test-a-linux')
+    b = render(os.path.join(graph_data_dir, 'b'), finalize=False)[0][0]
+    g.add_node('build-b-linux', meta=b, env={}, worker=default_worker)
+    g.add_edge('build-b-linux', 'build-a-linux')
+    g.add_node('test-b-linux', meta=b, env={}, worker=default_worker)
+    g.add_edge('test-b-linux', 'build-b-linux')
+    g.add_node('upload-b-linux', meta=b, env={}, worker=default_worker)
+    g.add_edge('upload-b-linux', 'test-b-linux')
+    c = render(os.path.join(graph_data_dir, 'c'), finalize=False)[0][0]
+    g.add_node('test-c-linux', meta=c, env={}, worker=default_worker)
+    g.add_edge('test-c-linux', 'test-b-linux')
     return g
 
 
@@ -134,10 +134,13 @@ def testing_metadata(request):
     d['build']['string'] = None
     d['requirements']['build'] = ['build_requirement']
     d['requirements']['run'] = ['run_requirement  1.0']
+    d['requirements']['host'] = ['python']
     d['test']['requires'] = ['test_requirement']
     d['test']['commands'] = ['echo "A-OK"', 'exit 0']
     d['about']['home'] = "sweet home"
     d['about']['license'] = "contract in blood"
     d['about']['summary'] = "a test package"
-
-    return MetaData.fromdict(d)
+    m = MetaData.fromdict(d)
+    m.config.variant = {'python': '3.6', 'numpy': '1.11'}
+    m.config.variants = [{'python': '2.7', 'numpy': '1.11'}, {'python': '3.6', 'numpy': '1.11'}]
+    return m

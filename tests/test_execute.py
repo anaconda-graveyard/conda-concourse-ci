@@ -1,3 +1,4 @@
+import glob
 import os
 import subprocess
 
@@ -12,9 +13,6 @@ import pytest
 import yaml
 
 from .utils import test_data_dir, graph_data_dir, default_worker, test_config_dir
-
-a_hash = 'a-h0bb54af_0-linux'
-b_hash = 'b-hd248202_0-linux'
 
 
 def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
@@ -62,7 +60,7 @@ boilerplate_test_vars = {'base-name': 'steve',
 
 def test_get_build_job(testing_graph):
     job = execute.get_build_job(base_path=graph_data_dir, graph=testing_graph,
-                                node='build-' + b_hash, base_name="frank",
+                                node='build-b-linux', base_name="frank",
                                 recipe_archive_version="1.0.0")
     # download the recipe tarball
     assert job['plan'][0]['get'] == 's3-archive'
@@ -73,25 +71,25 @@ def test_get_build_job(testing_graph):
     assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
 
     # get upstream dependency
-    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-h0bb54af_0'
-    assert job['plan'][2]['passed'] == ['build-' + a_hash]
+    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
+    assert job['plan'][2]['passed'] == ['build-a-linux']
 
     # run the build
     assert job['plan'][-2]['config']['platform'] == 'linux'
     assert job['plan'][-2]['config']['inputs'] == [{'name': 'extracted-archive'},
                                                    {'name': 'packages'}]
-    assert job['plan'][-2]['config']['outputs'] == [{'name': 'build-' + b_hash}]
+    assert job['plan'][-2]['config']['outputs'] == [{'name': 'build-b-linux'}]
     assert job['plan'][-2]['config']['run']['args'][-1] == 'extracted-archive/b'
 
     # upload the built package to temporary s3 storage
+    # no hash because we haven't built a, and b is thus not finalizable
     assert job['plan'][-1]['put'] == "s3-frank-linux-b-1.0-hd248202_0"
-    assert job['plan'][-1]['params']['file'] == os.path.join("build-" + b_hash,
-                                                             subdir, "*.tar.bz2")
+    assert job['plan'][-1]['params']['file'] == os.path.join('build-b-linux', subdir, "*.tar.bz2")
 
 
 def test_get_test_recipe_job(testing_graph):
     job = execute.get_test_recipe_job(base_path=graph_data_dir, graph=testing_graph,
-                                      node='test-' + b_hash, base_name="frank",
+                                      node='test-b-linux', base_name="frank",
                                       recipe_archive_version="1.0.0")
     # download the recipe tarball
     assert job['plan'][0]['get'] == 's3-archive'
@@ -102,10 +100,10 @@ def test_get_test_recipe_job(testing_graph):
     assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
 
     # get upstream dependency
-    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-h0bb54af_0'
-    assert job['plan'][2]['passed'] == ['build-' + a_hash]
+    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
+    assert job['plan'][2]['passed'] == ['build-a-linux']
     assert job['plan'][3]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
-    assert job['plan'][3]['passed'] == ['build-' + b_hash]
+    assert job['plan'][3]['passed'] == ['build-b-linux']
 
     # run the test
     assert job['plan'][-1]['config']['platform'] == 'linux'
@@ -116,18 +114,18 @@ def test_get_test_recipe_job(testing_graph):
 
 
 def test_get_test_package_job(testing_graph):
-    job = execute.get_test_package_job(graph=testing_graph, node='test-' + b_hash,
+    job = execute.get_test_package_job(graph=testing_graph, node='test-b-linux',
                                        base_name="frank")
     # download the package tarball
     assert job['plan'][0]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
-    assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-h0bb54af_0'
-    assert job['plan'][1]['passed'] == ['build-a-h0bb54af_0-linux']
+    assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
+    assert job['plan'][1]['passed'] == ['build-a-linux']
 
     # run the test
     assert job['plan'][-1]['config']['platform'] == 'linux'
     assert job['plan'][-1]['config']['inputs'] == [{'name': 's3-frank-linux-b-1.0-hd248202_0'},
                                                    {'name': 'packages'}]
-    output_pkg = api.get_output_file_path(testing_graph.node['test-b-hd248202_0-linux']['meta'])[0]
+    output_pkg = api.get_output_file_paths(testing_graph.node['test-b-linux']['meta'])[0]
     output_pkg = os.path.basename(output_pkg)
     assert job['plan'][-1]['config']['run']['args'][-1] == os.path.join(
         "packages", subdir, output_pkg)
@@ -148,14 +146,14 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert len(plan_dict['jobs']) == 7
     assert plan_dict['resources'][0]['source']['regexp'] in (
         'recipes-test-1.0.0.tar.bz(.*)',
-        os.path.join("s3-test-linux-a-1.0-h0bb54af_0", 'linux-64', "a-1.0-h0bb54af_0.tar.bz(.*)"),
+        os.path.join("s3-test-linux-a-1.0-hbf21a9e_0", 'linux-64', "a-1.0-hbf21a9e_0.tar.bz(.*)"),
         os.path.join("s3-test-linux-b-1.0-hd248202_0", 'linux-64', "b-1.0-hd248202_0.tar.bz(.*)"))
 
 
 def test_get_upload_job(mocker, testing_graph):
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
         config_vars = yaml.load(f)
-    types, resources, job = execute.get_upload_job(testing_graph, 'build-' + b_hash,
+    types, resources, job = execute.get_upload_job(testing_graph, 'build-b-linux',
                                                    os.path.join(test_config_dir, 'uploads.d'),
                                                    config_vars)
     assert len(types) == 1
@@ -205,11 +203,12 @@ def test_consolidate_packages(testing_workdir, testing_metadata):
     testing_metadata.config.croot = testing_workdir
     testing_metadata.config.anaconda_upload = False
     api.build(testing_metadata)
-    assert os.path.isfile(os.path.join(testing_workdir, subdir,
-                                       'test_consolidate_packages-1.0-h0bb54af_1.tar.bz2'))
+    pkgs = glob.glob(os.path.join(testing_workdir, subdir, '*.tar.bz2'))
+    assert len(pkgs) > 0
     execute.consolidate_packages(testing_workdir, subdir)
-    assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir,
-                                       'test_consolidate_packages-1.0-h0bb54af_1.tar.bz2'))
+    for pkg in pkgs:
+        assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir,
+                                           os.path.basename(pkg)))
     assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json'))
     assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json.bz2'))
 
@@ -232,7 +231,7 @@ def test_archive_recipes(testing_workdir, monkeypatch):
     with open(os.path.join('output', 'recipes-steve-1.0.tar.bz2'), 'w') as f:
         f.write('dummy')
     monkeypatch.chdir(os.path.join(testing_workdir, 'recipes'))
-    execute._archive_recipes('../output', '.', ['abc'], 'steve', '1.0')
+    execute._archive_recipes('../output', '.', 'steve', '1.0')
     assert os.path.isfile(os.path.join('../output', 'recipes-steve-1.0.tar.bz2'))
 
 
