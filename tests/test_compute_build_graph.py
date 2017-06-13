@@ -1,6 +1,7 @@
 import os
 
 from conda_build import api
+from conda_build.metadata import MetaData
 import networkx as nx
 import pytest
 
@@ -44,6 +45,8 @@ def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
                                   ('test-test_dir_2-linux', 'build-test_dir_2-linux'),
                                   ('test-test_dir_3-linux', 'build-test_dir_3-linux'),
                                   ('test-test_dir_1-linux', 'build-test_dir_1-linux'),
+                                  ('test-test_dir_1-linux', 'build-test_dir_2-linux'),
+                                  ('test-test_dir_2-linux', 'build-test_dir_3-linux'),
                                   ('upload-test_dir_2-linux', 'test-test_dir_2-linux'),
                                   ('upload-test_dir_3-linux', 'test-test_dir_3-linux'),
                                   ('upload-test_dir_1-linux', 'test-test_dir_1-linux')])
@@ -91,6 +94,10 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
             ('test-c-linux', 'build-c-linux'),
             ('test-d-linux', 'build-d-linux'),
             ('test-e-linux', 'build-e-linux'),
+            # intradependency ordering additions
+            ('test-a-linux', 'build-b-linux'),
+            ('test-b-linux', 'build-c-linux'),
+            ('test-c-linux', 'build-d-linux'),
             # uploads for the builds
             ('upload-a-linux', 'test-a-linux'),
             ('upload-b-linux', 'test-b-linux'),
@@ -118,6 +125,10 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
             ('test-c-linux', 'build-c-linux'),
             ('test-d-linux', 'build-d-linux'),
             ('test-e-linux', 'build-e-linux'),
+            # intradependency ordering additions
+            ('test-b-linux', 'build-c-linux'),
+            ('test-a-linux', 'build-b-linux'),
+            ('test-c-linux', 'build-d-linux'),
             # uploads for the builds
             ('upload-a-linux', 'test-a-linux'),
             ('upload-b-linux', 'test-b-linux'),
@@ -420,3 +431,20 @@ def test_resolve_cyclical_build_test_dependency():
     assert not ('build-b', 'test-b') in g.edges()
     assert ('test-a', 'test-b') in g.edges()
     assert ('build-b', 'test-a') in g.edges()
+
+
+def test_add_intradependencies():
+    a_meta = MetaData.fromdict({'package': {'name': 'a', 'version': '1.0'}})
+    b_meta = MetaData.fromdict({'package': {'name': 'b', 'version': '1.0'},
+                                'requirements': {'build': ['a']}})
+    g = nx.DiGraph()
+    g.add_node('build-a', meta=a_meta)
+    g.add_node('build-b', meta=b_meta)
+    g.add_node('test-a', meta=a_meta)
+    g.add_node('test-b', meta=b_meta)
+    # normal test after build dependencies
+    g.add_edge('build-a', 'test-a')
+    # normal test after build dependencies
+    g.add_edge('build-b', 'test-b')
+    compute_build_graph.add_intradependencies(g)
+    assert ('test-a', 'build-b') in g.edges()

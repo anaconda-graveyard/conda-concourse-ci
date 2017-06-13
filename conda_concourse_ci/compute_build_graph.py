@@ -161,6 +161,28 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
     return name
 
 
+def add_intradependencies(graph):
+    """ensure that downstream packages wait for upstream build/test (not use existing
+    available packages)"""
+    for node in graph.nodes():
+        if node.startswith('build'):
+            # get build dependencies
+            m = graph.node[node]['meta']
+            # this is pretty hard. Realistically, we would want to know
+            # what the build and host platforms are on the build machine.
+            # However, all we know right now is what machine we're actually
+            # on (the one calculating the graph).
+            deps = (m.ms_depends('build') + m.ms_depends('host'))
+
+            for dep in deps:
+                # are any of these build dependencies also nodes in our graph?
+                dep_test_node = node.replace('build-', 'test-', 1)
+                dep_test_node = dep_test_node.replace(m.name(), dep.name, 1)
+                if dep_test_node in graph.nodes() and (dep_test_node, node) not in graph.edges():
+                    # add edges if they don't already exist
+                    graph.add_edge(dep_test_node, node)
+
+
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
                     git_rev=None, stop_rev=None, matrix_base_dir=None):
     '''
@@ -186,6 +208,7 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
         recipe_dir = os.path.join(recipes_dir, folder)
         add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                             recipes_dir)
+    add_intradependencies(graph)
     return graph
 
 
