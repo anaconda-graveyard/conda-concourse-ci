@@ -197,9 +197,13 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
 
     build_args = ['--no-test', '--no-anaconda-upload', '--output-folder', node,
                   '-c', 'packages']
+    recipe_path = os.path.join('extracted-archive', recipe_folder_name)
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
-    build_args.append(os.path.join('extracted-archive', recipe_folder_name))
+    # use the conda_build_config.yaml that we store with the recipe
+    build_args.extend(['-m', os.path.join(recipe_path, 'conda_build_config.yaml')])
+    # this is the recipe path to build
+    build_args.append(recipe_path)
 
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
@@ -632,12 +636,13 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
         for node in task_graph:
             if node.split('-')[0] == 'build':
                 meta = task_graph.node[node]['meta']
-                if meta.path:
-                    recipe = meta.path
+                if meta.meta_path:
+                    recipe = os.path.dirname(meta.meta_path)
                 else:
                     recipe = meta.get('extra', {}).get('parent_recipe', {})
                 assert recipe, ("no parent recipe set, and no path associated "
                                         "with this metadata")
+                # make recipe path relative
                 recipe = recipe.replace(path + '/', '')
                 # compensate for conda-forge style recipe layout
                 if '/' in recipe:
@@ -646,6 +651,7 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
                 out_folder = os.path.join(tmp, node)
                 shutil.copytree(os.path.join(path, recipe), out_folder)
                 # write the conda_build_config.yaml for this particular metadata into that recipe
+                #   This should sit alongside meta.yaml, where conda-build will be able to find it
                 with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
                     yaml.dump(meta.config.variant, f, default_flow_style=False)
 
