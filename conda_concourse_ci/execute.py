@@ -167,7 +167,8 @@ def append_consolidate_package_tasks(tasks, graph, node, base_name, resources=No
                 dep_meta = graph.node[dep]['meta']
                 worker = graph.node[dep]['worker']
                 pkg_version = '{0}-{1}'.format(dep_meta.version(), dep_meta.build_id())
-                resource_name = get_s3_resource_name(base_name, worker, dep_meta.name(), pkg_version)
+                resource_name = get_s3_resource_name(base_name, worker, dep_meta.name(),
+                                                     pkg_version)
                 if not any('get' in task and task['get'] == resource_name for task in tasks):
                     tasks.append({'get': resource_name,
                                 'trigger': True,

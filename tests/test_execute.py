@@ -83,7 +83,7 @@ def test_get_build_job(testing_graph):
 
     # upload the built package to temporary s3 storage
     # no hash because we haven't built a, and b is thus not finalizable
-    assert job['plan'][-1]['put'] == "s3-frank-linux-b-1.0-0"
+    assert job['plan'][-1]['put'] == "s3-frank-linux-b-1.0-hd248202_0"
     assert job['plan'][-1]['params']['file'] == os.path.join('build-b-linux', subdir, "*.tar.bz2")
 
 
@@ -102,8 +102,7 @@ def test_get_test_recipe_job(testing_graph):
     # get upstream dependency
     assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
     assert job['plan'][2]['passed'] == ['build-a-linux']
-    # no hash because we haven't built a, and b is thus not finalizable
-    assert job['plan'][3]['get'] == 's3-frank-linux-b-1.0-0'
+    assert job['plan'][3]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
     assert job['plan'][3]['passed'] == ['build-b-linux']
 
     # run the test
@@ -118,13 +117,13 @@ def test_get_test_package_job(testing_graph):
     job = execute.get_test_package_job(graph=testing_graph, node='test-b-linux',
                                        base_name="frank")
     # download the package tarball
-    assert job['plan'][0]['get'] == 's3-frank-linux-b-1.0-0'
+    assert job['plan'][0]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
     assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
     assert job['plan'][1]['passed'] == ['build-a-linux']
 
     # run the test
     assert job['plan'][-1]['config']['platform'] == 'linux'
-    assert job['plan'][-1]['config']['inputs'] == [{'name': 's3-frank-linux-b-1.0-0'},
+    assert job['plan'][-1]['config']['inputs'] == [{'name': 's3-frank-linux-b-1.0-hd248202_0'},
                                                    {'name': 'packages'}]
     output_pkg = api.get_output_file_paths(testing_graph.node['test-b-linux']['meta'])[0]
     output_pkg = os.path.basename(output_pkg)
@@ -148,7 +147,7 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert plan_dict['resources'][0]['source']['regexp'] in (
         'recipes-test-1.0.0.tar.bz(.*)',
         os.path.join("s3-test-linux-a-1.0-hbf21a9e_0", 'linux-64', "a-1.0-hbf21a9e_0.tar.bz(.*)"),
-        os.path.join("s3-test-linux-b-1.0-h6071067_0", 'linux-64', "b-1.0-h6071067_0.tar.bz(.*)"))
+        os.path.join("s3-test-linux-b-1.0-hd248202_0", 'linux-64', "b-1.0-hd248202_0.tar.bz(.*)"))
 
 
 def test_get_upload_job(mocker, testing_graph):
