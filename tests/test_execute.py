@@ -8,6 +8,7 @@ from conda_concourse_ci.utils import HashableDict
 
 from conda_build import api
 from conda_build.conda_interface import subdir
+from conda_build.utils import package_has_file, copy_into
 import networkx as nx
 import pytest
 import yaml
@@ -226,22 +227,43 @@ def test_archive_recipes(testing_workdir, monkeypatch):
     os.makedirs(os.path.join(testing_workdir, 'recipes', 'abc'))
     with open(os.path.join('recipes', 'abc', 'meta.yaml'), 'w') as f:
         f.write('wee')
+    copy_into(os.path.join(test_data_dir, 'conda_forge_style_recipe'), testing_workdir)
     os.makedirs('output')
     # ensures that we test removal of any existing file
     with open(os.path.join('output', 'recipes-steve-1.0.tar.bz2'), 'w') as f:
         f.write('dummy')
     monkeypatch.chdir(os.path.join(testing_workdir, 'recipes'))
     execute._archive_recipes('../output', '.', 'steve', '1.0')
-    assert os.path.isfile(os.path.join('../output', 'recipes-steve-1.0.tar.bz2'))
+    package_path = os.path.join('../output', 'recipes-steve-1.0.tar.bz2')
+    assert os.path.isfile(package_path)
 
 
-def test_compute_builds(testing_workdir, mocker, testing_graph, monkeypatch):
-    collect_tasks = mocker.patch.object(execute, 'collect_tasks')
-    collect_tasks.return_value = testing_graph
-    monkeypatch.chdir(graph_data_dir)
-    execute.compute_builds('.', 'config-name', 'master', folders=['a'],
-                           matrix_base_dir=os.path.join(test_data_dir, 'config-test'))
+def test_compute_builds(testing_workdir, monkeypatch):
+    monkeypatch.chdir(test_data_dir)
+    execute.compute_builds('.', 'config-name', 'master',
+                           folders=['python_test', 'conda_forge_style_recipe'],
+                           matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'))
     assert os.path.isdir('../output')
     files = os.listdir('../output')
     assert 'plan.yml' in files
     assert 'recipes-config-name-1.0.0.tar.bz2' in files
+    tar = '../output/recipes-config-name-1.0.0.tar.bz2'
+
+    # for debugging on remote servers
+    from tarfile import TarFile
+    f = TarFile.open(tar)
+    flist = f.getnames()
+    f.extractall()
+    os.listdir('.')
+    f.close()
+
+    assert package_has_file(tar, os.path.join('build-frank-centos5-64', 'meta.yaml'))
+    assert package_has_file(tar, os.path.join('build-frank-centos5-64/', 'conda_build_config.yaml'))
+    assert package_has_file(tar, os.path.join('build-dummy_conda_forge_test-centos5-64',
+                                              'meta.yaml')), flist
+    cfg = package_has_file(tar, os.path.join('build-dummy_conda_forge_test-centos5-64/',
+                                              'conda_build_config.yaml')), flist
+    assert cfg is not None
+    if hasattr(cfg, 'decode'):
+        cfg = cfg.decode()
+    assert "HashableDict" not in cfg

@@ -1,0 +1,17 @@
+aws-bucket: your-bucket
+aws-key-id: your-key
+aws-secret-key: your-secret
+aws-region-name: your-region
+concourse-url: your-server
+concourse-team: your-team
+concourse-username: your-user
+concourse-password: your-user
+recipe-repo: your-repo
+# TODO: these need to be dynamically definable based on PR info
+recipe-repo-commit: master
+base-name: test
+config-folder: config-test
+config-folder-star: config-test/*
+tarball-glob: output/recipes-test-*.tar.bz2
+tarball-regex: recipes-test-(.*).tar.bz2
+version-file: version-test

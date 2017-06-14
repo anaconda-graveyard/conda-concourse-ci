@@ -2,11 +2,7 @@ import os
 import six
 import yaml
 
-
-class HashableDict(dict):
-    """use hashable frozen dictionaries for signatures of packages"""
-    def __hash__(self):
-        return hash(frozenset(self))
+from conda_build.utils import HashableDict  # NOQA
 
 
 def ensure_list(arg):
