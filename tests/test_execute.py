@@ -75,6 +75,9 @@ def test_get_build_job(testing_graph):
     assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
     assert job['plan'][2]['passed'] == ['build-a-linux']
 
+    assert job['plan'][3]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
+    assert job['plan'][3]['passed'] == ['test-a-linux']
+
     # run the build
     assert job['plan'][-2]['config']['platform'] == 'linux'
     assert job['plan'][-2]['config']['inputs'] == [{'name': 'extracted-archive'},
@@ -267,3 +270,23 @@ def test_compute_builds(testing_workdir, monkeypatch):
     if hasattr(cfg, 'decode'):
         cfg = cfg.decode()
     assert "HashableDict" not in cfg
+
+
+def test_compute_builds_intradependencies(testing_workdir, monkeypatch):
+    """When we build stuff, and upstream dependencies are part of the batch, but they're
+    also already installable, then we do extra work to make sure that we order our build
+    so that downstream builds depend on upstream builds (and don't directly use the
+    already-available packages.)"""
+    monkeypatch.chdir(os.path.join(test_data_dir, 'intradependencies'))
+    execute.compute_builds('.', 'config-name', 'master',
+                           folders=['zlib', 'uses_zlib'],
+                           matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'))
+    assert os.path.isdir('../output')
+    files = os.listdir('../output')
+    assert 'plan.yml' in files
+    with open('../output/plan.yml') as f:
+        plan = yaml.load(f)
+
+    uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'build-uses_zlib-centos5-64'][0]
+    assert any(task.get('get') == 's3-test-centos5-64-zlib-1.2.8-he64c481_0'
+               for task in uses_zlib_job['plan'])

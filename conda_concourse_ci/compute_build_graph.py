@@ -180,7 +180,7 @@ def add_intradependencies(graph):
                 dep_test_node = dep_test_node.replace(m.name(), dep.name, 1)
                 if dep_test_node in graph.nodes() and (dep_test_node, node) not in graph.edges():
                     # add edges if they don't already exist
-                    graph.add_edge(dep_test_node, node)
+                    graph.add_edge(node, dep_test_node)
 
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
