@@ -166,7 +166,6 @@ def append_consolidate_package_tasks(tasks, graph, node, base_name, resources=No
             # recurse, so that we include dependencies of dependencies also
             append_consolidate_package_tasks(tasks, graph, dep, base_name, resources=resources,
                                             append_task=False)
-
             if graph.node[dep]:
                 dep_meta = graph.node[dep]['meta']
                 worker = graph.node[dep]['worker']
@@ -183,11 +182,26 @@ def append_consolidate_package_tasks(tasks, graph, node, base_name, resources=No
     return resources
 
 
+def add_dependency_edge_tasks(graph, node, base_name):
+    worker = graph.node[node]['worker']
+    dependency_tasks = []
+    for dep in graph.successors(node):
+        meta = graph.node[dep]['meta']
+        pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
+        s3_resource_name = get_s3_resource_name(base_name, worker, meta.name(), pkg_version)
+        dependency_tasks.append({'get': s3_resource_name,
+                                 'trigger': True,
+                                 'passed': [dep]})
+    return dependency_tasks
+
+
 def get_build_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
     # we append each individual s3 resource in the graph successors loop below
     tasks = [{'get': 's3-archive',
               'trigger': True},
              _extract_task(base_name, recipe_archive_version)]
+    tasks.extend(add_dependency_edge_tasks(graph, node, base_name))
+
     meta = graph.node[node]['meta']
     recipe_folder_name = meta.meta_path.replace(base_path, '')
     if '\\' in recipe_folder_name or '/' in recipe_folder_name:
@@ -269,6 +283,7 @@ def get_test_recipe_job(base_path, graph, node, base_name, recipe_archive_versio
 
 
 def get_test_package_job(graph, node, base_name, public=True):
+    # this is for packages that we build elsewhere in the batch
     meta = graph.node[node]['meta']
     worker = graph.node[node]['worker']
     pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
@@ -276,6 +291,7 @@ def get_test_package_job(graph, node, base_name, public=True):
     tasks = [{'get': s3_resource_name,
               'trigger': True,
               'passed': [node.replace('test', 'build')]}]
+    tasks.extend(add_dependency_edge_tasks(graph, node, base_name))
 
     inputs = [{'name': s3_resource_name}, {'name': 'packages'}]
 
