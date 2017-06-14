@@ -21,6 +21,9 @@ from .utils import HashableDict, load_yaml_config_dir
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
 
+# get rid of the special object notation in the yaml file for HashableDict instances that we dump
+yaml.add_representer(HashableDict, yaml.representer.SafeRepresenter.represent_dict)
+
 
 def _s3_resource(s3_name, regexp, config_vars):
     return HashableDict(name=s3_name,
@@ -200,8 +203,6 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
     recipe_path = os.path.join('extracted-archive', recipe_folder_name)
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
-    # use the conda_build_config.yaml that we store with the recipe
-    build_args.extend(['-m', os.path.join(recipe_path, 'conda_build_config.yaml')])
     # this is the recipe path to build
     build_args.append(recipe_path)
 
@@ -644,9 +645,6 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
                                         "with this metadata")
                 # make recipe path relative
                 recipe = recipe.replace(path + '/', '')
-                # compensate for conda-forge style recipe layout
-                if '/' in recipe:
-                    recipe = os.path.dirname(recipe)
                 # copy base recipe into a folder named for this node
                 out_folder = os.path.join(tmp, node)
                 shutil.copytree(os.path.join(path, recipe), out_folder)
