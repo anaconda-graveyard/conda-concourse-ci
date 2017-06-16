@@ -162,21 +162,24 @@ def append_consolidate_package_tasks(tasks, graph, node, base_name, resources=No
 
         # relate this package to dependencies that have been built
         for dep in graph.successors(node):
+            # recurse, so that we include dependencies of dependencies also.  Only for test runs.
+            #    test runs are our fundamental level of trust of a package, and all test runs
+            #    depend on build (or otherwise having the package)
+            if dep.startswith('test-'):
+                append_consolidate_package_tasks(tasks, graph, dep, base_name, resources=resources,
+                                                append_task=False)
 
-            # recurse, so that we include dependencies of dependencies also
-            append_consolidate_package_tasks(tasks, graph, dep, base_name, resources=resources,
-                                            append_task=False)
-            if graph.node[dep]:
-                dep_meta = graph.node[dep]['meta']
-                worker = graph.node[dep]['worker']
-                pkg_version = '{0}-{1}'.format(dep_meta.version(), dep_meta.build_id())
-                resource_name = get_s3_resource_name(base_name, worker, dep_meta.name(),
-                                                     pkg_version)
-                if not any('get' in task and task['get'] == resource_name for task in tasks):
-                    tasks.append({'get': resource_name,
-                                'trigger': True,
-                                'passed': [dep]})
-                resources.append(resource_name)
+                if graph.node[dep]:
+                    dep_meta = graph.node[dep]['meta']
+                    worker = graph.node[dep]['worker']
+                    pkg_version = '{0}-{1}'.format(dep_meta.version(), dep_meta.build_id())
+                    resource_name = get_s3_resource_name(base_name, worker, dep_meta.name(),
+                                                        pkg_version)
+                    if not any('get' in task and task['get'] == resource_name for task in tasks):
+                        tasks.append({'get': resource_name,
+                                    'trigger': True,
+                                    'passed': [dep]})
+                    resources.append(resource_name)
         if append_task:
             tasks.append(consolidate_packages_task(resources, subdir))
     return resources

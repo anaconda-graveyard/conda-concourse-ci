@@ -73,7 +73,7 @@ def test_get_build_job(testing_graph):
 
     # get upstream dependency
     assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
-    assert job['plan'][2]['passed'] == ['build-a-linux']
+    assert job['plan'][2]['passed'] == ['test-a-linux']
 
     assert job['plan'][3]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
     assert job['plan'][3]['passed'] == ['test-a-linux']
@@ -92,6 +92,7 @@ def test_get_build_job(testing_graph):
 
 
 def test_get_test_recipe_job(testing_graph):
+    """Test something that already exists.  Note that this is not building any dependencies."""
     job = execute.get_test_recipe_job(base_path=graph_data_dir, graph=testing_graph,
                                       node='test-b-linux', base_name="frank",
                                       recipe_archive_version="1.0.0")
@@ -102,12 +103,6 @@ def test_get_test_recipe_job(testing_graph):
     assert job['plan'][1]['config']['inputs'] == [{'name': 's3-archive'}]
     assert job['plan'][1]['config']['run']['path'] == 'tar'
     assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
-
-    # get upstream dependency
-    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
-    assert job['plan'][2]['passed'] == ['build-a-linux']
-    assert job['plan'][3]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
-    assert job['plan'][3]['passed'] == ['build-b-linux']
 
     # run the test
     assert job['plan'][-1]['config']['platform'] == 'linux'
@@ -122,8 +117,7 @@ def test_get_test_package_job(testing_graph):
                                        base_name="frank")
     # download the package tarball
     assert job['plan'][0]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
-    assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
-    assert job['plan'][1]['passed'] == ['build-a-linux']
+    assert job['plan'][0]['passed'] == ['build-b-linux']
 
     # run the test
     assert job['plan'][-1]['config']['platform'] == 'linux'

@@ -74,11 +74,12 @@ def testing_graph(request):
     g.add_edge('upload-a-linux', 'test-a-linux')
     b = render(os.path.join(graph_data_dir, 'b'), finalize=False)[0][0]
     g.add_node('build-b-linux', meta=b, env={}, worker=default_worker)
-    g.add_edge('build-b-linux', 'build-a-linux')
+    g.add_edge('build-b-linux', 'test-a-linux')
     g.add_node('test-b-linux', meta=b, env={}, worker=default_worker)
     g.add_edge('test-b-linux', 'build-b-linux')
     g.add_node('upload-b-linux', meta=b, env={}, worker=default_worker)
     g.add_edge('upload-b-linux', 'test-b-linux')
+    # semi-detached recipe (test-only, does not have a build part)
     c = render(os.path.join(graph_data_dir, 'c'), finalize=False)[0][0]
     g.add_node('test-c-linux', meta=c, env={}, worker=default_worker)
     g.add_edge('test-c-linux', 'test-b-linux')

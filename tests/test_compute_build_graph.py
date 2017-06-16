@@ -45,8 +45,6 @@ def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
                                   ('test-test_dir_2-linux', 'build-test_dir_2-linux'),
                                   ('test-test_dir_3-linux', 'build-test_dir_3-linux'),
                                   ('test-test_dir_1-linux', 'build-test_dir_1-linux'),
-                                  ('test-test_dir_1-linux', 'build-test_dir_2-linux'),
-                                  ('test-test_dir_2-linux', 'build-test_dir_3-linux'),
                                   ('upload-test_dir_2-linux', 'test-test_dir_2-linux'),
                                   ('upload-test_dir_3-linux', 'test-test_dir_3-linux'),
                                   ('upload-test_dir_1-linux', 'test-test_dir_1-linux')])
@@ -81,6 +79,7 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
                                             folders=('a', 'b', 'c', 'd', 'e'),
                                             run='test', matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
+    # left depends on right
     deps = {('build-b-linux', 'test-a-linux'),
             ('build-c-linux', 'test-b-linux'),
             ('build-d-linux', 'test-c-linux'),
@@ -94,10 +93,6 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
             ('test-c-linux', 'build-c-linux'),
             ('test-d-linux', 'build-d-linux'),
             ('test-e-linux', 'build-e-linux'),
-            # intradependency ordering additions
-            ('test-a-linux', 'build-b-linux'),
-            ('test-b-linux', 'build-c-linux'),
-            ('test-c-linux', 'build-d-linux'),
             # uploads for the builds
             ('upload-a-linux', 'test-a-linux'),
             ('upload-b-linux', 'test-b-linux'),
@@ -111,6 +106,7 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
     g = compute_build_graph.construct_graph(graph_data_dir, worker, folders=('a'),
                                             run='test', matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
+    # left depends on right
     deps = {('build-b-linux', 'test-a-linux'),
             ('build-c-linux', 'test-b-linux'),
             ('build-d-linux', 'test-c-linux'),
@@ -125,10 +121,6 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
             ('test-c-linux', 'build-c-linux'),
             ('test-d-linux', 'build-d-linux'),
             ('test-e-linux', 'build-e-linux'),
-            # intradependency ordering additions
-            ('test-b-linux', 'build-c-linux'),
-            ('test-a-linux', 'build-b-linux'),
-            ('test-c-linux', 'build-d-linux'),
             # uploads for the builds
             ('upload-a-linux', 'test-a-linux'),
             ('upload-b-linux', 'test-b-linux'),
@@ -447,4 +439,4 @@ def test_add_intradependencies():
     # normal test after build dependencies
     g.add_edge('build-b', 'test-b')
     compute_build_graph.add_intradependencies(g)
-    assert ('test-a', 'build-b') in g.edges()
+    assert ('build-b', 'test-a') in g.edges()
