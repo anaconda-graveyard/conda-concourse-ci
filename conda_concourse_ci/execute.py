@@ -195,12 +195,22 @@ def add_dependency_edge_tasks(graph, node, base_name):
     return dependency_tasks
 
 
+def deduplicate_tasks(tasks):
+    """Concourse does not allow tasks with similar names"""
+    task_list = []
+    for task in tasks:
+        if task not in task_list:
+            task_list.append(task)
+    return task_list
+
+
 def get_build_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
     # we append each individual s3 resource in the graph successors loop below
     tasks = [{'get': 's3-archive',
               'trigger': True},
              _extract_task(base_name, recipe_archive_version)]
     tasks.extend(add_dependency_edge_tasks(graph, node, base_name))
+    tasks = deduplicate_tasks(tasks)
 
     meta = graph.node[node]['meta']
     recipe_folder_name = meta.meta_path.replace(base_path, '')
@@ -292,6 +302,7 @@ def get_test_package_job(graph, node, base_name, public=True):
               'trigger': True,
               'passed': [node.replace('test', 'build')]}]
     tasks.extend(add_dependency_edge_tasks(graph, node, base_name))
+    tasks = deduplicate_tasks(tasks)
 
     inputs = [{'name': s3_resource_name}, {'name': 'packages'}]
 
