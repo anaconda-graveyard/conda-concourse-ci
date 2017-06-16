@@ -1,0 +1,9 @@
+# this is a dummy package to make sure that we correctly create the build tree
+
+package:
+  name: zlib
+  version: 1.2.8
+
+build:
+  # we never want this package to accidentally make it to anyone's channel
+  script: exit 1

@@ -1,0 +1,7 @@
+package:
+  name: uses_zlib
+  version: 1.0
+
+requirements:
+  build:
+    - zlib
