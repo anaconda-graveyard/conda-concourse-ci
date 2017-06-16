@@ -75,9 +75,6 @@ def test_get_build_job(testing_graph):
     assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
     assert job['plan'][2]['passed'] == ['test-a-linux']
 
-    assert job['plan'][3]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
-    assert job['plan'][3]['passed'] == ['test-a-linux']
-
     # run the build
     assert job['plan'][-2]['config']['platform'] == 'linux'
     assert job['plan'][-2]['config']['inputs'] == [{'name': 'extracted-archive'},

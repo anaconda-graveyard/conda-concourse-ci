@@ -169,17 +169,17 @@ def append_consolidate_package_tasks(tasks, graph, node, base_name, resources=No
                 append_consolidate_package_tasks(tasks, graph, dep, base_name, resources=resources,
                                                 append_task=False)
 
-                if graph.node[dep]:
-                    dep_meta = graph.node[dep]['meta']
-                    worker = graph.node[dep]['worker']
-                    pkg_version = '{0}-{1}'.format(dep_meta.version(), dep_meta.build_id())
-                    resource_name = get_s3_resource_name(base_name, worker, dep_meta.name(),
-                                                        pkg_version)
-                    if not any('get' in task and task['get'] == resource_name for task in tasks):
-                        tasks.append({'get': resource_name,
-                                    'trigger': True,
-                                    'passed': [dep]})
-                    resources.append(resource_name)
+            if graph.node[dep]:
+                dep_meta = graph.node[dep]['meta']
+                worker = graph.node[dep]['worker']
+                pkg_version = '{0}-{1}'.format(dep_meta.version(), dep_meta.build_id())
+                resource_name = get_s3_resource_name(base_name, worker, dep_meta.name(),
+                                                    pkg_version)
+                if not any('get' in task and task['get'] == resource_name for task in tasks):
+                    tasks.append({'get': resource_name,
+                                'trigger': True,
+                                'passed': [dep]})
+                resources.append(resource_name)
         if append_task:
             tasks.append(consolidate_packages_task(resources, subdir))
     return resources
@@ -192,18 +192,21 @@ def add_dependency_edge_tasks(graph, node, base_name):
         meta = graph.node[dep]['meta']
         pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
         s3_resource_name = get_s3_resource_name(base_name, worker, meta.name(), pkg_version)
-        dependency_tasks.append({'get': s3_resource_name,
-                                 'trigger': True,
-                                 'passed': [dep]})
+        if not any('get' in task and task['get'] == s3_resource_name for task in dependency_tasks):
+            dependency_tasks.append({'get': s3_resource_name,
+                                    'trigger': True,
+                                    'passed': [dep]})
     return dependency_tasks
 
 
-def deduplicate_tasks(tasks):
+def deduplicate_get_tasks(tasks):
     """Concourse does not allow tasks with similar names"""
     task_list = []
+    resources = set()
     for task in tasks:
-        if task not in task_list:
+        if not any('get' in task and task['get'] in resources for task in task_list):
             task_list.append(task)
+            resources.add(task['get'])
     return task_list
 
 
@@ -213,7 +216,7 @@ def get_build_job(base_path, graph, node, base_name, recipe_archive_version, pub
               'trigger': True},
              _extract_task(base_name, recipe_archive_version)]
     tasks.extend(add_dependency_edge_tasks(graph, node, base_name))
-    tasks = deduplicate_tasks(tasks)
+    tasks = deduplicate_get_tasks(tasks)
 
     meta = graph.node[node]['meta']
     recipe_folder_name = meta.meta_path.replace(base_path, '')
@@ -303,9 +306,9 @@ def get_test_package_job(graph, node, base_name, public=True):
     s3_resource_name = get_s3_resource_name(base_name, worker, meta.name(), pkg_version)
     tasks = [{'get': s3_resource_name,
               'trigger': True,
-              'passed': [node.replace('test', 'build')]}]
+              'passed': [node.replace('test', 'build', 1)]}]
     tasks.extend(add_dependency_edge_tasks(graph, node, base_name))
-    tasks = deduplicate_tasks(tasks)
+    tasks = deduplicate_get_tasks(tasks)
 
     inputs = [{'name': s3_resource_name}, {'name': 'packages'}]
 
@@ -398,60 +401,57 @@ def graph_to_plan_with_jobs(base_path, graph, version, matrix_base_dir, config_v
                                   config_vars)])
 
     for node in order:
-        if 'meta' not in graph.node[node]:
-            log.warn("Skipping {}, it has no metadata to work with")
-        else:
-            meta = graph.node[node]['meta']
-            package_name = meta.name()
-            worker = graph.node[node]['worker']
-            # build jobs need to get the recipes from s3, extract them, and run a build task
-            #    same is true for test jobs that do not have a preceding test job.  These use the
-            #    recipe for determining which package to download from available channels.
-            if node.startswith('build'):
-                # need to define an s3 resource for each built package
-                pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
-                resource = _s3_resource(get_s3_resource_name(config_vars['base-name'],
-                                                            worker, package_name, pkg_version),
-                                        get_s3_package_regex(config_vars['base-name'],
-                                                            worker, package_name, pkg_version),
-                                        config_vars=config_vars)
-                if resource['name'] not in (r['name'] for r in resources):
-                    resources.add(resource)
-                jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
-                                        version, public))
+        meta = graph.node[node]['meta']
+        package_name = meta.name()
+        worker = graph.node[node]['worker']
+        # build jobs need to get the recipes from s3, extract them, and run a build task
+        #    same is true for test jobs that do not have a preceding test job.  These use the
+        #    recipe for determining which package to download from available channels.
+        if node.startswith('build'):
+            # need to define an s3 resource for each built package
+            pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
+            resource = _s3_resource(get_s3_resource_name(config_vars['base-name'],
+                                                        worker, package_name, pkg_version),
+                                    get_s3_package_regex(config_vars['base-name'],
+                                                        worker, package_name, pkg_version),
+                                    config_vars=config_vars)
+            if resource['name'] not in (r['name'] for r in resources):
+                resources.add(resource)
+            jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
+                                    version, public))
 
-            # test jobs need to get the package from either the temporary s3 store or test using the
-            #     recipe (download package from available channels) and run a test task
+        # test jobs need to get the package from either the temporary s3 store or test using the
+        #     recipe (download package from available channels) and run a test task
 
-            # TODO: currently tests for things that have no build are broken and skipped
+        # TODO: currently tests for things that have no build are broken and skipped
 
-            elif node.startswith('test'):
-                if node.replace('test', 'build') in graph.nodes():
-                    # we build the package in this plan.  Get it from s3.
-                    jobs.append(get_test_package_job(graph, node, config_vars['base-name'], public))
-                else:
-                    # we are only testing this package in this plan.  Get from configured channels.
-                    jobs.append(get_test_recipe_job(base_path, graph, node,
-                                                    config_vars['base-name'], version, public))
-
-            # as far as the graph is concerned, there's only one upload job.  However, this job can
-            # represent several upload tasks.  This take the job from the graph, and creates tasks
-            # appropriately.
-            #
-            # This is also more complicated, because uploads may involve other resource types and
-            # resources that are not used for build/test.  For example, the scp and commands uploads
-            # need to be able to access private keys, which are stored in config uploads.d folder.
-            elif node.startswith('upload'):
-                upload_resource_types, upload_resources, job = get_upload_job(graph, node,
-                                                                            upload_config_path,
-                                                                            config_vars, public)
-                resource_types.update(upload_resource_types)
-                resources.update(upload_resources)
-                jobs.append(job)
-
+        elif node.startswith('test'):
+            if node.replace('test', 'build', 1) in graph.nodes():
+                # we build the package in this plan.  Get it from s3.
+                jobs.append(get_test_package_job(graph, node, config_vars['base-name'], public))
             else:
-                raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
-                                          "start with 'build', 'test', or 'upload'")
+                # we are only testing this package in this plan.  Get from configured channels.
+                jobs.append(get_test_recipe_job(base_path, graph, node,
+                                                config_vars['base-name'], version, public))
+
+        # as far as the graph is concerned, there's only one upload job.  However, this job can
+        # represent several upload tasks.  This take the job from the graph, and creates tasks
+        # appropriately.
+        #
+        # This is also more complicated, because uploads may involve other resource types and
+        # resources that are not used for build/test.  For example, the scp and commands uploads
+        # need to be able to access private keys, which are stored in config uploads.d folder.
+        elif node.startswith('upload'):
+            upload_resource_types, upload_resources, job = get_upload_job(graph, node,
+                                                                        upload_config_path,
+                                                                        config_vars, public)
+            resource_types.update(upload_resource_types)
+            resources.update(upload_resources)
+            jobs.append(job)
+
+        else:
+            raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
+                                        "start with 'build', 'test', or 'upload'")
 
     # convert types for smoother output to yaml
     upload_resource_types = [_resource_type_to_dict(t) for t in upload_resource_types]
