@@ -66,14 +66,14 @@ def test_get_build_job(testing_graph):
     # download the recipe tarball
     assert job['plan'][0]['get'] == 's3-archive'
 
-    # extract the recipe tarball
-    assert job['plan'][1]['config']['inputs'] == [{'name': 's3-archive'}]
-    assert job['plan'][1]['config']['run']['path'] == 'tar'
-    assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
-
     # get upstream dependency
-    assert job['plan'][2]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
-    assert job['plan'][2]['passed'] == ['test-a-linux']
+    assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
+    assert job['plan'][1]['passed'] == ['test-a-linux']
+
+    # extract the recipe tarball
+    assert job['plan'][2]['config']['inputs'] == [{'name': 's3-archive'}]
+    assert job['plan'][2]['config']['run']['path'] == 'tar'
+    assert job['plan'][2]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
 
     # run the build
     assert job['plan'][-2]['config']['platform'] == 'linux'

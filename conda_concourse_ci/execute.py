@@ -192,22 +192,26 @@ def add_dependency_edge_tasks(graph, node, base_name):
         meta = graph.node[dep]['meta']
         pkg_version = '{0}-{1}'.format(meta.version(), meta.build_id())
         s3_resource_name = get_s3_resource_name(base_name, worker, meta.name(), pkg_version)
-        if not any('get' in task and task['get'] == s3_resource_name for task in dependency_tasks):
-            dependency_tasks.append({'get': s3_resource_name,
-                                    'trigger': True,
-                                    'passed': [dep]})
+        dependency_tasks.append({'get': s3_resource_name,
+                                'trigger': True,
+                                'passed': [dep]})
     return dependency_tasks
 
 
 def deduplicate_get_tasks(tasks):
     """Concourse does not allow tasks with similar names"""
-    task_list = []
-    resources = set()
+    resources = {}
+    other_tasks = []
     for task in tasks:
-        if not any('get' in task and task['get'] in resources for task in task_list):
-            task_list.append(task)
-            resources.add(task['get'])
-    return task_list
+        resource = task.get('get')
+        if resource:
+            passed_deps = resources.get(resource, set())
+            passed_deps.update(set(task.get('passed', [])))
+            resources[resource] = passed_deps
+        else:
+            other_tasks.append(task)
+    return [{'get': resource, 'trigger': True, 'passed': list(deps)}
+            for resource, deps in resources.items()] + other_tasks
 
 
 def get_build_job(base_path, graph, node, base_name, recipe_archive_version, public=True):
