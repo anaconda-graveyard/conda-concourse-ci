@@ -1,0 +1,183 @@
+jobs:
+- name: linux
+  public: true
+  serial: true
+  plan:
+  - get: recipe-repo-source
+    trigger: true
+  - task: build installer
+    config:
+      platform: linux
+      image_resource:
+        source:
+          repository: msarahan/installer_builder
+          tag: latest
+        type: docker-image
+
+      inputs:
+        - name: recipe-repo-source
+      outputs:
+        - name: installer
+      params:
+        ANA_LEVEL: 11127
+        MINICONDA: 1
+        IGNORE_USER: 1
+        CONDA_PRIVATE: 0
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            cwd=$(pwd)
+            mkdir aroot
+            cd recipe-repo-source
+            python setup.py develop
+            cd ibuild
+            python shar.py
+            mv Miniconda*-*.sh ${cwd}/installer
+
+  - task: upload
+    config:
+      image_resource:
+        source:
+          repository: msarahan/conda-concourse-ci
+        type: docker-image
+      inputs:
+      - name: installer
+      platform: linux
+      run:
+        path: scp
+        args:
+          - installer/*
+          - msarahan@smalls.corp.continuum.io:test-pkgs-msarahan/linux-64
+          - -i
+          - keys/key.pem
+        # args:
+        # - installer/*
+        # - msarahan@10.200.35.34:test-pkgs-msarahan/win-64
+        # - -i
+        # - config/uploads.d/bremen-key
+        # path: scp
+        # args:
+        # - installer/*
+        # - msarahan@10.200.35.34:test-pkgs-msarahan/win-64
+        # - -i
+        # - config/uploads.d/bremen-key
+
+# - name: winderp 32
+#   public: true
+#   serial: true
+#   plan:
+#   - get: recipe-repo-source
+#     trigger: true
+#   - task: build installer
+#     config:
+#       platform: win-64
+#       inputs:
+#         - recipe-repo-source
+#       outputs:
+#         - installer
+#       run:
+#         path: constructor
+#         args:
+#           - --output-dir
+#           - installer
+#           - --platform=win-32
+#           - .
+#   - task: upload
+#     config:
+#       image_resource:
+#         source:
+#           repository: msarahan/conda-concourse-ci
+#         type: docker-image
+#       inputs:
+#       - name: installer
+#       platform: linux
+#       run:
+#         path: scp
+#         args:
+#         - installer/*
+#         - msarahan@10.200.35.34:test-pkgs-msarahan/win-64
+#         - -i
+#         - config/uploads.d/bremen-key
+
+# - name: winderp 64
+#   public: true
+#   serial: true
+#   plan:
+#   - get: recipe-repo-source
+#     trigger: true
+#   - task: build installer
+#     config:
+#       platform: win-64
+#       inputs:
+#         - recipe-repo-source
+#       outputs:
+#         - installer
+#       run:
+#         path: constructor
+#         args:
+#           - --output-dir
+#           - installer
+#           - --platform=win-64
+#           - .
+#   - task: upload
+#     config:
+#       image_resource:
+#         source:
+#           repository: msarahan/conda-concourse-ci
+#         type: docker-image
+#       inputs:
+#       - name: installer
+#       platform: linux
+#       run:
+#         path: scp
+#         args:
+#         - installer/*
+#         - msarahan@10.200.35.34:test-pkgs-msarahan/win-64
+#         - -i
+#         - config/uploads.d/bremen-key
+
+
+# - name: apple garbage
+#   public: true
+#   serial: true
+#   plan:
+#   - get: recipe-repo-source
+#     trigger: true
+#   - task: build installer
+#     config:
+#       platform: osx-109
+#       inputs:
+#         - recipe-repo-source
+#       outputs:
+#         - installer
+#       run:
+#         path: constructor
+#         args:
+#           - --output-dir
+#           - installer
+#           - .
+#   - task: upload
+#     config:
+#       image_resource:
+#         source:
+#           repository: msarahan/conda-concourse-ci
+#         type: docker-image
+#       inputs:
+#       - name: installer
+#       platform: linux
+#       run:
+#         path: scp
+#         args:
+#         - installer/*
+#         - msarahan@10.200.35.34:test-pkgs-msarahan/osx-64
+#         - -i
+#         - config/uploads.d/bremen-key
+
+resources:
+- name: recipe-repo-source
+  type: git
+  source:
+    uri: {{recipe-repo}}
+    private_key: {{key_text}}
