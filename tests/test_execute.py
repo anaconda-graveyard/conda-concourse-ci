@@ -1,4 +1,3 @@
-import glob
 import os
 import subprocess
 
@@ -8,7 +7,7 @@ from conda_concourse_ci.utils import HashableDict
 
 from conda_build import api
 from conda_build.conda_interface import subdir
-from conda_build.utils import package_has_file, copy_into
+from conda_build.utils import package_has_file
 import networkx as nx
 import pytest
 import yaml
@@ -39,91 +38,64 @@ boilerplate_test_vars = {'base-name': 'steve',
                          'aws-region-name': 'frank'}
 
 
-# def test_get_plan_text(mocker, testing_graph):
-#     plan = execute.encode_plan_as_text(testing_graph, [], '1.0.0', boilerplate_test_vars)
-#     reference = execute._plan_boilerplate(boilerplate_test_vars)
-
-#     reference = reference + "\n" + yaml.dump({
-#         'jobs': [
-#             {'name': 'execute',
-#              'public': True,
-#              'plan': [
-#                  {'get': 's3-archive', 'trigger': 'true',
-#                   'params': {'version': '1.0.0'}},
-#                  execute._extract_task('steve', '1.0.0'),
-#                  execute._ls_task,
-#              ]
-#             }
-#         ]
-#     }, default_flow_style=False)
-#     assert plan == reference
-
-
 def test_get_build_job(testing_graph):
+    # ensure that our channels make it into the args
+    meta = testing_graph.node['build-b-linux']['meta']
+    meta.config.channel_urls = ['conda_build_test']
     job = execute.get_build_job(base_path=graph_data_dir, graph=testing_graph,
                                 node='build-b-linux', base_name="frank",
-                                recipe_archive_version="1.0.0")
-    # download the recipe tarball
-    assert job['plan'][0]['get'] == 's3-archive'
-
-    # get upstream dependency
-    assert job['plan'][1]['get'] == 's3-frank-linux-a-1.0-hbf21a9e_0'
-    assert job['plan'][1]['passed'] == ['test-a-linux']
-
-    # extract the recipe tarball
-    assert job['plan'][2]['config']['inputs'] == [{'name': 's3-archive'}]
-    assert job['plan'][2]['config']['run']['path'] == 'tar'
-    assert job['plan'][2]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
+                                commit_id='abc123')
+    # download the recipes and config, contingent on passed tests
+    assert job['plan'][0]['get'] == 'rsync-intermediary'
+    assert job['plan'][0]['passed'] == ['test-a-linux']
 
     # run the build
-    assert job['plan'][-2]['config']['platform'] == 'linux'
-    assert job['plan'][-2]['config']['inputs'] == [{'name': 'extracted-archive'},
-                                                   {'name': 'packages'}]
-    assert job['plan'][-2]['config']['outputs'] == [{'name': 'build-b-linux'}]
-    assert job['plan'][-2]['config']['run']['args'][-1] == 'extracted-archive/b'
+    assert job['plan'][1]['config']['platform'] == 'linux'
+    assert job['plan'][1]['config']['inputs'] == [{'name': 'rsync-intermediary'}]
+    assert job['plan'][1]['config']['run']['args'][-1] == ('rsync-intermediary/abc123/recipes'
+                                                           '/build-b-linux')
+    assert 'conda_build_test' in job['plan'][1]['config']['run']['args']
 
-    # upload the built package to temporary s3 storage
-    # no hash because we haven't built a, and b is thus not finalizable
-    assert job['plan'][-1]['put'] == "s3-frank-linux-b-1.0-hd248202_0"
-    assert job['plan'][-1]['params']['file'] == os.path.join('build-b-linux', subdir, "*.tar.bz2")
+    # upload the built package to temporary storage
+    assert job['plan'][-1]['put'] == "rsync-intermediary"
 
 
 def test_get_test_recipe_job(testing_graph):
     """Test something that already exists.  Note that this is not building any dependencies."""
+    meta = testing_graph.node['test-b-linux']['meta']
+    meta.config.channel_urls = ['conda_build_test']
     job = execute.get_test_recipe_job(base_path=graph_data_dir, graph=testing_graph,
                                       node='test-b-linux', base_name="frank",
-                                      recipe_archive_version="1.0.0")
+                                      commit_id='abc123')
     # download the recipe tarball
-    assert job['plan'][0]['get'] == 's3-archive'
-
-    # extract the recipe tarball
-    assert job['plan'][1]['config']['inputs'] == [{'name': 's3-archive'}]
-    assert job['plan'][1]['config']['run']['path'] == 'tar'
-    assert job['plan'][1]['config']['run']['args'][-3] == 's3-archive/recipes-frank-1.0.0.tar.bz2'
+    assert job['plan'][0]['get'] == 'rsync-intermediary'
 
     # run the test
-    assert job['plan'][-1]['config']['platform'] == 'linux'
-    assert job['plan'][-1]['config']['inputs'] == [{'name': 'extracted-archive'},
-                                                   {'name': 'packages'}]
-    assert job['plan'][-1]['config']['run']['args'][-1] == 'b'
-    assert job['plan'][-1]['config']['run']['dir'] == 'extracted-archive'
+    assert job['plan'][1]['config']['platform'] == 'linux'
+    assert job['plan'][1]['config']['inputs'] == [{'name': 'rsync-intermediary'}]
+    assert job['plan'][1]['config']['run']['args'][-1] == 'b'
+    assert job['plan'][1]['config']['run']['dir'] == os.path.join('rsync-intermediary', 'abc123',
+                                                                  'recipes')
+    assert 'conda_build_test' in job['plan'][1]['config']['run']['args']
 
 
 def test_get_test_package_job(testing_graph):
+    meta = testing_graph.node['test-b-linux']['meta']
+    meta.config.channel_urls = ['conda_build_test']
     job = execute.get_test_package_job(graph=testing_graph, node='test-b-linux',
-                                       base_name="frank")
-    # download the package tarball
-    assert job['plan'][0]['get'] == 's3-frank-linux-b-1.0-hd248202_0'
+                                       base_name="frank", commit_id='abc123')
+    # download the recipes and config, contingent on passed tests
+    assert job['plan'][0]['get'] == 'rsync-intermediary'
     assert job['plan'][0]['passed'] == ['build-b-linux']
 
     # run the test
-    assert job['plan'][-1]['config']['platform'] == 'linux'
-    assert job['plan'][-1]['config']['inputs'] == [{'name': 's3-frank-linux-b-1.0-hd248202_0'},
-                                                   {'name': 'packages'}]
     output_pkg = api.get_output_file_paths(testing_graph.node['test-b-linux']['meta'])[0]
     output_pkg = os.path.basename(output_pkg)
-    assert job['plan'][-1]['config']['run']['args'][-1] == os.path.join(
-        "packages", subdir, output_pkg)
+    assert job['plan'][1]['config']['platform'] == 'linux'
+    assert job['plan'][1]['config']['inputs'] == [{'name': 'rsync-intermediary'}]
+    assert job['plan'][1]['config']['run']['args'][-1] == os.path.join(
+        'rsync-intermediary', 'abc123', 'artifacts', subdir, output_pkg)
+    assert 'conda_build_test' in job['plan'][1]['config']['run']['args']
 
 
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
@@ -133,28 +105,22 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
 
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
         config_vars = yaml.load(f)
-    plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, '1.0.0',
+    plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
                                                 test_config_dir, config_vars)
-    # s3-archive, a, b
-    assert len(plan_dict['resources']) == 3
+    # rsync-archive is the only resource.  For each job, we change the 'passed' condition
+    assert len(plan_dict['resources']) == 1
     # build a, test a, upload a, build b, test b, upload b, test c
     assert len(plan_dict['jobs']) == 7
-    assert plan_dict['resources'][0]['source']['regexp'] in (
-        'recipes-test-1.0.0.tar.bz(.*)',
-        os.path.join("s3-test-linux-a-1.0-hbf21a9e_0", 'linux-64', "a-1.0-hbf21a9e_0.tar.bz(.*)"),
-        os.path.join("s3-test-linux-b-1.0-hd248202_0", 'linux-64', "b-1.0-hd248202_0.tar.bz(.*)"))
 
 
 def test_get_upload_job(mocker, testing_graph):
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
         config_vars = yaml.load(f)
-    types, resources, job = execute.get_upload_job(testing_graph, 'build-b-linux',
+    job = execute.get_upload_job(testing_graph, 'build-b-linux',
                                                    os.path.join(test_config_dir, 'uploads.d'),
-                                                   config_vars)
-    assert len(types) == 1
-    assert len(resources) == 1
-    # get config; get package; anaconda; 3 for scp; 1 command;
-    assert len(job['plan']) == 7
+                                                   config_vars, commit_id='abc123')
+    # get config; anaconda; 3 for scp; 1 command;
+    assert len(job['plan']) == 6
 
 
 def test_unknown_job_type():
@@ -175,37 +141,20 @@ def test_resource_to_dict():
 
 
 def test_submit(mocker):
-    mocker.patch.object(execute, '_upload_to_s3')
-    mocker.patch.object(execute, '_remove_bucket_folder')
     mocker.patch.object(execute, 'subprocess')
-    execute.submit(os.path.join(test_config_dir, 'plan_director.yml'), "test", "test-pipeline", '.',
-                   test_data_dir)
+    pipeline_file = os.path.join(test_config_dir, 'plan_director.yml')
+    execute.submit(pipeline_file, base_name="test", pipeline_name="test-pipeline",
+                   src_dir='.', config_root_dir=os.path.join(test_data_dir, 'config-test'))
 
 
 def test_bootstrap(mocker, testing_workdir):
     execute.bootstrap('frank')
     assert os.path.isfile('plan_director.yml')
-    assert os.path.isdir('config-frank')
-    assert os.path.isfile('config-frank/config.yml')
-    assert os.path.isdir('config-frank/uploads.d')
-    assert os.path.isdir('config-frank/build_platforms.d')
-    assert os.path.isdir('config-frank/test_platforms.d')
-
-
-def test_consolidate_packages(testing_workdir, testing_metadata):
-    del testing_metadata.meta['requirements']
-    del testing_metadata.meta['test']
-    testing_metadata.config.croot = testing_workdir
-    testing_metadata.config.anaconda_upload = False
-    api.build(testing_metadata)
-    pkgs = glob.glob(os.path.join(testing_workdir, subdir, '*.tar.bz2'))
-    assert len(pkgs) > 0
-    execute.consolidate_packages(testing_workdir, subdir)
-    for pkg in pkgs:
-        assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir,
-                                           os.path.basename(pkg)))
-    assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json'))
-    assert os.path.isfile(os.path.join(testing_workdir, 'packages', subdir, 'repodata.json.bz2'))
+    assert os.path.isdir('frank')
+    assert os.path.isfile('frank/config.yml')
+    assert os.path.isdir('frank/uploads.d')
+    assert os.path.isdir('frank/build_platforms.d')
+    assert os.path.isdir('frank/test_platforms.d')
 
 
 def test_get_current_git_rev(testing_workdir):
@@ -217,67 +166,63 @@ def test_get_current_git_rev(testing_workdir):
         assert execute._get_current_git_rev(git_repo, True) == 'HEAD'
 
 
-def test_archive_recipes(testing_workdir, monkeypatch):
-    os.makedirs(os.path.join(testing_workdir, 'recipes', 'abc'))
-    with open(os.path.join('recipes', 'abc', 'meta.yaml'), 'w') as f:
-        f.write('wee')
-    copy_into(os.path.join(test_data_dir, 'conda_forge_style_recipe'), testing_workdir)
-    os.makedirs('output')
-    # ensures that we test removal of any existing file
-    with open(os.path.join('output', 'recipes-steve-1.0.tar.bz2'), 'w') as f:
-        f.write('dummy')
-    monkeypatch.chdir(os.path.join(testing_workdir, 'recipes'))
-    execute._archive_recipes('../output', '.', 'steve', '1.0')
-    package_path = os.path.join('../output', 'recipes-steve-1.0.tar.bz2')
-    assert os.path.isfile(package_path)
-
-
-def test_compute_builds(testing_workdir, monkeypatch):
+def test_compute_builds(testing_workdir, mocker, monkeypatch):
     monkeypatch.chdir(test_data_dir)
+    output = os.path.join(testing_workdir, 'output')
+    # neutralize git checkout so we're really testing the HEAD commit
+    mocker.patch.object(execute, 'checkout_git_rev')
     execute.compute_builds('.', 'config-name', 'master',
                            folders=['python_test', 'conda_forge_style_recipe'],
-                           matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'))
-    assert os.path.isdir('../output')
-    files = os.listdir('../output')
+                           matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
+                           output=output)
+    assert os.path.isdir(output)
+    files = os.listdir(output)
     assert 'plan.yml' in files
-    assert 'recipes-config-name-1.0.0.tar.bz2' in files
-    tar = '../output/recipes-config-name-1.0.0.tar.bz2'
 
-    # for debugging on remote servers
-    from tarfile import TarFile
-    f = TarFile.open(tar)
-    flist = f.getnames()
-    f.extractall()
-    os.listdir('.')
-    f.close()
+    assert os.path.isfile(os.path.join(output, 'build-frank-centos5-64', 'meta.yaml'))
+    assert os.path.isfile(os.path.join(output, 'build-frank-centos5-64/', 'conda_build_config.yaml'))
+    assert os.path.isfile(os.path.join(output, 'build-dummy_conda_forge_test-centos5-64',
+                                              'meta.yaml'))
+    with open(os.path.join(output, 'build-dummy_conda_forge_test-centos5-64/', 'conda_build_config.yaml')) as f:
+        cfg = f.read()
 
-    assert package_has_file(tar, os.path.join('build-frank-centos5-64', 'meta.yaml'))
-    assert package_has_file(tar, os.path.join('build-frank-centos5-64/', 'conda_build_config.yaml'))
-    assert package_has_file(tar, os.path.join('build-dummy_conda_forge_test-centos5-64',
-                                              'meta.yaml')), flist
-    cfg = package_has_file(tar, os.path.join('build-dummy_conda_forge_test-centos5-64/',
-                                              'conda_build_config.yaml')), flist
     assert cfg is not None
     if hasattr(cfg, 'decode'):
         cfg = cfg.decode()
     assert "HashableDict" not in cfg
 
 
-def test_compute_builds_intradependencies(testing_workdir, monkeypatch):
+def test_compute_builds_intradependencies(testing_workdir, monkeypatch, mocker):
     """When we build stuff, and upstream dependencies are part of the batch, but they're
     also already installable, then we do extra work to make sure that we order our build
     so that downstream builds depend on upstream builds (and don't directly use the
     already-available packages.)"""
     monkeypatch.chdir(os.path.join(test_data_dir, 'intradependencies'))
+    # neutralize git checkout so we're really testing the HEAD commit
+    mocker.patch.object(execute, 'checkout_git_rev')
+    output_dir = os.path.join(testing_workdir, 'output')
     execute.compute_builds('.', 'config-name', 'master',
                            folders=['zlib', 'uses_zlib'],
-                           matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'))
-    assert os.path.isdir('../output')
-    files = os.listdir('../output')
+                           matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
+                           output=output_dir)
+    assert os.path.isdir(output_dir)
+    files = os.listdir(output_dir)
     assert 'plan.yml' in files
-    with open('../output/plan.yml') as f:
+    with open(os.path.join(output_dir, 'plan.yml')) as f:
         plan = yaml.load(f)
 
     uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'build-uses_zlib-centos5-64'][0]
-    assert any(task.get('get') == 's3-test-centos5-64-zlib-1.2.8-he64c481_0'
+    assert any(task.get('passed') == ['test-zlib-centos5-64']
                for task in uses_zlib_job['plan'])
+
+
+def test_compute_builds_dies_when_no_folders_and_no_git(testing_workdir, mocker, capfd):
+    changed = mocker.patch.object(execute, 'git_changed_recipes')
+    changed.return_value = None
+    output_dir = os.path.join(testing_workdir, 'output')
+    execute.compute_builds('.', 'config-name', 'master',
+                           folders=None,
+                           matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
+                           output=output_dir)
+    out, err = capfd.readouterr()
+    assert "No folders specified to build" in out

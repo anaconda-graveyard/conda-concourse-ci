@@ -1,14 +1,17 @@
 resource_types:
-# used to download arbitrary user configuration (credentials, platforms)
-- name: s3-simple
-  type: docker-image
-  source:
-    repository: 18fgsa/s3-resource-simple
+
 # used to check for PRs and update status at Github
-- name: pull-request
+# - name: pull-request
+#   type: docker-image
+#   source:
+#     repository: jtarchie/pr
+
+- name: rsync-resource
   type: docker-image
   source:
-    repository: jtarchie/pr
+      repository: mrsixw/concourse-rsync-resource
+      tag: latest
+
 
 resources:
 # - name: recipe-repo-source
@@ -20,39 +23,16 @@ resources:
 - name: recipe-repo-source
   type: git
   source:
-    uri: {{recipe-repo}}
+    uri: {{ recipe-repo }}
 
-
-- name: version
-  type: semver
+- name: rsync-intermediary
+  type: rsync-resource
   source:
-    bucket: {{aws-bucket}}
-    key: {{version-file}}
-    secret_access_key: {{aws-secret-key}}
-    access_key_id: {{aws-key-id}}
-    region_name: {{aws-region-name}}
-    initial_version: 1.0.0
+    server: {{ intermediate-server }}
+    base_dir: {{ intermediate-base-folder }}/{{ base-name }}
+    user : {{ intermediate-user }}
+    private_key: {{ intermediate-private-key }}
 
-- name: s3-archive
-  type: s3
-  source:
-    bucket: {{aws-bucket}}
-    access_key_id: {{aws-key-id}}
-    secret_access_key: {{aws-secret-key}}
-    region_name: {{aws-region-name}}
-    # this is the output folder on aws, not the local location.
-    regexp: {{tarball-regex}}
-
-# this is a folder of all of our initial configuration.  No pushing here.
-- name: s3-config-base
-  type: s3-simple
-  trigger: true
-  source:
-    bucket: {{aws-bucket}}
-    secret_access_key: {{aws-secret-key}}
-    access_key_id: {{aws-key-id}}
-    region_name: {{aws-region-name}}
-    options: [--exclude '*', --include {{config-folder-star}}]
 
 jobs:
 - name: collect-tasks
@@ -67,18 +47,13 @@ jobs:
   #   params:
   #     path: recipe-repo-source
   #     status: pending
-  - get: s3-config-base
-  - get: version
-    params:
-      bump: patch
-
+  - get: rsync-intermediary
   - task: c3i-examine
     config:
       # seems redundant, but you need this in order to have the repo source code folder show up
       inputs:
         - name: recipe-repo-source
-        - name: s3-config-base
-        - name: version
+        - name: rsync-intermediary
       outputs:
         - name: output
       image_resource:
@@ -87,17 +62,18 @@ jobs:
           repository: msarahan/conda-concourse-ci
       platform: linux
       run:
+        # this should output plan.yaml (credentials baked in) and recipes.  These will be in a folder
+        #    named for the git revision that we're on right now.
         path: c3i
-        args: [examine, {{base-name}}, ., --matrix-base-dir, ../s3-config-base/{{config-folder}}]
         dir: recipe-repo-source
-  - put: version
-    params:
-      file: version/version
-  # this should trigger the execute pipeline
-  - put: s3-archive
-    params:
-      # this is the relative location on local disk
-      file: {{tarball-glob}}
+        args:
+          - examine
+          - {{base-name}}
+          - .
+          - --matrix-base-dir
+          - ../rsync-intermediary/config/
+          # TODO: need to specify output folder, or c3i needs to know somehow
+  - put: rsync-intermediary
   # - put: recipe-repo-source
   #   params:
   #     path: recipe-repo-source
@@ -105,10 +81,8 @@ jobs:
   - task: set-execute-pipeline
     config:
       inputs:
-        - name: s3-config-base
-        - name: output
+        - name: rsync-intermediary
         - name: recipe-repo-source
-        - name: version
       image_resource:
         type: docker-image
         source:
@@ -119,13 +93,13 @@ jobs:
         # TODO: need to determine what private/public status is, and set child accordingly
         args:
           - submit
-          - {{base-name}}
+          - {{ base-name }}
           - --pipeline-file
-          - output/plan.yml
+          - "rsync-intermediary/builds/{git_identifier}/plan.yaml"
           - --pipeline-name
           # these template variables are filled in by the c3i program, NOT concourse.
           - "{base_name}-execute-{git_identifier}"
           - --src-dir
           - recipe-repo-source
           - --config-root-dir
-          - s3-config-base
+          - rsync-intermediary/config/

@@ -55,7 +55,7 @@ def parse_args(parse_this=None):
     submit_parser.add_argument('--pipeline-file', default='plan_director.yml',
                                help="path to pipeline .yml file containing plan")
     submit_parser.add_argument('--config-root-dir',
-                               help="path to one level above config folder")
+                               help="path containing config.yaml and matrix definitions")
     submit_parser.add_argument('--src-dir', help="folder where git repo of source code lives",
                                default=os.getcwd())
     submit_parser.add_argument('--private', action='store_false',
@@ -67,13 +67,6 @@ def parse_args(parse_this=None):
     bootstrap_parser.add_argument('base_name',
                             help="name of your project, to distinguish it from other projects")
 
-    consolidate_parser = sp.add_parser('consolidate',
-                                       help=('Collect disparate resources into central location and'
-                                            'index that location for conda to install from'))
-    consolidate_parser.add_argument("subdir", help=("conda subdir (e.g. win-64)"))
-    consolidate_parser.add_argument("path", default='.', nargs='?',
-                                    help=("path in which to consolidate packages.  Dumps to "
-                                          "'packages/{subdir}' subfolder of this directory."))
     return parser.parse_args(parse_this)
 
 
@@ -89,13 +82,14 @@ def main(args=None):
         logging.basicConfig(level=logging.INFO)
 
     if args.subparser_name == 'submit':
-        execute.submit(**args.__dict__)
+        args_dict = args.__dict__
+        if not args_dict.get('config_root_dir'):
+            args_dict['config_root_dir'] = args_dict['base_name']
+        execute.submit(**args_dict)
     elif args.subparser_name == 'bootstrap':
         execute.bootstrap(**args.__dict__)
     elif args.subparser_name == 'examine':
         execute.compute_builds(**args.__dict__)
-    elif args.subparser_name == 'consolidate':
-        execute.consolidate_packages(**args.__dict__)
     else:
         # this is here so that if future subcommands are added, you don't forget to add a bit
         #     here to enable them.

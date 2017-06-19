@@ -1,7 +1,3 @@
-aws-bucket: your-bucket
-aws-key-id: your-key
-aws-secret-key: your-secret
-aws-region-name: your-region
 concourse-url: your-server
 concourse-team: your-team
 concourse-username: your-user
@@ -11,7 +7,8 @@ recipe-repo: your-repo
 recipe-repo-commit: master
 base-name: test
 config-folder: config-test
-config-folder-star: config-test/*
-tarball-glob: output/recipes-test-*.tar.bz2
-tarball-regex: recipes-test-(.*).tar.bz2
-version-file: version-test
+intermediate-server: your-intermediate-server
+intermediate-base-folder: your-intermediate-base-folder
+intermediate-user: your-intermediate-user
+intermediate-private-key: |
+  private-key-to-use-for-connecting-to-intermediate-server
