@@ -81,7 +81,7 @@ def get_build_job(base_path, graph, node, base_name, commit_id, public=True):
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     # this is the recipe path to build
-    build_args.append(os.path.join('rsync-intermediary', commit_id, 'recipes', node))
+    build_args.append(os.path.join('rsync-intermediary', commit_id, 'plan_and_recipes', node))
 
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
