@@ -29,6 +29,8 @@ jobs:
   - put: docker-image
     params:
       build: recipe-repo-source/docker
+    get_params:
+      skip_download: true
 
 resources:
 - name: docker-image

@@ -306,15 +306,6 @@ def checkout_git_rev(checkout_rev, path):
         subprocess.check_call(['git', 'checkout', git_current_rev], cwd=path)
 
 
-def _get_git_identifier(path):
-    try:
-        # set by pullrequest-resource, but probably doesn't exist locally
-        id = 'PR_{0}'.format(subprocess.check_output('git config --get pullrequest.id'.split()))
-    except subprocess.CalledProcessError:
-        id = _get_current_git_rev(path)
-    return id
-
-
 def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
            public=True, output_dir='../output', **kw):
     """submit task that will monitor changes and trigger other build tasks
@@ -323,7 +314,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     builds.  This is creating the task that monitors git changes and triggers regeneration
     of the dynamic job.
     """
-    git_identifier = _get_git_identifier(src_dir)
+    git_identifier = _get_current_git_rev(src_dir)
     pipeline_name = pipeline_name.format(base_name=base_name,
                                          git_identifier=git_identifier)
     pipeline_file = pipeline_file.format(git_identifier=git_identifier)
