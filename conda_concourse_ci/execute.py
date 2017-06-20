@@ -226,8 +226,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                   'type': 'rsync-resource',
                   'source': {
                       'server': config_vars['intermediate-server'],
-                      'base_dir': (config_vars['intermediate-base-folder'] + '/' +
-                                   config_vars['base-name']),
+                      'base_dir': config_vars['intermediate-base-folder'],
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       }
@@ -317,15 +316,16 @@ def _get_git_identifier(path):
 
 
 def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
-           public=True, **kw):
+           public=True, output_dir='../output', **kw):
     """submit task that will monitor changes and trigger other build tasks
 
     This gets the ball rolling.  Once submitted, you don't need to manually trigger
     builds.  This is creating the task that monitors git changes and triggers regeneration
     of the dynamic job.
     """
+    git_identifier = _get_git_identifier(src_dir)
     pipeline_name = pipeline_name.format(base_name=base_name,
-                                         git_identifier=_get_git_identifier(src_dir))
+                                         git_identifier=git_identifier)
 
     config_path = os.path.join(config_root_dir, 'config.yml')
     with open(config_path) as src:
@@ -336,8 +336,14 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     key_handle.write(data['intermediate-private-key'])
     key_handle.close()
 
+    subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
+                           '-o', 'StrictHostKeyChecking=no',
+                           '-i', key_file,
+                           '{intermediate-user}@{intermediate-server}'.format(**data),
+                           'mkdir -p {intermediate-base-folder}/config'.format(**data)])
     # TODO: rsync config folder to intermediate server
-    subprocess.check_call(['rsync', '--delete', '-av', '-e', 'ssh -i ' + key_file,
+    subprocess.check_call(['rsync', '--delete', '-av', '-e', 'ssh -o UserKnownHostsFile=/dev/null '
+                           '-o StrictHostKeyChecking=no -i ' + key_file,
                            config_root_dir + '/',
                            ('{intermediate-user}@{intermediate-server}:'
                             '{intermediate-base-folder}/config'.format(**data))
@@ -368,17 +374,14 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     subprocess.check_call(['fly', '-t', 'conda-concourse-server',
                            'up', '-p', pipeline_name])
 
-    # trigger the job to actually run
-    # subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'tj', '-j',
-    #                        '{0}/collect-tasks'.format(pipeline_name)])
-
     if public:
         subprocess.check_call(['fly', '-t', 'conda-concourse-server',
                                'expose-pipeline', '-p', pipeline_name])
 
 
 def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix_base_dir=None,
-                   steps=0, max_downstream=5, test=False, public=True, output='../output', **kw):
+                   steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
+                   **kw):
     checkout_rev = stop_rev or git_rev
     folders = folders
     path = path.replace('"', '')
@@ -408,9 +411,12 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
                                    commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
                                    config_vars=data, public=public)
 
-    if not os.path.isdir(output):
-        os.makedirs(output)
-    with open(os.path.join(output, 'plan.yml'), 'w') as f:
+    # here's how we fill in recipe output destination for the git commit we're working with
+    output_dir = output_dir.format(base_name=base_name, git_rev=git_rev)
+
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
+    with open(os.path.join(output_dir, 'plan.yml'), 'w') as f:
         yaml.dump(plan, f, default_flow_style=False)
 
     # expand folders to include any dependency builds or tests
@@ -428,7 +434,7 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
             # make recipe path relative
             recipe = recipe.replace(path + '/', '')
             # copy base recipe into a folder named for this node
-            out_folder = os.path.join(output, node)
+            out_folder = os.path.join(output_dir, node)
             shutil.copytree(os.path.join(path, recipe), out_folder)
             # write the conda_build_config.yaml for this particular metadata into that recipe
             #   This should sit alongside meta.yaml, where conda-build will be able to find it
@@ -469,10 +475,7 @@ def bootstrap(base_name, **kw):
     with open('{0}/config.yml'.format(base_name)) as f:
         config = yaml.load(f)
     config['base-name'] = base_name
-    config['config-folder'] = base_name
-    config['config-folder-star'] = base_name + '/*'
     config['execute-job-name'] = 'execute-' + base_name
-    config['channels'] = []
     with open('{0}/config.yml'.format(base_name), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
     # create platform.d folders

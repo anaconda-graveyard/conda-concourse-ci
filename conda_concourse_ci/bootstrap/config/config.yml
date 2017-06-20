@@ -7,7 +7,7 @@ recipe-repo: your-repo
 recipe-repo-commit: master
 recipe-repo-access-token: your-github-access-token-if-using-private-repo
 intermediate-server: your-intermediate-server
-intermediate-base-folder: your-intermediate-base-folder
+intermediate-base-folder: your-intermediate-base-folder/base-name
 intermediate-user: your-intermediate-user
 intermediate-private-key: |
   private-key-to-use-for-connecting-to-intermediate-server

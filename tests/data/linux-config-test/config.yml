@@ -6,9 +6,8 @@ recipe-repo: your-repo
 # TODO: these need to be dynamically definable based on PR info
 recipe-repo-commit: master
 base-name: test
-config-folder: config-test
 intermediate-server: your-intermediate-server
-intermediate-base-folder: your-intermediate-base-folder
+intermediate-base-folder: your-intermediate-base-folder/test
 intermediate-user: your-intermediate-user
 intermediate-private-key: |
   private-key-to-use-for-connecting-to-intermediate-server

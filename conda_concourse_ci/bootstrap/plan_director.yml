@@ -23,15 +23,16 @@ resources:
 - name: recipe-repo-source
   type: git
   source:
-    uri: {{ recipe-repo }}
+    uri: {{recipe-repo}}
 
 - name: rsync-intermediary
   type: rsync-resource
   source:
-    server: {{ intermediate-server }}
-    base_dir: {{ intermediate-base-folder }}/{{ base-name }}
-    user : {{ intermediate-user }}
-    private_key: {{ intermediate-private-key }}
+    server: {{intermediate-server}}
+    base_dir: {{intermediate-base-folder}}
+    user : {{intermediate-user}}
+    private_key: {{intermediate-private-key}}
+    disable_version_path: true
 
 
 jobs:
@@ -72,8 +73,12 @@ jobs:
           - .
           - --matrix-base-dir
           - ../rsync-intermediary/config/
-          # TODO: need to specify output folder, or c3i needs to know somehow
+          - --output-dir
+          # this is evaluated by c3i, not by concourse.
+          - "../rsync-intermediary/{base_name}/{git_rev}/plan_and_recipes"
   - put: rsync-intermediary
+    params:
+      sync_dir: "rsync-intermediary"
   # - put: recipe-repo-source
   #   params:
   #     path: recipe-repo-source
@@ -93,7 +98,7 @@ jobs:
         # TODO: need to determine what private/public status is, and set child accordingly
         args:
           - submit
-          - {{ base-name }}
+          - {{base-name}}
           - --pipeline-file
           - "rsync-intermediary/builds/{git_identifier}/plan.yaml"
           - --pipeline-name

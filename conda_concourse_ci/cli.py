@@ -8,6 +8,9 @@ from conda_concourse_ci import execute, __version__
 def parse_args(parse_this=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--version', action='version',
+        help='Show the conda-build version number and exit.',
+        version='conda-concourse-ci %s' % __version__)
     sp = parser.add_subparsers(title='subcommands', dest='subparser_name')
     examine_parser = sp.add_parser('examine', help='examine path for changed recipes')
     examine_parser.add_argument('base_name',
@@ -40,12 +43,10 @@ def parse_args(parse_this=None):
                               'changes are git_rev..stop_rev'))
     examine_parser.add_argument('--test', action='store_true',
                         help='test packages (instead of building AND testing them)')
-
     examine_parser.add_argument('--matrix-base-dir',
                         help='path to matrix configuration, if different from recipe path')
-    examine_parser.add_argument('--version', action='version',
-        help='Show the conda-build version number and exit.',
-        version='conda-concourse-ci %s' % __version__)
+    examine_parser.add_argument('--output-dir', help="folder where output plan and recipes live",
+                                default='../output')
 
     submit_parser = sp.add_parser('submit', help="submit plan director to configured server")
     submit_parser.add_argument('base_name',

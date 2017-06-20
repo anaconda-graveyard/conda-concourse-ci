@@ -51,7 +51,6 @@ resources:
     secret_access_key: {{aws-secret-key}}
     access_key_id: {{aws-key-id}}
     region_name: {{aws-region-name}}
-    options: [--exclude '*', --include {{config-folder-star}}]
 
 - name: set-execute-pipelines
   type: concourse-pipeline
@@ -96,7 +95,7 @@ jobs:
       platform: linux
       run:
         path: c3i
-        args: [examine, recipe-repo-source, {{base-name}}, --matrix-base-dir, s3-config-base/{{config-folder}}]
+        args: [examine, recipe-repo-source, {{base-name}}, --matrix-base-dir, s3-config-base/config]
   - put: set-execute-pipelines
     params:
       pipelines:
