@@ -403,8 +403,9 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
                                    commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
                                    config_vars=data, public=public)
 
+    git_identifier = _get_current_git_rev(path)
     # here's how we fill in recipe output destination for the git commit we're working with
-    output_dir = output_dir.format(base_name=base_name, git_rev=git_rev)
+    output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)

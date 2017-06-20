@@ -75,7 +75,7 @@ jobs:
           - ../rsync-intermediary/config/
           - --output-dir
           # this is evaluated by c3i, not by concourse.
-          - "../output/builds/{git_rev}/plan_and_recipes"
+          - "../output/builds/{git_identifier}/plan_and_recipes"
   - put: rsync-intermediary
     params:
       sync_dir: "output/builds"
