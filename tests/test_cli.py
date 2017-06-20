@@ -16,8 +16,8 @@ def test_submit(mocker):
     mocker.patch.object(cli.execute, 'submit')
     args = ['submit', 'frank']
     cli.main(args)
-    cli.execute.submit.assert_called_once_with(base_name='frank', config_root_dir=None, debug=False,
-                                               pipeline_file='plan_director.yml',
+    cli.execute.submit.assert_called_once_with(base_name='frank', config_root_dir='frank',
+                                               debug=False, pipeline_file='plan_director.yml',
                                                pipeline_name='{base_name} plan director',
                                                public=True, src_dir=os.getcwd(),
                                                subparser_name='submit')
@@ -60,20 +60,6 @@ def test_examine_without_base_name_raises():
         cli.main(args)
 
 
-def test_consolidate(mocker):
-    mocker.patch.object(cli.execute, 'consolidate_packages')
-    args = ['consolidate', 'linux-64']
-    cli.main(args)
-    cli.execute.consolidate_packages.assert_called_once_with(subdir='linux-64', debug=False,
-                                                             path='.', subparser_name='consolidate')
-
-
-def test_consolidate_without_subdir_raises():
-    with pytest.raises(SystemExit):
-        args = ['consolidate']
-        cli.main(args)
-
-
 # not sure what the right syntax for this is yet.  TODO.
 @pytest.mark.xfail
 def test_logger_sets_debug_level(mocker):
@@ -84,4 +70,4 @@ def test_logger_sets_debug_level(mocker):
 
 def test_bad_command_raises():
     with pytest.raises(SystemExit):
-        cli.main([''])
+        cli.main(['llama'])

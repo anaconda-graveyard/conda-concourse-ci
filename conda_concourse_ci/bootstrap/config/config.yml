@@ -1,11 +1,13 @@
-aws-bucket: your-bucket
-aws-key-id: your-key
-aws-secret-key: your-secret
-aws-region-name: your-region
+anaconda-upload-token: your-anaconda-org-upload-token
 concourse-url: your-server
 concourse-team: your-team
 concourse-username: your-user
 concourse-password: your-user
 recipe-repo: your-repo
-# TODO: these need to be dynamically definable based on PR info
 recipe-repo-commit: master
+recipe-repo-access-token: your-github-access-token-if-using-private-repo
+intermediate-server: your-intermediate-server
+intermediate-base-folder: your-intermediate-base-folder
+intermediate-user: your-intermediate-user
+intermediate-private-key: |
+  private-key-to-use-for-connecting-to-intermediate-server
