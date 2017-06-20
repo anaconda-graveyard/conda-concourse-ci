@@ -75,7 +75,7 @@ jobs:
           - ../rsync-intermediary/config/
           - --output-dir
           # this is evaluated by c3i, not by concourse.
-          - "../rsync-intermediary/{base_name}/{git_rev}/plan_and_recipes"
+          - "../rsync-intermediary/{git_rev}/plan_and_recipes"
   - put: rsync-intermediary
     params:
       sync_dir: "rsync-intermediary"
@@ -100,11 +100,12 @@ jobs:
           - submit
           - {{base-name}}
           - --pipeline-file
-          - "rsync-intermediary/builds/{git_identifier}/plan.yaml"
+          - "rsync-intermediary/plan_and_recipes/{git_identifier}/plan.yaml"
           - --pipeline-name
           # these template variables are filled in by the c3i program, NOT concourse.
           - "{base_name}-execute-{git_identifier}"
           - --src-dir
           - recipe-repo-source
           - --config-root-dir
+          # we omit the config name here because that's already captured in rsync-intermediary
           - rsync-intermediary/config/

@@ -326,6 +326,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     git_identifier = _get_git_identifier(src_dir)
     pipeline_name = pipeline_name.format(base_name=base_name,
                                          git_identifier=git_identifier)
+    pipeline_file = pipeline_file.format(git_identifier=git_identifier)
 
     config_path = os.path.join(config_root_dir, 'config.yml')
     with open(config_path) as src:
