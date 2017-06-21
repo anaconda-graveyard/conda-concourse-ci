@@ -212,10 +212,14 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
         # TODO: currently tests for things that have no build are broken and skipped
 
-        elif node.startswith('test') and not node.replace('test', 'build', 1) in graph.nodes():
-            # we are only testing this package in this plan.  Get from configured channels.
-            tasks.append(get_test_recipe_task(base_path, graph, node,
-                                                config_vars['base-name'], commit_id, public))
+        elif node.startswith('test'):
+            if not node.replace('test', 'build', 1) in graph.nodes():
+                # we are only testing this package in this plan.  Get from configured channels.
+                tasks.append(get_test_recipe_task(base_path, graph, node,
+                                                  config_vars['base-name'], commit_id, public))
+            # testing for built packages is rolled into the build step.
+            else:
+                pass
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
