@@ -248,7 +248,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     remapped_jobs = []
     for plan_dict in jobs.values():
         name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
-        plan_dict['tasks'].append({'put': 'rsync-intermediary',
+        plan_dict['tasks'].append({'put': 'rsync-artifacts',
                                    'params': {'sync_dir': 'output-artifacts'}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
