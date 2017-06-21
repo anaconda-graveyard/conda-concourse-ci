@@ -68,21 +68,6 @@ def test_get_test_recipe_task(testing_graph):
     assert 'conda_build_test' in task['config']['run']['args']
 
 
-def test_get_test_package_tasks(testing_graph):
-    meta = testing_graph.node['test-b-linux']['meta']
-    meta.config.channel_urls = ['conda_build_test']
-    tasks = execute.get_test_package_tasks(graph=testing_graph, node='test-b-linux',
-                                       base_name="frank", commit_id='abc123')
-    # run the test
-    output_pkg = api.get_output_file_paths(testing_graph.node['test-b-linux']['meta'])[0]
-    output_pkg = os.path.basename(output_pkg)
-    assert tasks[0]['config']['platform'] == 'linux'
-    assert tasks[0]['config']['inputs'] == [{'name': 'rsync-intermediary'}]
-    assert tasks[0]['config']['run']['args'][-1] == os.path.join(
-        'rsync-intermediary', 'builds', 'abc123', 'artifacts', subdir, output_pkg)
-    assert 'conda_build_test' in tasks[0]['config']['run']['args']
-
-
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
     # stub out uploads, since it depends on config file stuff and we want to manipulate it
     get_upload = mocker.patch.object(execute, "get_upload_tasks")

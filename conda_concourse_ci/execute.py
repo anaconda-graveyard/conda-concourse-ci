@@ -73,7 +73,7 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
     meta = graph.node[node]['meta']
     # TODO: use git rev info to determine the folder where artifacts should go
-    build_args = ['--no-test', '--no-anaconda-upload', '--output-folder', 'output-artifacts',
+    build_args = ['--no-anaconda-upload', '--output-folder', 'output-artifacts',
                   '-c', os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
@@ -124,37 +124,6 @@ def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=Tr
     #   feature right now.
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
     return {'task': node, 'config': task_dict}
-
-
-def get_test_package_tasks(graph, node, base_name, commit_id, public=True):
-    """this is for packages that we build elsewhere in the batch"""
-    meta = graph.node[node]['meta']
-    local_channel = os.path.join('output-artifacts')
-    tasks = []
-    for pkg in conda_build.api.get_output_file_paths(meta):
-        subdir = os.path.basename(os.path.dirname(pkg))
-        filename = os.path.basename(pkg)
-
-        args = ['--test', '-c', local_channel]
-        for channel in meta.config.channel_urls:
-            args.extend(['-c', channel])
-        args.append(os.path.join(local_channel, subdir, filename))
-
-        task_dict = {
-            'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],  # NOQA
-            # dependency inputs are down below
-            'inputs': [{'name': 'rsync-intermediary'}, {'name': 'output-artifacts'}],
-            'run': {
-                'path': 'conda-build',
-                'args': args,
-                    }
-            }
-        # this has details on what image or image_resource to use.
-        #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
-        #   feature right now.
-        task_dict.update(graph.node[node]['worker'].get('connector', {}))
-        tasks.append({'task': node, 'config': task_dict})
-    return tasks
 
 
 def _resource_type_to_dict(resource_type):
@@ -243,15 +212,10 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
         # TODO: currently tests for things that have no build are broken and skipped
 
-        elif node.startswith('test'):
-            if node.replace('test', 'build', 1) in graph.nodes():
-                # we build the package in this plan.  Get it from rsync
-                tasks.extend(get_test_package_tasks(graph, node, config_vars['base-name'],
-                                                    commit_id, public))
-            else:
-                # we are only testing this package in this plan.  Get from configured channels.
-                tasks.append(get_test_recipe_task(base_path, graph, node,
-                                                  config_vars['base-name'], commit_id, public))
+        elif node.startswith('test') and not node.replace('test', 'build', 1) in graph.nodes():
+            # we are only testing this package in this plan.  Get from configured channels.
+            tasks.append(get_test_recipe_task(base_path, graph, node,
+                                                config_vars['base-name'], commit_id, public))
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
