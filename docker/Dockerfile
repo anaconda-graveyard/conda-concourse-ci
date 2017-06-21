@@ -8,6 +8,10 @@ RUN conda config --add channels msarahan
 RUN conda config --add channels rdonnelly
 RUN conda config --set anaconda_upload True
 
+# minimal subset of build-essentials.  We provide our own toolchain, so we want to save the space
+#    for that as much as possible.
+RUN apt-get install -y make
+
 RUN conda update -qy --all && conda install -qy -c conda_build_test -c conda-canary -c msarahan conda-build conda-concourse-ci anaconda-client && conda clean -pty
 
 RUN mkdir -p bin && \
