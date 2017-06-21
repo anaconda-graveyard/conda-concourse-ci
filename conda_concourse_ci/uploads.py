@@ -141,7 +141,8 @@ def get_upload_tasks(graph, node, upload_config_path, config_vars, commit_id, pu
     configurations = load_yaml_config_dir(upload_config_path)
     for package in api.get_output_file_paths(meta):
         filename = os.path.basename(package)
-        package_path = os.path.join('output-artifacts', filename)
+        package_path = os.path.join('output-artifacts', 'builds', commit_id, 'artifacts',
+                                    meta.config.host_subdir, filename)
         for config in configurations:
             if 'token' in config:
                 tasks = upload_anaconda(package_path, **config)

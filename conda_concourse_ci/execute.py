@@ -72,8 +72,8 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
     meta = graph.node[node]['meta']
-    # TODO: use git rev info to determine the folder where artifacts should go
-    build_args = ['--no-anaconda-upload', '--output-folder', 'output-artifacts',
+    output_folder = os.path.join('output-artifacts', 'builds', commit_id, 'artifacts')
+    build_args = ['--no-anaconda-upload', '--output-folder', output_folder,
                   '-c', os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
@@ -238,6 +238,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     remapped_jobs = []
     for plan_dict in jobs.values():
         name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
+        plan_dict['tasks'].append({'put': 'rsync-intermediary',
+                                   'params': {'sync_dir': 'output-artifacts'}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
     # convert types for smoother output to yaml
