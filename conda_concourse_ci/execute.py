@@ -207,10 +207,20 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
         tasks = jobs.get(pkgs, {}).get('tasks',
                                 [{'get': 'rsync-recipes',
-                                    'trigger': True,
-                                    'passed': list(set(_get_successor_condensed_job_name(graph, n)
-                                                       for n in graph.successors(node)))},
-                                 {'get': 'rsync-artifacts'}])
+                                    'trigger': True}])
+        prereqs = set(_get_successor_condensed_job_name(graph, n) for n in graph.successors(node))
+        if prereqs:
+            artifact_task = {'get': 'rsync-artifacts',
+                             'trigger': True,
+                             'passed': prereqs}
+            if len(tasks) == 1:
+                tasks.append(artifact_task)
+            elif tasks[1].get('get') == 'rsync-artifacts':
+                tasks[1]['passed'] = set(tasks[1]['passed']) | prereqs
+            else:
+                tasks.insert(1, artifact_task)
+            tasks[1]['passed'].discard(_get_successor_condensed_job_name(graph, node))
+            tasks[1]['passed'] = list(tasks[1]['passed'])
 
         if node.startswith('build'):
             tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
