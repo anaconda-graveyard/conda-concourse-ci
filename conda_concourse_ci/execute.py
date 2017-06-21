@@ -72,10 +72,10 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
     meta = graph.node[node]['meta']
-    output_path = os.path.join('rsync-intermediary', commit_id, 'artifacts')
+    output_path = os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')
     # TODO: use git rev info to determine the folder where artifacts should go
     build_args = ['--no-test', '--no-anaconda-upload', '--output-folder', output_path,
-                  '-c', os.path.join('rsync-intermediary', commit_id, 'artifacts')]
+                  '-c', os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     # this is the recipe path to build
