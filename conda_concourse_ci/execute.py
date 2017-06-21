@@ -229,8 +229,9 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         # resources that are not used for build/test.  For example, the scp and commands uploads
         # need to be able to access private keys, which are stored in config uploads.d folder.
         elif node.startswith('upload'):
-            tasks.extend(get_upload_tasks(graph, node, upload_config_path, config_vars,
-                                          commit_id=commit_id, public=public))
+            pass
+            # tasks.extend(get_upload_tasks(graph, node, upload_config_path, config_vars,
+            #                               commit_id=commit_id, public=public))
         else:
             raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
                                         "start with 'build', 'test', or 'upload'")
