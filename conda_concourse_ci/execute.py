@@ -1,4 +1,5 @@
 from __future__ import print_function, division
+from collections import OrderedDict
 import contextlib
 import logging
 import os
@@ -69,10 +70,7 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
     return task_graph
 
 
-def get_build_job(base_path, graph, node, base_name, commit_id, public=True):
-    tasks = [{'get': 'rsync-intermediary',
-              'trigger': True,
-              'passed': list(graph.successors(node))}]
+def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
     meta = graph.node[node]['meta']
     output_path = os.path.join('rsync-intermediary', commit_id, 'artifacts')
     # TODO: use git rev info to determine the folder where artifacts should go
@@ -81,7 +79,8 @@ def get_build_job(base_path, graph, node, base_name, commit_id, public=True):
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     # this is the recipe path to build
-    build_args.append(os.path.join('rsync-intermediary', commit_id, 'plan_and_recipes', node))
+    build_args.append(os.path.join('rsync-intermediary', 'builds', commit_id,
+                                   'plan_and_recipes', node))
 
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
@@ -97,20 +96,10 @@ def get_build_job(base_path, graph, node, base_name, commit_id, public=True):
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
-    tasks.append({'task': node, 'config': task_dict})
-    tasks.append({'put': 'rsync-intermediary'})
-
-    # do not store empty sets for passed reqs
-    if not tasks[0]['passed']:
-        del tasks[0]['passed']
-
-    return {'name': node, 'plan': tasks, 'public': public}
+    return {'task': node, 'config': task_dict}
 
 
-def get_test_recipe_job(base_path, graph, node, base_name, commit_id, public=True):
-    tasks = [{'get': 'rsync-intermediary',
-              'trigger': True,
-              'passed': list(graph.successors(node))}]
+def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=True):
     recipe_folder_name = graph.node[node]['meta'].meta_path.replace(base_path, '')
     if '\\' in recipe_folder_name or '/' in recipe_folder_name:
         recipe_folder_name = list(filter(None, re.split("[\\/]+", recipe_folder_name)))[0]
@@ -126,7 +115,7 @@ def get_test_recipe_job(base_path, graph, node, base_name, commit_id, public=Tru
         'run': {
              'path': 'conda-build',
              'args': args,
-             'dir': os.path.join('rsync-intermediary', commit_id, 'recipes'),
+             'dir': os.path.join('rsync-intermediary', 'builds', commit_id, 'plan_and_recipes'),
                 }
          }
 
@@ -134,19 +123,14 @@ def get_test_recipe_job(base_path, graph, node, base_name, commit_id, public=Tru
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
-    tasks.append({'task': node, 'config': task_dict})
-
-    return {'name': node, 'plan': tasks, 'public': public}
+    return {'task': node, 'config': task_dict}
 
 
-def get_test_package_job(graph, node, base_name, commit_id, public=True):
+def get_test_package_tasks(graph, node, base_name, commit_id, public=True):
     """this is for packages that we build elsewhere in the batch"""
-    tasks = [{'get': 'rsync-intermediary',
-              'trigger': True,
-              'passed': list(graph.successors(node))}]
-
     meta = graph.node[node]['meta']
-    local_channel = os.path.join('rsync-intermediary', commit_id, 'artifacts')
+    local_channel = os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')
+    tasks = []
     for pkg in conda_build.api.get_output_file_paths(meta):
         subdir = os.path.basename(os.path.dirname(pkg))
         filename = os.path.basename(pkg)
@@ -170,23 +154,7 @@ def get_test_package_job(graph, node, base_name, commit_id, public=True):
         #   feature right now.
         task_dict.update(graph.node[node]['worker'].get('connector', {}))
         tasks.append({'task': node, 'config': task_dict})
-
-    return {'name': node, 'plan': tasks, 'public': public}
-
-
-def get_upload_job(graph, node, upload_config_path, config_vars, commit_id, public=True):
-    meta = graph.node[node]['meta']
-    plan = [{'get': 'rsync-intermediary',
-             'trigger': True,
-             'passed': list(graph.successors(node))}]
-
-    for package in conda_build.api.get_output_file_paths(meta):
-        filename = os.path.basename(package)
-        tasks = get_upload_tasks(filename, upload_config_path, worker=graph.node[node]['worker'],
-                                 config_vars=config_vars, commit_id=commit_id)
-        plan.extend(tasks)
-    job = {'name': node, 'plan': plan, 'public': public}
-    return job
+    return tasks
 
 
 def _resource_type_to_dict(resource_type):
@@ -210,8 +178,29 @@ def _resource_to_dict(resource):
     return out
 
 
+def _get_successor_condensed_job_name(graph, node_or_meta):
+    if hasattr(node_or_meta, 'config'):
+        meta = node_or_meta
+    else:
+        meta = graph.node[node_or_meta]['meta']
+    loop_vars = meta.get_loop_vars()
+    requirements = (meta.get_value('requirements/build') +
+                    meta.get_value('requirements/host') +
+                    meta.get_value('requirements/run'))
+    used_variables = set()
+
+    for v in loop_vars:
+        if v in requirements or any(req.startswith(v + ' ') for req in requirements):
+            used_variables.add(v)
+    name = '-'.join((meta.name(), meta.config.host_subdir))
+    build_vars = ''.join([k + str(meta.config.variant[k]) for k in used_variables])
+    if build_vars:
+        name = '-'.join((name, build_vars))
+    return name
+
+
 def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config_vars, public=True):
-    jobs = []
+    jobs = OrderedDict()
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
 
@@ -232,10 +221,22 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       }
                   }]
 
+    # each package is a unit in the concourse graph.  This step recombines our separate steps.
+
     for node in order:
+        pkgs = tuple(conda_build.api.get_output_file_paths(graph.node[node]['meta']))
+        meta = graph.node[node]['meta']
+
+        tasks = jobs.get(pkgs, {}).get('tasks',
+                                [{'get': 'rsync-intermediary',
+                                    'trigger': True,
+                                    'passed': list(set(_get_successor_condensed_job_name(graph, n)
+                                                       for n in graph.successors(node)))}]
+                                )
+
         if node.startswith('build'):
-            jobs.append(get_build_job(base_path, graph, node, config_vars['base-name'],
-                                    commit_id, public))
+            tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
+                                       commit_id, public))
 
         # test jobs need to get the package from either the temporary s3 store or test using the
         #     recipe (download package from available channels) and run a test task
@@ -244,13 +245,13 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
         elif node.startswith('test'):
             if node.replace('test', 'build', 1) in graph.nodes():
-                # we build the package in this plan.  Get it from s3.
-                jobs.append(get_test_package_job(graph, node, config_vars['base-name'],
-                                                 commit_id, public))
+                # we build the package in this plan.  Get it from rsync
+                tasks.extend(get_test_package_tasks(graph, node, config_vars['base-name'],
+                                                    commit_id, public))
             else:
                 # we are only testing this package in this plan.  Get from configured channels.
-                jobs.append(get_test_recipe_job(base_path, graph, node,
-                                                config_vars['base-name'], commit_id, public))
+                tasks.append(get_test_recipe_task(base_path, graph, node,
+                                                  config_vars['base-name'], commit_id, public))
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
@@ -260,16 +261,19 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         # resources that are not used for build/test.  For example, the scp and commands uploads
         # need to be able to access private keys, which are stored in config uploads.d folder.
         elif node.startswith('upload'):
-            job = get_upload_job(graph, node, upload_config_path, config_vars, commit_id=commit_id,
-                                 public=public)
-            jobs.append(job)
-
+            tasks.extend(get_upload_tasks(graph, node, upload_config_path, config_vars,
+                                          commit_id=commit_id, public=public))
         else:
             raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
                                         "start with 'build', 'test', or 'upload'")
+        jobs[pkgs] = {'tasks': tasks, 'meta': meta}
+    remapped_jobs = []
+    for plan_dict in jobs.values():
+        name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
+        remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
     # convert types for smoother output to yaml
-    return {'resource_types': resource_types, 'resources': resources, 'jobs': jobs}
+    return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
 
 
 def _get_current_git_rev(path, branch=False):

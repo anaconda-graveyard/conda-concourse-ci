@@ -38,70 +38,55 @@ boilerplate_test_vars = {'base-name': 'steve',
                          'aws-region-name': 'frank'}
 
 
-def test_get_build_job(testing_graph):
+def test_get_build_task(testing_graph):
     # ensure that our channels make it into the args
     meta = testing_graph.node['build-b-linux']['meta']
     meta.config.channel_urls = ['conda_build_test']
-    job = execute.get_build_job(base_path=graph_data_dir, graph=testing_graph,
+    task = execute.get_build_task(base_path=graph_data_dir, graph=testing_graph,
                                 node='build-b-linux', base_name="frank",
                                 commit_id='abc123')
-    # download the recipes and config, contingent on passed tests
-    assert job['plan'][0]['get'] == 'rsync-intermediary'
-    assert job['plan'][0]['passed'] == ['test-a-linux']
-
-    # run the build
-    assert job['plan'][1]['config']['platform'] == 'linux'
-    assert job['plan'][1]['config']['inputs'] == [{'name': 'rsync-intermediary'}]
-    assert job['plan'][1]['config']['run']['args'][-1] == ('rsync-intermediary/abc123/recipes'
+    assert task['config']['platform'] == 'linux'
+    assert task['config']['inputs'] == [{'name': 'rsync-intermediary'}]
+    assert task['config']['run']['args'][-1] == ('rsync-intermediary/builds/abc123/plan_and_recipes'
                                                            '/build-b-linux')
-    assert 'conda_build_test' in job['plan'][1]['config']['run']['args']
-
-    # upload the built package to temporary storage
-    assert job['plan'][-1]['put'] == "rsync-intermediary"
+    assert 'conda_build_test' in task['config']['run']['args']
 
 
-def test_get_test_recipe_job(testing_graph):
+def test_get_test_recipe_task(testing_graph):
     """Test something that already exists.  Note that this is not building any dependencies."""
     meta = testing_graph.node['test-b-linux']['meta']
     meta.config.channel_urls = ['conda_build_test']
-    job = execute.get_test_recipe_job(base_path=graph_data_dir, graph=testing_graph,
-                                      node='test-b-linux', base_name="frank",
-                                      commit_id='abc123')
-    # download the recipe tarball
-    assert job['plan'][0]['get'] == 'rsync-intermediary'
-
+    task = execute.get_test_recipe_task(base_path=graph_data_dir, graph=testing_graph,
+                                        node='test-b-linux', base_name="frank",
+                                        commit_id='abc123')
     # run the test
-    assert job['plan'][1]['config']['platform'] == 'linux'
-    assert job['plan'][1]['config']['inputs'] == [{'name': 'rsync-intermediary'}]
-    assert job['plan'][1]['config']['run']['args'][-1] == 'b'
-    assert job['plan'][1]['config']['run']['dir'] == os.path.join('rsync-intermediary', 'abc123',
-                                                                  'recipes')
-    assert 'conda_build_test' in job['plan'][1]['config']['run']['args']
+    assert task['config']['platform'] == 'linux'
+    assert task['config']['inputs'] == [{'name': 'rsync-intermediary'}]
+    assert task['config']['run']['args'][-1] == 'b'
+    assert task['config']['run']['dir'] == os.path.join('rsync-intermediary', 'builds', 'abc123',
+                                                        'plan_and_recipes')
+    assert 'conda_build_test' in task['config']['run']['args']
 
 
-def test_get_test_package_job(testing_graph):
+def test_get_test_package_tasks(testing_graph):
     meta = testing_graph.node['test-b-linux']['meta']
     meta.config.channel_urls = ['conda_build_test']
-    job = execute.get_test_package_job(graph=testing_graph, node='test-b-linux',
+    tasks = execute.get_test_package_tasks(graph=testing_graph, node='test-b-linux',
                                        base_name="frank", commit_id='abc123')
-    # download the recipes and config, contingent on passed tests
-    assert job['plan'][0]['get'] == 'rsync-intermediary'
-    assert job['plan'][0]['passed'] == ['build-b-linux']
-
     # run the test
     output_pkg = api.get_output_file_paths(testing_graph.node['test-b-linux']['meta'])[0]
     output_pkg = os.path.basename(output_pkg)
-    assert job['plan'][1]['config']['platform'] == 'linux'
-    assert job['plan'][1]['config']['inputs'] == [{'name': 'rsync-intermediary'}]
-    assert job['plan'][1]['config']['run']['args'][-1] == os.path.join(
-        'rsync-intermediary', 'abc123', 'artifacts', subdir, output_pkg)
-    assert 'conda_build_test' in job['plan'][1]['config']['run']['args']
+    assert tasks[0]['config']['platform'] == 'linux'
+    assert tasks[0]['config']['inputs'] == [{'name': 'rsync-intermediary'}]
+    assert tasks[0]['config']['run']['args'][-1] == os.path.join(
+        'rsync-intermediary', 'builds', 'abc123', 'artifacts', subdir, output_pkg)
+    assert 'conda_build_test' in tasks[0]['config']['run']['args']
 
 
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
     # stub out uploads, since it depends on config file stuff and we want to manipulate it
-    mocker.patch.object(execute, "get_upload_job")
-    execute.get_upload_job.return_value = [], [], {}
+    get_upload = mocker.patch.object(execute, "get_upload_tasks")
+    get_upload.return_value = []
 
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
         config_vars = yaml.load(f)
@@ -109,18 +94,8 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
                                                 test_config_dir, config_vars)
     # rsync-archive is the only resource.  For each job, we change the 'passed' condition
     assert len(plan_dict['resources']) == 1
-    # build a, test a, upload a, build b, test b, upload b, test c
-    assert len(plan_dict['jobs']) == 7
-
-
-def test_get_upload_job(mocker, testing_graph):
-    with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
-    job = execute.get_upload_job(testing_graph, 'build-b-linux',
-                                                   os.path.join(test_config_dir, 'uploads.d'),
-                                                   config_vars, commit_id='abc123')
-    # get config; anaconda; 3 for scp; 1 command;
-    assert len(job['plan']) == 6
+    # a, b, c
+    assert len(plan_dict['jobs']) == 3
 
 
 def test_unknown_job_type():
@@ -174,7 +149,7 @@ def test_compute_builds(testing_workdir, mocker, monkeypatch):
     execute.compute_builds('.', 'config-name', 'master',
                            folders=['python_test', 'conda_forge_style_recipe'],
                            matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
-                           output=output)
+                           output_dir=output)
     assert os.path.isdir(output)
     files = os.listdir(output)
     assert 'plan.yml' in files
@@ -204,15 +179,15 @@ def test_compute_builds_intradependencies(testing_workdir, monkeypatch, mocker):
     execute.compute_builds('.', 'config-name', 'master',
                            folders=['zlib', 'uses_zlib'],
                            matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
-                           output=output_dir)
+                           output_dir=output_dir)
     assert os.path.isdir(output_dir)
     files = os.listdir(output_dir)
     assert 'plan.yml' in files
     with open(os.path.join(output_dir, 'plan.yml')) as f:
         plan = yaml.load(f)
 
-    uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'build-uses_zlib-centos5-64'][0]
-    assert any(task.get('passed') == ['test-zlib-centos5-64']
+    uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'uses_zlib-linux-64'][0]
+    assert any(task.get('passed') == ['zlib-linux-64']
                for task in uses_zlib_job['plan'])
 
 
@@ -223,6 +198,6 @@ def test_compute_builds_dies_when_no_folders_and_no_git(testing_workdir, mocker,
     execute.compute_builds('.', 'config-name', 'master',
                            folders=None,
                            matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
-                           output=output_dir)
+                           output_dir=output_dir)
     out, err = capfd.readouterr()
     assert "No folders specified to build" in out

@@ -49,9 +49,9 @@ def test_examine(mocker):
     cli.main(args)
     cli.execute.compute_builds.assert_called_once_with(base_name='frank', debug=False, folders=[],
                                                        git_rev='HEAD', matrix_base_dir=None,
-                                                       max_downstream=5, path='.', steps=0,
-                                                       stop_rev=None, subparser_name='examine',
-                                                       test=False)
+                                                       max_downstream=5, output_dir='../output',
+                                                       path='.', steps=0, stop_rev=None,
+                                                       subparser_name='examine', test=False)
 
 
 def test_examine_without_base_name_raises():

@@ -11,6 +11,7 @@ import logging
 import os
 
 from six.moves.urllib import parse
+from conda_build import api
 
 from .utils import ensure_list, load_yaml_config_dir
 
@@ -133,26 +134,28 @@ def upload_commands(package_path, commands, config_vars, **file_contents):
     return tasks
 
 
-def get_upload_tasks(package_filename, upload_config_dir, worker, config_vars, commit_id):
+def get_upload_tasks(graph, node, upload_config_path, config_vars, commit_id, public=True):
     upload_tasks = []
-    configurations = load_yaml_config_dir(upload_config_dir)
-    package_path = os.path.join('rsync-intermediary', commit_id, 'artifacts', package_filename)
-
-    for config in configurations:
-        if 'token' in config:
-            tasks = upload_anaconda(package_path, **config)
-        elif 'server' in config:
-            tasks = upload_scp(package_path=package_path,
-                                                 worker=worker, config_vars=config_vars,
-                                                 **config)
-        elif 'commands' in config:
-            tasks = upload_commands(package_path, config_vars=config_vars,
-                                                      **config)
-        else:
-            raise ValueError("Unrecognized upload configuration.  Each file needs one of: "
-                             "'token', 'server', or 'command'")
-        upload_tasks.extend(task for task in tasks if task not in upload_tasks)
-
+    meta = graph.node[node]['meta']
+    worker = graph.node[node]['worker']
+    configurations = load_yaml_config_dir(upload_config_path)
+    for package in api.get_output_file_paths(meta):
+        filename = os.path.basename(package)
+        package_path = os.path.join('rsync-intermediary', commit_id, 'artifacts', filename)
+        for config in configurations:
+            if 'token' in config:
+                tasks = upload_anaconda(package_path, **config)
+            elif 'server' in config:
+                tasks = upload_scp(package_path=package_path,
+                                worker=worker, config_vars=config_vars,
+                                **config)
+            elif 'commands' in config:
+                tasks = upload_commands(package_path, config_vars=config_vars,
+                                                        **config)
+            else:
+                raise ValueError("Unrecognized upload configuration.  Each file needs one of: "
+                                "'token', 'server', or 'command'")
+            upload_tasks.extend(task for task in tasks if task not in upload_tasks)
     return upload_tasks
 
 
