@@ -72,19 +72,18 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
     meta = graph.node[node]['meta']
-    output_folder = os.path.join('output-artifacts', 'builds', commit_id, 'artifacts')
+    output_folder = os.path.join('output-artifacts', commit_id)
     build_args = ['--no-anaconda-upload', '--output-folder', output_folder,
-                  '-c', os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')]
+                  '-c', os.path.join('rsync-artifacts', commit_id)]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     # this is the recipe path to build
-    build_args.append(os.path.join('rsync-intermediary', 'builds', commit_id,
-                                   'plan_and_recipes', node))
+    build_args.append(os.path.join('rsync-recipes', commit_id, node))
 
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         # dependency inputs are down below
-        'inputs': [{'name': 'rsync-intermediary'}],
+        'inputs': [{'name': 'rsync-recipes'}, {'name': 'rsync-artifacts'}],
         'outputs': [{'name': 'output-artifacts'}],
         'run': {
             'path': 'conda-build',
@@ -111,14 +110,13 @@ def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=Tr
     args.append(recipe_folder_name)
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
-        'inputs': [{'name': 'rsync-intermediary'}],
+        'inputs': [{'name': 'rsync-recipes'}],
         'run': {
              'path': 'conda-build',
              'args': args,
-             'dir': os.path.join('rsync-intermediary', 'builds', commit_id, 'plan_and_recipes'),
+             'dir': os.path.join('rsync-recipes', commit_id),
                 }
          }
-
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
@@ -180,11 +178,22 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                            'tag': 'latest'
                            }
                        }]
-    resources = [{'name': 'rsync-intermediary',
+    resources = [{'name': 'rsync-recipes',
                   'type': 'rsync-resource',
                   'source': {
                       'server': config_vars['intermediate-server'],
-                      'base_dir': config_vars['intermediate-base-folder'],
+                      'base_dir': os.path.join(config_vars['intermediate-base-folder'],
+                                               'plan_and_recipes', commit_id),
+                      'user': config_vars['intermediate-user'],
+                      'private_key': config_vars['intermediate-private-key'],
+                      'disable_version_path': True,
+                  }},
+                 {'name': 'rsync-artifacts',
+                  'type': 'rsync-resource',
+                  'source': {
+                      'server': config_vars['intermediate-server'],
+                      'base_dir': os.path.join(config_vars['intermediate-base-folder'],
+                                               'artifacts', commit_id),
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
@@ -197,11 +206,11 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         meta = graph.node[node]['meta']
 
         tasks = jobs.get(pkgs, {}).get('tasks',
-                                [{'get': 'rsync-intermediary',
+                                [{'get': 'rsync-recipes',
                                     'trigger': True,
                                     'passed': list(set(_get_successor_condensed_job_name(graph, n)
-                                                       for n in graph.successors(node)))}]
-                                )
+                                                       for n in graph.successors(node)))},
+                                 {'get': 'rsync-artifacts'}])
 
         if node.startswith('build'):
             tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],

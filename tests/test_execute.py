@@ -46,9 +46,8 @@ def test_get_build_task(testing_graph):
                                 node='build-b-linux', base_name="frank",
                                 commit_id='abc123')
     assert task['config']['platform'] == 'linux'
-    assert task['config']['inputs'] == [{'name': 'rsync-intermediary'}]
-    assert task['config']['run']['args'][-1] == ('rsync-intermediary/builds/abc123/plan_and_recipes'
-                                                           '/build-b-linux')
+    assert task['config']['inputs'] == [{'name': 'rsync-recipes'}, {'name': 'rsync-artifacts'}]
+    assert task['config']['run']['args'][-1] == ('rsync-recipes/abc123/build-b-linux')
     assert 'conda_build_test' in task['config']['run']['args']
 
 
@@ -61,10 +60,9 @@ def test_get_test_recipe_task(testing_graph):
                                         commit_id='abc123')
     # run the test
     assert task['config']['platform'] == 'linux'
-    assert task['config']['inputs'] == [{'name': 'rsync-intermediary'}]
+    assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
     assert task['config']['run']['args'][-1] == 'b'
-    assert task['config']['run']['dir'] == os.path.join('rsync-intermediary', 'builds', 'abc123',
-                                                        'plan_and_recipes')
+    assert task['config']['run']['dir'] == os.path.join('rsync-recipes', 'abc123')
     assert 'conda_build_test' in task['config']['run']['args']
 
 
@@ -77,8 +75,8 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
         config_vars = yaml.load(f)
     plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
                                                 test_config_dir, config_vars)
-    # rsync-archive is the only resource.  For each job, we change the 'passed' condition
-    assert len(plan_dict['resources']) == 1
+    # rsync-recipes and rsync-artifacts are the only resource.  For each job, we change the 'passed' condition
+    assert len(plan_dict['resources']) == 2
     # a, b, c
     assert len(plan_dict['jobs']) == 3
 

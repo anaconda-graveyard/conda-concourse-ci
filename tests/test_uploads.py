@@ -2,8 +2,8 @@ import os
 
 from conda_concourse_ci import uploads
 
-import pytest
 import yaml
+from conda_build import conda_interface
 
 from .utils import test_config_dir, default_worker
 
@@ -13,7 +13,7 @@ def test_base_task():
     assert task['task'] == 'steve'
     assert 'run' in task['config']
     assert len(task['config']['inputs']) == 1
-    assert task['config']['inputs'][0]['name'] == 'rsync-intermediary'
+    assert task['config']['inputs'][0]['name'] == 'output-artifacts'
 
 
 def test_upload_anaconda():
@@ -107,13 +107,16 @@ def test_get_upload_tasks(mocker, testing_graph):
     uploads.get_upload_tasks(testing_graph, 'build-b-linux',
                              os.path.join(test_config_dir, 'uploads.d'),
                              config_vars, commit_id='abc123')
-    uploads.upload_anaconda.assert_called_once_with('rsync-intermediary/abc123/artifacts/b-1.0-hd248202_0.tar.bz2',
-                                                    token='abc')
+    subdir = conda_interface.subdir
+    uploads.upload_anaconda.assert_called_once_with(
+        'output-artifacts/abc123/{}/b-1.0-hd248202_0.tar.bz2'.format(subdir),
+        token='abc')
     uploads.upload_scp.assert_called_once_with(
-        package_path='rsync-intermediary/abc123/artifacts/b-1.0-hd248202_0.tar.bz2', worker=default_worker,
-        config_vars=config_vars, server='localhost')
+        package_path='output-artifacts/abc123/{}/b-1.0-hd248202_0.tar.bz2'.format(subdir),
+        worker=default_worker, config_vars=config_vars, server='localhost')
     uploads.upload_commands.assert_called_once_with(
-        'rsync-intermediary/abc123/artifacts/b-1.0-hd248202_0.tar.bz2', config_vars=config_vars, commands='weee')
+        'output-artifacts/abc123/{}/b-1.0-hd248202_0.tar.bz2'.format(subdir),
+        config_vars=config_vars, commands='weee')
 
     # uploads.load_yaml_config_dir.return_value = [{'bad': 'abc'}]
     # with pytest.raises(ValueError):
