@@ -21,7 +21,7 @@ log = logging.getLogger(__file__)
 def _base_task(upload_job_name):
     return {'task': upload_job_name,
             'config': {
-                'inputs': [{'name': 'rsync-intermediary'}],
+                'inputs': [{'name': 'output-artifacts'}],
                 'image_resource': {
                     'type': 'docker-image',
                     'source': {'repository': 'msarahan/conda-concourse-ci',
@@ -141,7 +141,7 @@ def get_upload_tasks(graph, node, upload_config_path, config_vars, commit_id, pu
     configurations = load_yaml_config_dir(upload_config_path)
     for package in api.get_output_file_paths(meta):
         filename = os.path.basename(package)
-        package_path = os.path.join('rsync-intermediary', commit_id, 'artifacts', filename)
+        package_path = os.path.join('output-artifacts', filename)
         for config in configurations:
             if 'token' in config:
                 tasks = upload_anaconda(package_path, **config)
