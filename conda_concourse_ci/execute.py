@@ -72,9 +72,8 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
     meta = graph.node[node]['meta']
-    output_path = os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')
     # TODO: use git rev info to determine the folder where artifacts should go
-    build_args = ['--no-test', '--no-anaconda-upload', '--output-folder', output_path,
+    build_args = ['--no-test', '--no-anaconda-upload', '--output-folder', 'output-artifacts',
                   '-c', os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
@@ -86,6 +85,7 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         # dependency inputs are down below
         'inputs': [{'name': 'rsync-intermediary'}],
+        'outputs': [{'name': 'output-artifacts'}],
         'run': {
             'path': 'conda-build',
             'args': build_args,
@@ -129,7 +129,7 @@ def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=Tr
 def get_test_package_tasks(graph, node, base_name, commit_id, public=True):
     """this is for packages that we build elsewhere in the batch"""
     meta = graph.node[node]['meta']
-    local_channel = os.path.join('rsync-intermediary', 'builds', commit_id, 'artifacts')
+    local_channel = os.path.join('output-artifacts')
     tasks = []
     for pkg in conda_build.api.get_output_file_paths(meta):
         subdir = os.path.basename(os.path.dirname(pkg))
@@ -143,7 +143,7 @@ def get_test_package_tasks(graph, node, base_name, commit_id, public=True):
         task_dict = {
             'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],  # NOQA
             # dependency inputs are down below
-            'inputs': [{'name': 'rsync-intermediary'}],
+            'inputs': [{'name': 'rsync-intermediary'}, {'name': 'output-artifacts'}],
             'run': {
                 'path': 'conda-build',
                 'args': args,
