@@ -218,8 +218,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'base_dir': config_vars['intermediate-base-folder'],
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
-                      }
-                  }]
+                      'disable_version_path': True,
+                  }}]
 
     # each package is a unit in the concourse graph.  This step recombines our separate steps.
 
