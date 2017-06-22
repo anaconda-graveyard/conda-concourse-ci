@@ -70,7 +70,7 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
     return task_graph
 
 
-def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
+def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False):
     meta = graph.node[node]['meta']
     output_folder = os.path.join('output-artifacts', commit_id)
     build_args = ['--no-anaconda-upload', '--output-folder', output_folder,
@@ -79,11 +79,14 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True):
         build_args.extend(['-c', channel])
     # this is the recipe path to build
     build_args.append(os.path.join('rsync-recipes', commit_id, node))
+    inputs = [{'name': 'rsync-recipes'}]
+    if artifact_input:
+        inputs.append({'name': 'rsync-artifacts'})
 
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         # dependency inputs are down below
-        'inputs': [{'name': 'rsync-recipes'}, {'name': 'rsync-artifacts'}],
+        'inputs': inputs,
         'outputs': [{'name': 'output-artifacts'}],
         'run': {
             'path': 'conda-build',
@@ -204,6 +207,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     for node in order:
         pkgs = tuple(conda_build.api.get_output_file_paths(graph.node[node]['meta']))
         meta = graph.node[node]['meta']
+        artifact_input = False
 
         tasks = jobs.get(pkgs, {}).get('tasks',
                                 [{'get': 'rsync-recipes',
@@ -221,12 +225,14 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                 tasks.insert(1, artifact_task)
             tasks[1]['passed'].discard(_get_successor_condensed_job_name(graph, node))
             tasks[1]['passed'] = list(tasks[1]['passed'])
-            if not tasks[1]['passed']:
+            if tasks[1]['passed']:
+                artifact_input = True
+            else:
                 del tasks[1]
 
         if node.startswith('build'):
             tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
-                                       commit_id, public))
+                                        commit_id, public, artifact_input=artifact_input))
 
         # test jobs need to get the package from either the temporary s3 store or test using the
         #     recipe (download package from available channels) and run a test task
@@ -237,7 +243,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
             if not node.replace('test', 'build', 1) in graph.nodes():
                 # we are only testing this package in this plan.  Get from configured channels.
                 tasks.append(get_test_recipe_task(base_path, graph, node,
-                                                  config_vars['base-name'], commit_id, public))
+                                                  config_vars['base-name'], commit_id, public,
+                                                  artifact_input=artifact_input))
             # testing for built packages is rolled into the build step.
             else:
                 pass
