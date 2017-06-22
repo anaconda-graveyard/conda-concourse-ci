@@ -74,11 +74,11 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     meta = graph.node[node]['meta']
     output_folder = os.path.join('output-artifacts', commit_id)
     build_args = ['--no-anaconda-upload', '--output-folder', output_folder,
-                  '-c', os.path.join('rsync-artifacts', commit_id)]
+                  '-c', os.path.join('rsync-artifacts')]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     # this is the recipe path to build
-    build_args.append(os.path.join('rsync-recipes', commit_id, node))
+    build_args.append(os.path.join('rsync-recipes', node))
     inputs = [{'name': 'rsync-recipes'}]
     if artifact_input:
         inputs.append({'name': 'rsync-artifacts'})
