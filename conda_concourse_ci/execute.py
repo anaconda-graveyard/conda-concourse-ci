@@ -221,6 +221,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                 tasks.insert(1, artifact_task)
             tasks[1]['passed'].discard(_get_successor_condensed_job_name(graph, node))
             tasks[1]['passed'] = list(tasks[1]['passed'])
+            if not tasks[1]['passed']:
+                del tasks[1]
 
         if node.startswith('build'):
             tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
