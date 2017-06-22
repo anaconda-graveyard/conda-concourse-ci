@@ -72,7 +72,7 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
 
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False):
     meta = graph.node[node]['meta']
-    output_folder = os.path.join('output-artifacts', commit_id)
+    output_folder = os.path.join('output-artifacts')
     build_args = ['--no-anaconda-upload', '--output-folder', output_folder,
                   '-c', os.path.join('rsync-artifacts')]
     for channel in meta.config.channel_urls:
