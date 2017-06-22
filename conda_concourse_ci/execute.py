@@ -212,8 +212,6 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         tasks = jobs.get(pkgs, {}).get('tasks',
                                 [{'get': 'rsync-recipes',
                                     'trigger': True}])
-        if 'openssl' in node:
-            import ipdb; ipdb.set_trace()
 
         prereqs = set(_get_successor_condensed_job_name(graph, n) for n in graph.successors(node))
         if prereqs:
