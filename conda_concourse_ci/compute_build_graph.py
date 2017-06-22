@@ -17,7 +17,7 @@ CONDA_BUILD_CACHE = os.environ.get("CONDA_BUILD_CACHE")
 hash_length = api.Config().hash_length
 
 
-def package_key(run, metadata, worker_label):
+def package_key(metadata, worker_label):
     # get the build string from whatever conda-build makes of the configuration
     variables = metadata.get_loop_vars()
     used_variables = set()
@@ -29,7 +29,7 @@ def package_key(run, metadata, worker_label):
         if v in requirements or any(req.startswith(v + ' ') for req in requirements):
             used_variables.add(v)
     build_vars = ''.join([k + str(metadata.config.variant[k]) for k in used_variables])
-    key = [run, metadata.name()]
+    key = [metadata.name()]
     if build_vars:
         key.append(build_vars)
     key.append(worker_label)
@@ -139,7 +139,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         return None
 
     for (metadata, _, _) in rendered:
-        name = package_key(run, metadata, worker['label'])
+        name = package_key(metadata, worker['label'])
 
         if metadata.skip():
             return None
@@ -148,15 +148,15 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         add_dependency_nodes_and_edges(name, graph, run, worker, conda_resolve,
                                     recipes_dir=recipes_dir)
 
-        # add the test equivalent at the same time.  This is so that expanding can find it.
-        if run == 'build':
-            add_recipe_to_graph(recipe_dir, graph, 'test', worker, conda_resolve,
-                                recipes_dir=recipes_dir)
-            test_key = package_key('test', metadata, worker['label'])
-            graph.add_edge(test_key, name)
-            upload_key = package_key('upload', metadata, worker['label'])
-            graph.add_node(upload_key, meta=metadata, worker=worker)
-            graph.add_edge(upload_key, test_key)
+        # # add the test equivalent at the same time.  This is so that expanding can find it.
+        # if run == 'build':
+        #     add_recipe_to_graph(recipe_dir, graph, 'test', worker, conda_resolve,
+        #                         recipes_dir=recipes_dir)
+        #     test_key = package_key(metadata, worker['label'])
+        #     graph.add_edge(test_key, name)
+        #     upload_key = package_key(metadata, worker['label'])
+        #     graph.add_node(upload_key, meta=metadata, worker=worker)
+        #     graph.add_edge(upload_key, test_key)
 
     return name
 
@@ -268,7 +268,13 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
     changes graph in place.
     '''
     metadata = graph.node[node]['meta']
-    deps = get_build_deps(metadata) if run == 'build' else get_run_test_deps(metadata)
+    # for plain test runs, ignore build reqs.
+    deps = get_run_test_deps(metadata)
+
+    # cross: need to distinguish between build_subdir (build reqs) and host_subdir
+    if run == 'build':
+        deps.update(get_build_deps(metadata))
+
     for dep, (version, build_str) in deps.items():
         dummy_meta = metadata.copy()
         dummy_meta.meta = {'package': {'name': dep,
@@ -290,7 +296,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
                                      metadata.config.host_subdir)))
             # version is passed literally here because constraints may make it an invalid version
             #    for metadata.
-            dep_name = package_key('build', dummy_meta, worker['label'])
+            dep_name = package_key(dummy_meta, worker['label'])
             dep_re = re.sub(r'anyh[0-9a-f]{%d}' % metadata.config.hash_length, '.*', dep_name)
             if sys.version_info.major < 3:
                 dep_re = re.compile(dep_re.encode('unicode-escape'))
@@ -312,7 +318,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
             else:
                 dep_name = node_in_graph[0].string
 
-            graph.add_edge(node, package_key('test', dummy_meta, worker['label']))
+            graph.add_edge(node, package_key(dummy_meta, worker['label']))
 
 
 def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,

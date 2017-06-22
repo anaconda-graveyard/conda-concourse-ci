@@ -6,8 +6,6 @@ import conda_concourse_ci
 from conda_concourse_ci.utils import HashableDict
 
 from conda_build import api
-from conda_build.conda_interface import subdir
-from conda_build.utils import package_has_file
 import networkx as nx
 import pytest
 import yaml
@@ -23,10 +21,9 @@ def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
     conda_concourse_ci.compute_build_graph._installable.return_value = True
     task_graph = execute.collect_tasks(graph_data_dir, folders=['a'],
                                        matrix_base_dir=test_config_dir)
-    test_platforms = os.listdir(os.path.join(test_config_dir, 'test_platforms.d'))
     build_platforms = os.listdir(os.path.join(test_config_dir, 'build_platforms.d'))
     # one build, one test per platform, uploads only for builds.
-    n_platforms = len(test_platforms) + 2 * len(build_platforms)
+    n_platforms = len(build_platforms)
     # minimum args means build and test provided folders.  Two tasks.
     assert len(task_graph.nodes()) == n_platforms
 
@@ -40,23 +37,23 @@ boilerplate_test_vars = {'base-name': 'steve',
 
 def test_get_build_task(testing_graph):
     # ensure that our channels make it into the args
-    meta = testing_graph.node['build-b-linux']['meta']
+    meta = testing_graph.node['b-linux']['meta']
     meta.config.channel_urls = ['conda_build_test']
     task = execute.get_build_task(base_path=graph_data_dir, graph=testing_graph,
-                                node='build-b-linux', base_name="frank",
+                                node='b-linux', base_name="frank",
                                 commit_id='abc123')
     assert task['config']['platform'] == 'linux'
-    assert task['config']['inputs'] == [{'name': 'rsync-recipes'}, {'name': 'rsync-artifacts'}]
-    assert task['config']['run']['args'][-1] == ('rsync-recipes/abc123/build-b-linux')
+    assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
+    assert task['config']['run']['args'][-1] == ('rsync-recipes/b-linux')
     assert 'conda_build_test' in task['config']['run']['args']
 
 
 def test_get_test_recipe_task(testing_graph):
     """Test something that already exists.  Note that this is not building any dependencies."""
-    meta = testing_graph.node['test-b-linux']['meta']
+    meta = testing_graph.node['b-linux']['meta']
     meta.config.channel_urls = ['conda_build_test']
     task = execute.get_test_recipe_task(base_path=graph_data_dir, graph=testing_graph,
-                                        node='test-b-linux', base_name="frank",
+                                        node='b-linux', base_name="frank",
                                         commit_id='abc123')
     # run the test
     assert task['config']['platform'] == 'linux'

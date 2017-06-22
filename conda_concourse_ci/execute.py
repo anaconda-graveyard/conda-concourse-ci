@@ -212,6 +212,9 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         tasks = jobs.get(pkgs, {}).get('tasks',
                                 [{'get': 'rsync-recipes',
                                     'trigger': True}])
+        if 'openssl' in node:
+            import ipdb; ipdb.set_trace()
+
         prereqs = set(_get_successor_condensed_job_name(graph, n) for n in graph.successors(node))
         if prereqs:
             artifact_task = {'get': 'rsync-artifacts',
@@ -226,30 +229,28 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
             tasks[1]['passed'].discard(_get_successor_condensed_job_name(graph, node))
             tasks[1]['passed'] = list(tasks[1]['passed'])
 
-        if len(tasks) > 1 and 'passed' in tasks[1]:
+        if len(tasks) > 1 and tasks[1].get('get') == 'rsync-artifacts' and 'passed' in tasks[1]:
             if tasks[1].get('passed'):
                 artifact_input = True
             else:
                 del tasks[1]
-
-        if node.startswith('build'):
-            tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
-                                        commit_id, public, artifact_input=artifact_input))
 
         # test jobs need to get the package from either the temporary s3 store or test using the
         #     recipe (download package from available channels) and run a test task
 
         # TODO: currently tests for things that have no build are broken and skipped
 
-        elif node.startswith('test'):
+        if node.startswith('test-'):
             if not node.replace('test', 'build', 1) in graph.nodes():
                 # we are only testing this package in this plan.  Get from configured channels.
                 tasks.append(get_test_recipe_task(base_path, graph, node,
-                                                  config_vars['base-name'], commit_id, public,
-                                                  artifact_input=artifact_input))
+                                                  config_vars['base-name'], commit_id, public))
             # testing for built packages is rolled into the build step.
             else:
                 pass
+        else:
+            tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
+                                        commit_id, public, artifact_input=artifact_input))
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
@@ -258,13 +259,13 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         # This is also more complicated, because uploads may involve other resource types and
         # resources that are not used for build/test.  For example, the scp and commands uploads
         # need to be able to access private keys, which are stored in config uploads.d folder.
-        elif node.startswith('upload'):
-            pass
-            # tasks.extend(get_upload_tasks(graph, node, upload_config_path, config_vars,
-            #                               commit_id=commit_id, public=public))
-        else:
-            raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
-                                        "start with 'build', 'test', or 'upload'")
+        # elif node.startswith('upload'):
+        #     pass
+        #     # tasks.extend(get_upload_tasks(graph, node, upload_config_path, config_vars,
+        #     #                               commit_id=commit_id, public=public))
+        # else:
+        #     raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
+        #                                 "start with 'build', 'test', or 'upload'")
         jobs[pkgs] = {'tasks': tasks, 'meta': meta}
     remapped_jobs = []
     for plan_dict in jobs.values():
