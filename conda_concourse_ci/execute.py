@@ -213,7 +213,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                 [{'get': 'rsync-recipes',
                                     'trigger': True}])
 
-        prereqs = set(_get_successor_condensed_job_name(graph, n) for n in graph.successors(node))
+        prereqs = set(graph.successors(node))
         if prereqs:
             artifact_task = {'get': 'rsync-artifacts',
                              'trigger': True,
@@ -224,7 +224,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                 tasks[1]['passed'] = set(tasks[1]['passed']) | prereqs
             else:
                 tasks.insert(1, artifact_task)
-            tasks[1]['passed'].discard(_get_successor_condensed_job_name(graph, node))
+            tasks[1]['passed'].discard(node)
             tasks[1]['passed'] = list(tasks[1]['passed'])
 
         if len(tasks) > 1 and tasks[1].get('get') == 'rsync-artifacts' and 'passed' in tasks[1]:
@@ -420,23 +420,22 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
     if not os.path.isabs(path):
         path = os.path.normpath(os.path.join(os.getcwd(), path))
     for node in task_graph:
-        if node.split('-')[0] == 'build':
-            meta = task_graph.node[node]['meta']
-            if meta.meta_path:
-                recipe = os.path.dirname(meta.meta_path)
-            else:
-                recipe = meta.get('extra', {}).get('parent_recipe', {})
-            assert recipe, ("no parent recipe set, and no path associated "
-                                    "with this metadata")
-            # make recipe path relative
-            recipe = recipe.replace(path + '/', '')
-            # copy base recipe into a folder named for this node
-            out_folder = os.path.join(output_dir, node)
-            shutil.copytree(os.path.join(path, recipe), out_folder)
-            # write the conda_build_config.yaml for this particular metadata into that recipe
-            #   This should sit alongside meta.yaml, where conda-build will be able to find it
-            with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
-                yaml.dump(meta.config.variant, f, default_flow_style=False)
+        meta = task_graph.node[node]['meta']
+        if meta.meta_path:
+            recipe = os.path.dirname(meta.meta_path)
+        else:
+            recipe = meta.get('extra', {}).get('parent_recipe', {})
+        assert recipe, ("no parent recipe set, and no path associated "
+                                "with this metadata")
+        # make recipe path relative
+        recipe = recipe.replace(path + '/', '')
+        # copy base recipe into a folder named for this node
+        out_folder = os.path.join(output_dir, node)
+        shutil.copytree(os.path.join(path, recipe), out_folder)
+        # write the conda_build_config.yaml for this particular metadata into that recipe
+        #   This should sit alongside meta.yaml, where conda-build will be able to find it
+        with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
+            yaml.dump(meta.config.variant, f, default_flow_style=False)
 
 
 def _copy_yaml_if_not_there(path, base_name):
