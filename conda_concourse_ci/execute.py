@@ -158,7 +158,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     resource_types = [{'name': 'rsync-resource',
                        'type': 'docker-image',
                        'source': {
-                           'repository': 'mrsixw/concourse-rsync-resource',
+                           'repository': 'msarahan/concourse-rsync-resource',
                            'tag': 'latest'
                            }
                        }]
