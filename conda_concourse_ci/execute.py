@@ -14,8 +14,9 @@ from conda_build.index import get_build_index
 import networkx as nx
 import yaml
 
-from .compute_build_graph import construct_graph, expand_run, order_build, git_changed_recipes
-from .uploads import get_upload_tasks, get_upload_channels
+from .compute_build_graph import (construct_graph, expand_run, order_build, git_changed_recipes,
+                                  package_key)
+from .uploads import get_upload_channels  # get_upload_tasks,
 from .utils import HashableDict, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
@@ -41,11 +42,12 @@ def parse_platforms(matrix_base_dir, run):
 
 
 def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downstream=5):
-    runs = ['test']
+    # runs = ['test']
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     # not testing means build and test
-    if not test:
-        runs.insert(0, 'build')
+    # if not test:
+    #     runs.insert(0, 'build')
+    runs = ['build']
 
     task_graph = nx.DiGraph()
     config = conda_build.api.Config()
@@ -148,30 +150,9 @@ def _resource_to_dict(resource):
     return out
 
 
-def _get_successor_condensed_job_name(graph, node_or_meta):
-    if hasattr(node_or_meta, 'config'):
-        meta = node_or_meta
-    else:
-        meta = graph.node[node_or_meta]['meta']
-    loop_vars = meta.get_loop_vars()
-    requirements = (meta.get_value('requirements/build') +
-                    meta.get_value('requirements/host') +
-                    meta.get_value('requirements/run'))
-    used_variables = set()
-
-    for v in loop_vars:
-        if v in requirements or any(req.startswith(v + ' ') for req in requirements):
-            used_variables.add(v)
-    name = '-'.join((meta.name(), meta.config.host_subdir))
-    build_vars = ''.join([k + str(meta.config.variant[k]) for k in used_variables])
-    if build_vars:
-        name = '-'.join((name, build_vars))
-    return name
-
-
 def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config_vars, public=True):
     jobs = OrderedDict()
-    upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
+    # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
 
     resource_types = [{'name': 'rsync-resource',
@@ -207,6 +188,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     for node in order:
         pkgs = tuple(conda_build.api.get_output_file_paths(graph.node[node]['meta']))
         meta = graph.node[node]['meta']
+        worker = graph.node[node]['worker']
         artifact_input = False
 
         tasks = jobs.get(pkgs, {}).get('tasks',
@@ -264,10 +246,11 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         # else:
         #     raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
         #                                 "start with 'build', 'test', or 'upload'")
-        jobs[pkgs] = {'tasks': tasks, 'meta': meta}
+        jobs[pkgs] = {'tasks': tasks, 'meta': meta, 'worker': worker}
     remapped_jobs = []
     for plan_dict in jobs.values():
-        name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
+        # name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
+        name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
         plan_dict['tasks'].append({'put': 'rsync-artifacts',
                                    'params': {'sync_dir': 'output-artifacts'}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
@@ -431,6 +414,8 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
         recipe = recipe.replace(path + '/', '')
         # copy base recipe into a folder named for this node
         out_folder = os.path.join(output_dir, node)
+        if os.path.isdir(out_folder):
+            shutil.rmtree(out_folder)
         shutil.copytree(os.path.join(path, recipe), out_folder)
         # write the conda_build_config.yaml for this particular metadata into that recipe
         #   This should sit alongside meta.yaml, where conda-build will be able to find it

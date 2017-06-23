@@ -65,8 +65,8 @@ def test_get_test_recipe_task(testing_graph):
 
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
     # stub out uploads, since it depends on config file stuff and we want to manipulate it
-    get_upload = mocker.patch.object(execute, "get_upload_tasks")
-    get_upload.return_value = []
+    # get_upload = mocker.patch.object(execute, "get_upload_tasks")
+    # get_upload.return_value = []
 
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
         config_vars = yaml.load(f)
@@ -76,16 +76,6 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert len(plan_dict['resources']) == 2
     # a, b, c
     assert len(plan_dict['jobs']) == 3
-
-
-def test_unknown_job_type():
-    graph = nx.DiGraph()
-    metadata_tuples = api.render(os.path.join(graph_data_dir, 'a'))
-    graph.add_node("invalid-somepkg-0-linux", meta=metadata_tuples[0][0], worker=default_worker)
-    with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
-    with pytest.raises(NotImplementedError):
-        execute.graph_to_plan_with_jobs('', graph, '1.0.0', test_config_dir, config_vars)
 
 
 def test_resource_to_dict():
@@ -134,11 +124,10 @@ def test_compute_builds(testing_workdir, mocker, monkeypatch):
     files = os.listdir(output)
     assert 'plan.yml' in files
 
-    assert os.path.isfile(os.path.join(output, 'build-frank-centos5-64', 'meta.yaml'))
-    assert os.path.isfile(os.path.join(output, 'build-frank-centos5-64/', 'conda_build_config.yaml'))
-    assert os.path.isfile(os.path.join(output, 'build-dummy_conda_forge_test-centos5-64',
-                                              'meta.yaml'))
-    with open(os.path.join(output, 'build-dummy_conda_forge_test-centos5-64/', 'conda_build_config.yaml')) as f:
+    assert os.path.isfile(os.path.join(output, 'frank-centos5-64', 'meta.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-centos5-64/', 'conda_build_config.yaml'))
+    assert os.path.isfile(os.path.join(output, 'dummy_conda_forge_test-centos5-64', 'meta.yaml'))
+    with open(os.path.join(output, 'dummy_conda_forge_test-centos5-64/', 'conda_build_config.yaml')) as f:
         cfg = f.read()
 
     assert cfg is not None
@@ -166,8 +155,8 @@ def test_compute_builds_intradependencies(testing_workdir, monkeypatch, mocker):
     with open(os.path.join(output_dir, 'plan.yml')) as f:
         plan = yaml.load(f)
 
-    uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'uses_zlib-linux-64'][0]
-    assert any(task.get('passed') == ['zlib-linux-64']
+    uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'uses_zlib-centos5-64'][0]
+    assert any(task.get('passed') == ['zlib-centos5-64']
                for task in uses_zlib_job['plan'])
 
 

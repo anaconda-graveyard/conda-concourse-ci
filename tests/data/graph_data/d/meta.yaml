@@ -5,6 +5,3 @@ package:
 requirements:
   build:
     - c
-  run:
-    # e depends on d at build time, but d depends on e at run time
-    - e

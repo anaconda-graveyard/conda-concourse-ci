@@ -73,8 +73,8 @@ def testing_graph(request):
     g.add_edge('b-linux', 'a-linux')
     # semi-detached recipe (test-only, does not have a build part)
     c = render(os.path.join(graph_data_dir, 'c'), finalize=False)[0][0]
-    g.add_node('test-c-linux', meta=c, env={}, worker=default_worker)
-    g.add_edge('test-c-linux', 'test-b-linux')
+    g.add_node('c3itest-c-linux', meta=c, env={}, worker=default_worker)
+    g.add_edge('c3itest-c-linux', 'b-linux')
     return g
 
 

@@ -17,7 +17,7 @@ CONDA_BUILD_CACHE = os.environ.get("CONDA_BUILD_CACHE")
 hash_length = api.Config().hash_length
 
 
-def package_key(metadata, worker_label):
+def package_key(metadata, worker_label, run='build'):
     # get the build string from whatever conda-build makes of the configuration
     variables = metadata.get_loop_vars()
     used_variables = set()
@@ -33,7 +33,10 @@ def package_key(metadata, worker_label):
     if build_vars:
         key.append(build_vars)
     key.append(worker_label)
-    return "-".join(key)
+    key = "-".join(key)
+    if run == 'test':
+        key = '-'.join(('c3itest', key))
+    return key
 
 
 def _git_changed_files(git_rev, stop_rev=None, git_root=''):
@@ -123,7 +126,7 @@ def _get_or_render_metadata(meta_file_or_recipe_dir, worker):
     platform = worker['platform']
     arch = str(worker['arch'])
     if (meta_file_or_recipe_dir, platform, arch) not in _rendered_recipes:
-        print("rendering {0} for {1}-{2}".format(meta_file_or_recipe_dir, platform, arch))
+        print("rendering {0} for {1}".format(meta_file_or_recipe_dir, worker['label']))
         _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)] = \
                             api.render(meta_file_or_recipe_dir, platform=platform, arch=arch,
                                        verbose=False)
@@ -139,7 +142,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         return None
 
     for (metadata, _, _) in rendered:
-        name = package_key(metadata, worker['label'])
+        name = package_key(metadata, worker['label'], run)
 
         if metadata.skip():
             return None
@@ -294,7 +297,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
                                      metadata.config.host_subdir)))
             # version is passed literally here because constraints may make it an invalid version
             #    for metadata.
-            dep_name = package_key(dummy_meta, worker['label'])
+            dep_name = package_key(dummy_meta, worker['label'], run)
             dep_re = re.sub(r'anyh[0-9a-f]{%d}' % metadata.config.hash_length, '.*', dep_name)
             if sys.version_info.major < 3:
                 dep_re = re.compile(dep_re.encode('unicode-escape'))
@@ -316,7 +319,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
             else:
                 dep_name = node_in_graph[0].string
 
-            graph.add_edge(node, package_key(dummy_meta, worker['label']))
+            graph.add_edge(node, package_key(dummy_meta, worker['label'], run))
 
 
 def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,

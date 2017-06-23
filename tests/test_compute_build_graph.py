@@ -29,7 +29,7 @@ def test_construct_graph(mocker, testing_conda_resolve):
                                             run='build', folders=('b'),
                                             matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
-    assert set(g.nodes()) == set(['build-b-linux', 'test-b-linux', 'upload-b-linux'])
+    assert set(g.nodes()) == set(['b-linux'])
 
 
 def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
@@ -44,6 +44,8 @@ def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
 def test_package_key(testing_metadata):
     assert (compute_build_graph.package_key(testing_metadata, 'linux') ==
             'test_package_key-python3.6-linux')
+    assert (compute_build_graph.package_key(testing_metadata, 'linux', 'test') ==
+            'c3itest-test_package_key-python3.6-linux')
 
 
 def test_platform_specific_graph(mocker, testing_conda_resolve):
@@ -56,9 +58,8 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
       e -> d
 
     run:
-      d -> e     (intentionally circular, though cycle split between build and test, so OK)
-      a -> c  # win
-      a -> d  # win64
+      c -> a  # win
+      e -> b  # win64
     """
 
     worker = {'platform': 'win', 'arch': '32', 'label': 'linux'}
@@ -68,32 +69,28 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
     compute_build_graph._installable.return_value = False
     g = compute_build_graph.construct_graph(graph_data_dir, worker,
                                             folders=('a', 'b', 'c', 'd', 'e'),
-                                            run='test', matrix_base_dir=test_config_dir,
+                                            run='build', matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
     # left depends on right
     deps = {('b-linux', 'a-linux'),
             ('c-linux', 'b-linux'),
             ('d-linux', 'c-linux'),
             ('e-linux', 'd-linux'),
-            # run deps
-            ('test-d-linux', 'test-e-linux'),
-            ('test-a-linux', 'test-c-linux'),
+            ('c-linux', 'a-linux'),
             }
     assert set(g.edges()) == deps
     worker['arch'] = '64'
-    # this dependency is only present with a selector on linux-64
-    g = compute_build_graph.construct_graph(graph_data_dir, worker, folders=('a'),
-                                            run='test', matrix_base_dir=test_config_dir,
+    # this dependency is only present with a selector on win-64
+    g = compute_build_graph.construct_graph(graph_data_dir, worker, folders=('a', 'b', 'c', 'd', 'e'),
+                                            run='build', matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
     # left depends on right
     deps = {('b-linux', 'a-linux'),
             ('c-linux', 'b-linux'),
             ('d-linux', 'c-linux'),
             ('e-linux', 'd-linux'),
-            # run deps (note new dependency of a on d - this is the selector-enabled dep.)
-            ('test-d-linux', 'test-e-linux'),
-            ('test-a-linux', 'test-c-linux'),
-            ('test-a-linux', 'test-d-linux'),
+            ('c-linux', 'a-linux'),
+            ('e-linux', 'b-linux'),
             }
     assert set(g.edges()) == deps
 
@@ -116,7 +113,7 @@ def test_run_test_graph(testing_conda_resolve):
                                             folders=('a', 'b', 'c'),
                                             run='test', matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
-    assert set(g.nodes()) == set(['test-a-linux', 'test-b-linux', 'test-c-linux'])
+    assert set(g.nodes()) == set(['c3itest-a-linux', 'c3itest-b-linux', 'c3itest-c-linux'])
 
 
 def test_git_changed_recipes_head(testing_git_repo):
@@ -139,10 +136,10 @@ def test_add_dependency_nodes_and_edges(mocker, testing_graph, testing_conda_res
     compute_build_graph._installable.return_value = False
     mocker.patch.object(compute_build_graph, '_buildable')
     compute_build_graph._buildable.return_value = os.path.join(graph_data_dir, 'a')
-    compute_build_graph.add_dependency_nodes_and_edges('build-b-linux', testing_graph,
-                                                            run='build', worker=dummy_worker,
-                                                            conda_resolve=testing_conda_resolve)
-    assert set(testing_graph.nodes()) == {'a-linux', 'b-linux', 'test-c-linux'}
+    compute_build_graph.add_dependency_nodes_and_edges('b-linux', testing_graph,
+                                                       run='build', worker=dummy_worker,
+                                                       conda_resolve=testing_conda_resolve)
+    assert set(testing_graph.nodes()) == {'a-linux', 'b-linux', 'c3itest-c-linux'}
 
 
 def test_buildable(monkeypatch, testing_metadata):
@@ -286,8 +283,8 @@ def test_expand_run_build_non_installable_prereq(mocker, testing_conda_resolve):
 
 def test_order_build(testing_graph):
     order = compute_build_graph.order_build(testing_graph)
-    assert order.index('b-linux') < order.index('a-linux')
-    assert order.index('test-c-linux') < order.index('b-linux')
+    assert order.index('b-linux') > order.index('a-linux')
+    assert order.index('c3itest-c-linux') > order.index('b-linux')
 
 
 def test_get_base_folders(testing_workdir):
@@ -367,13 +364,7 @@ def test_add_intradependencies():
     b_meta = MetaData.fromdict({'package': {'name': 'b', 'version': '1.0'},
                                 'requirements': {'build': ['a']}})
     g = nx.DiGraph()
-    g.add_node('build-a', meta=a_meta)
-    g.add_node('build-b', meta=b_meta)
-    g.add_node('test-a', meta=a_meta)
-    g.add_node('test-b', meta=b_meta)
-    # normal test after build dependencies
-    g.add_edge('build-a', 'test-a')
-    # normal test after build dependencies
-    g.add_edge('build-b', 'test-b')
+    g.add_node('a', meta=a_meta)
+    g.add_node('b', meta=b_meta)
     compute_build_graph.add_intradependencies(g)
-    assert ('build-b', 'test-a') in g.edges()
+    assert ('b', 'a') in g.edges()
