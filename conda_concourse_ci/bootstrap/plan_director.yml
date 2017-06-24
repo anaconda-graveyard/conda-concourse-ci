@@ -25,15 +25,23 @@ resources:
   source:
     uri: {{recipe-repo}}
 
-- name: rsync-intermediary
+- name: rsync-config
   type: rsync-resource
   source:
     server: {{intermediate-server}}
-    base_dir: {{intermediate-base-folder}}
+    base_dir: {{intermediate-config-folder}}
     user : {{intermediate-user}}
     private_key: {{intermediate-private-key}}
     disable_version_path: true
 
+- name: rsync-recipes
+  type: rsync-resource
+  source:
+    server: {{intermediate-server}}
+    base_dir: {{intermediate-recipe-folder}}
+    user : {{intermediate-user}}
+    private_key: {{intermediate-private-key}}
+    disable_version_path: true
 
 jobs:
 - name: collect-tasks
@@ -72,11 +80,11 @@ jobs:
           - {{base-name}}
           - .
           - --matrix-base-dir
-          - ../rsync-intermediary/config/
+          - ../rsync-config/
           - --output-dir
           # this is evaluated by c3i, not by concourse.
-          - "../output/plan_and_recipes/{git_identifier}"
-  - put: rsync-intermediary
+          - "../output/{git_identifier}"
+  - put: rsync-recipes
     params:
       sync_dir: "output"
   # - put: recipe-repo-source
@@ -86,7 +94,7 @@ jobs:
   - task: set-execute-pipeline
     config:
       inputs:
-        - name: rsync-intermediary
+        - name: rsync-config
         - name: recipe-repo-source
         - name: output
       image_resource:
@@ -109,4 +117,4 @@ jobs:
           - recipe-repo-source
           - --config-root-dir
           # we omit the config name here because that's already captured in rsync-intermediary
-          - rsync-intermediary/config/
+          - rsync-config/

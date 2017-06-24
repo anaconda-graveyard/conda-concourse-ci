@@ -166,8 +166,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                   'type': 'rsync-resource',
                   'source': {
                       'server': config_vars['intermediate-server'],
-                      'base_dir': os.path.join(config_vars['intermediate-base-folder'],
-                                               'plan_and_recipes', commit_id),
+                      'base_dir': os.path.join(config_vars['intermediate-recipe-folder'],
+                                               commit_id),
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
@@ -176,8 +176,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                   'type': 'rsync-resource',
                   'source': {
                       'server': config_vars['intermediate-server'],
-                      'base_dir': os.path.join(config_vars['intermediate-base-folder'],
-                                               'artifacts', commit_id),
+                      'base_dir': os.path.join(config_vars['intermediate-artifacts-folder'],
+                                               commit_id),
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
@@ -319,13 +319,13 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                            '-o', 'StrictHostKeyChecking=no',
                            '-i', key_file,
                            '{intermediate-user}@{intermediate-server}'.format(**data),
-                           'mkdir -p {intermediate-base-folder}/config'.format(**data)])
+                           'mkdir -p {intermediate-config-folder}'.format(**data)])
     # TODO: rsync config folder to intermediate server
     subprocess.check_call(['rsync', '--delete', '-av', '-e', 'ssh -o UserKnownHostsFile=/dev/null '
                            '-o StrictHostKeyChecking=no -i ' + key_file,
                            config_root_dir + '/',
                            ('{intermediate-user}@{intermediate-server}:'
-                            '{intermediate-base-folder}/config'.format(**data))
+                            '{intermediate-config-folder}'.format(**data))
                            ])
 
     os.remove(key_file)
