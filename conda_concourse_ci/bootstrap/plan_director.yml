@@ -56,13 +56,13 @@ jobs:
   #   params:
   #     path: recipe-repo-source
   #     status: pending
-  - get: rsync-intermediary
+  - get: rsync-config
   - task: c3i-examine
     config:
       # seems redundant, but you need this in order to have the repo source code folder show up
       inputs:
         - name: recipe-repo-source
-        - name: rsync-intermediary
+        - name: rsync-config
       outputs:
         - name: output
       image_resource:
@@ -116,5 +116,4 @@ jobs:
           - --src-dir
           - recipe-repo-source
           - --config-root-dir
-          # we omit the config name here because that's already captured in rsync-intermediary
           - rsync-config/
