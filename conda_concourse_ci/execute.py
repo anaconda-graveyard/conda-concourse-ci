@@ -89,9 +89,8 @@ def update_index_task(subdir):
         'run': {
             'path': 'sh',
             'args': ['-exc',
-                     ('|\n'
-                      'mv rsync-artifacts/* indexed-artifacts\n'
-                      'conda-index indexed-artifacts/{subdir}'.format(subdir=subdir))]
+                     ('mv rsync-artifacts/* indexed-artifacts\n'
+                      'conda-index indexed-artifacts/{subdir}\n'.format(subdir=subdir))]
         }}
     return {'task': 'update-artifact-index', 'config': task_dict}
 
