@@ -7,7 +7,9 @@ recipe-repo: your-repo
 recipe-repo-commit: master
 base-name: test
 intermediate-server: your-intermediate-server
-intermediate-base-folder: your-intermediate-base-folder/test
+intermediate-recipe-folder: your-intermediate-base-folder/test/plan_and_recipes
+intermediate-artifacts-folder: your-intermediate-base-folder/test/artifacts
+intermediate-config-folder: your-intermediate-base-folder/test/config
 intermediate-user: your-intermediate-user
 intermediate-private-key: |
   private-key-to-use-for-connecting-to-intermediate-server

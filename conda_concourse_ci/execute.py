@@ -72,6 +72,23 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
     return task_graph
 
 
+def update_index_task(subdir):
+    task_dict = {
+        # we can always do this on linux, so prefer it for speed.
+        'platform': 'linux',
+        'image_resource': {
+            'type': 'docker-image',
+            'source': {
+                'repository': 'msarahan/conda-concourse-ci',
+                'tag': 'latest',
+                }
+            },
+
+        'inputs': [{'name': 'rsync-artifacts'}],
+        'run': {'path': 'conda-index', 'args': os.path.join('rsync-artifacts', subdir)}}
+    return {'task': 'update-artifact-index', 'config': task_dict}
+
+
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False):
     meta = graph.node[node]['meta']
     output_folder = os.path.join('output-artifacts')
@@ -215,9 +232,6 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
             else:
                 del tasks[1]
 
-        # test jobs need to get the package from either the temporary s3 store or test using the
-        #     recipe (download package from available channels) and run a test task
-
         # TODO: currently tests for things that have no build are broken and skipped
 
         if node.startswith('test-'):
@@ -229,6 +243,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
             else:
                 pass
         else:
+            if artifact_input:
+                tasks.append(update_index_task(meta.config.host_subdir))
             tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
                                         commit_id, public, artifact_input=artifact_input))
 

@@ -109,7 +109,7 @@ jobs:
           - submit
           - {{base-name}}
           - --pipeline-file
-          - "output/plan_and_recipes/{git_identifier}/plan.yml"
+          - "output/{git_identifier}/plan.yml"
           - --pipeline-name
           # these template variables are filled in by the c3i program, NOT concourse.
           - "{base_name}-execute-{git_identifier}"
