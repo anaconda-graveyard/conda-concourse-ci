@@ -85,7 +85,7 @@ def update_index_task(subdir):
             },
 
         'inputs': [{'name': 'rsync-artifacts'}],
-        'run': {'path': 'conda-index', 'args': os.path.join('rsync-artifacts', subdir)}}
+        'run': {'path': 'conda-index', 'args': [os.path.join('rsync-artifacts', subdir)]}}
     return {'task': 'update-artifact-index', 'config': task_dict}
 
 
