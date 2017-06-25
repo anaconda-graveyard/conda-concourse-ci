@@ -85,7 +85,14 @@ def update_index_task(subdir):
             },
 
         'inputs': [{'name': 'rsync-artifacts'}],
-        'run': {'path': 'conda-index', 'args': [os.path.join('rsync-artifacts', subdir)]}}
+        'outputs': [{'name': 'indexed-artifacts'}],
+        'run': {
+            'path': 'sh',
+            'args': ['-exc',
+                     ('|\n'
+                      'mv rsync-artifacts/* indexed-artifacts\n'
+                      'conda-index indexed-artifacts/{subdir}'.format(subdir=subdir))]
+        }}
     return {'task': 'update-artifact-index', 'config': task_dict}
 
 
@@ -93,14 +100,14 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     meta = graph.node[node]['meta']
     output_folder = os.path.join('output-artifacts')
     build_args = ['--no-anaconda-upload', '--output-folder', output_folder,
-                  '-c', os.path.join('rsync-artifacts')]
+                  '-c', os.path.join('indexed-artifacts')]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     # this is the recipe path to build
     build_args.append(os.path.join('rsync-recipes', node))
     inputs = [{'name': 'rsync-recipes'}]
     if artifact_input:
-        inputs.append({'name': 'rsync-artifacts'})
+        inputs.append({'name': 'indexed-artifacts'})
 
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
