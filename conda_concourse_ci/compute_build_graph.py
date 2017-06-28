@@ -9,7 +9,9 @@ import sys
 
 import networkx as nx
 from conda_build import api, conda_interface
-from conda_build.metadata import find_recipe
+from conda_build.metadata import find_recipe, MetaData
+
+from .utils import HashableDict
 
 
 log = logging.getLogger(__file__)
@@ -184,6 +186,63 @@ def add_intradependencies(graph):
                 graph.add_edge(node, dep_test_node)
 
 
+def collapse_subpackage_nodes(graph):
+    """Collapse all subpackage nodes into their parent recipe node
+
+    We get one node per output, but a given recipe can have multiple outputs.  It's important
+    for dependency ordering in the graph that the outputs exist independently, but once those
+    dependencies are established, we need to collapse subpackages down to a single job for the
+    top-level recipe."""
+    # group nodes by their recipe path first, then within those groups by their variant
+    node_groups = {}
+    for node in graph.nodes():
+        meta = graph.node[node]['meta']
+        meta_path = meta.meta_path or meta.meta['extra']['parent_recipe']['path']
+        master = False
+        if meta.meta_path:
+            master = True
+        group = node_groups.get(meta_path, {})
+        subgroup = group.get(HashableDict(meta.config.variant), {})
+        if master:
+            if 'master' in subgroup:
+                raise ValueError("tried to set more than one node in a group as master")
+            subgroup['master'] = node
+        else:
+            sps = subgroup.get('subpackages', [])
+            sps.append(node)
+            subgroup['subpackages'] = sps
+        group[HashableDict(meta.config.variant)] = subgroup
+        node_groups[meta_path] = group
+
+    for recipe_path, group in node_groups.items():
+        for variant, subgroup in group.items():
+            # if no node is the top-level recipe (only outputs, no top-level output), need to obtain
+            #     package/name from recipe given by common recipe path.
+            subpackages = subgroup.get('subpackages')
+            if 'master' not in subgroup:
+                sp0 = graph.node[subpackages[0]]
+                master_meta = MetaData(recipe_path, config=sp0['meta'].config)
+                worker = sp0['worker']
+                master_key = package_key(master_meta, worker['label'])
+                graph.add_node(master_key, meta=master_meta, worker=worker)
+                master = graph.node[master_key]
+            else:
+                master = subgroup['master']
+                master_key = package_key(graph.node[master]['meta'],
+                                         graph.node[master]['worker']['label'])
+            # fold in dependencies for all of the other subpackages within a group.  This is just
+            #     the intersection of the edges between all nodes.  Store this on the "master" node.
+            if subpackages:
+                remap_edges = [edge for edge in graph.edges() if edge[1] in subpackages]
+                for edge in remap_edges:
+                    graph.add_edge(edge[0], master_key)
+                    graph.remove_edge(*edge)
+
+                # remove nodes that have been folded into master nodes
+                for subnode in subpackages:
+                    graph.remove_node(subnode)
+
+
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
                     git_rev=None, stop_rev=None, matrix_base_dir=None):
     '''
@@ -210,6 +269,7 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
         add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                             recipes_dir)
     add_intradependencies(graph)
+    collapse_subpackage_nodes(graph)
     return graph
 
 

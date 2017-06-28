@@ -170,3 +170,30 @@ def test_compute_builds_dies_when_no_folders_and_no_git(testing_workdir, mocker,
                            output_dir=output_dir)
     out, err = capfd.readouterr()
     assert "No folders specified to build" in out
+
+
+def test_python_build_matrix_expansion(monkeypatch):
+    monkeypatch.chdir(test_data_dir)
+    tasks = execute.collect_tasks('.', matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
+                                  folders=['python_test'])
+    assert len(tasks.nodes()) == 2
+    assert 'frank-python2.7-centos5-64' in tasks.nodes()
+    assert 'frank-python3.6-centos5-64' in tasks.nodes()
+
+
+def test_subpackage_matrix_no_subpackages(monkeypatch):
+    """Subpackages should not constitute new entries in the build graph.  They should be lumped in
+    with their parent recipe.  However, we have to include them initially for the sake of
+    dependency ordering.  Thus we initially include them as though they were full packages, but
+    then we squish them together and re-assign and dependency edges."""
+    monkeypatch.chdir(test_data_dir)
+    tasks = execute.collect_tasks('.', matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
+                                  folders=['has_subpackages', 'depends_on_subpackage'])
+    assert len(tasks.nodes()) == 2
+    assert 'has_subpackages_toplevel-centos5-64' in tasks.nodes()
+    assert 'depends_on_subpackage-centos5-64' in tasks.nodes()
+    assert 'has_subpackages_subpackage-centos5-64' not in tasks.nodes()
+    # this is the actual dependency
+    assert ('depends_on_subpackage-centos5-64', 'has_subpackages_subpackage-centos5-64') not in tasks.edges()
+    # this is what we remap it to
+    assert ('depends_on_subpackage-centos5-64', 'has_subpackages_toplevel-centos5-64') in tasks.edges()

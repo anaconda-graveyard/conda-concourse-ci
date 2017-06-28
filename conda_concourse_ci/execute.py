@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import shutil
+import stat
 import subprocess
 import tempfile
 
@@ -336,6 +337,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     key_handle = os.fdopen(key_handle, 'w')
     key_handle.write(data['intermediate-private-key'])
     key_handle.close()
+    os.chmod(key_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
                            '-o', 'StrictHostKeyChecking=no',

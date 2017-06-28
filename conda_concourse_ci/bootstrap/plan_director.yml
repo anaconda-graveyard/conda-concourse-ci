@@ -24,6 +24,7 @@ resources:
   type: git
   source:
     uri: {{recipe-repo}}
+    submodules: all
 
 - name: rsync-config
   type: rsync-resource
@@ -50,7 +51,6 @@ jobs:
   # pull down any PR submitted
   - get: recipe-repo-source
     trigger: true
-    submodules: all
   # update status for that PR
   # - put: recipe-repo-source
   #   params:
