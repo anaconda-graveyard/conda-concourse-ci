@@ -14,7 +14,7 @@ USER dev
 
 COPY install_miniconda.sh /home/dev
 COPY Miniconda-* /home/dev
-RUN bash install_miniconda.sh
+RUN /home/dev/install_miniconda.sh
     # mkdir -p /opt/share && \
     # mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
     # mkdir -p /opt/miniconda/conda-bld/work/linux-32 && \
