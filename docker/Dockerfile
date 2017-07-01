@@ -23,5 +23,4 @@ RUN echo "export PATH=$PATH:/home/dev/miniconda/bin" >> /home/dev/.bashrc && \
     /home/dev/miniconda/bin/conda config --add channels rdonnelly && \
     /home/dev/miniconda/bin/conda config --set anaconda_upload True
 
-ENTRYPOINT [ "/usr/bin/tini", "--" ]
 CMD [ "/bin/bash" ]
