@@ -14,14 +14,8 @@ USER dev
 COPY install_miniconda.sh /home/dev
 COPY Miniconda-* /home/dev
 RUN /home/dev/install_miniconda.sh
-    # mkdir -p /opt/share && \
-    # mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
-    # mkdir -p /opt/miniconda/conda-bld/work/linux-32 && \
-    # mkdir -p /opt/miniconda/conda-bld/work/noarch && \
-    # chmod -R 777 /opt && \
-    # useradd -m --uid 1000 dev
 
-RUN echo "export PATH=$PATH:~/bin" >> .bashrc && \
+RUN echo "export PATH=$PATH:~/miniconda/bin" >> .bashrc && \
     conda config --set add_pip_as_python_dependency False && \
     conda config --add channels msarahan && \
     conda config --add channels rdonnelly && \

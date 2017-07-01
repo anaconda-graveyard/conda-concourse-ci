@@ -1,12 +1,10 @@
 set -e -x
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
-fname="$(ls -t /home/dev/Miniconda-* | head -1)"
-
-bash $fname -b -p /opt/miniconda
-rm $fname
-/opt/miniconda/bin/conda config --set show_channel_urls True
-/opt/miniconda/bin/conda update --yes --all
-/opt/miniconda/bin/conda install --yes -c conda-canary git conda-build curl anaconda-client
-/opt/miniconda/bin/conda install --yes -c msarahan conda-concourse-ci
-/opt/miniconda/bin/conda config --add channels rdonnelly
-/opt/miniconda/bin/conda clean -ptiy
+bash "$(ls -t /home/dev/Miniconda-* | head -1)" -b -p /home/dev/miniconda
+rm /home/dev/Miniconda-*
+/home/dev/miniconda/bin/conda config --set show_channel_urls True
+/home/dev/miniconda/bin/conda update --yes --all
+/home/dev/miniconda/bin/conda install --yes -c conda-canary git conda-build curl anaconda-client
+/home/dev/miniconda/bin/conda install --yes -c msarahan conda-concourse-ci
+/home/dev/miniconda/bin/conda config --add channels rdonnelly
+/home/dev/miniconda/bin/conda clean -ptiy
