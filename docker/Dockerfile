@@ -1,4 +1,5 @@
 FROM centos:6.9
+ARG GITHUB_TOKEN
 MAINTAINER Michael Sarahan <msarahan@continuum.io>
 
 # minimal subset of build-essentials.  We provide our own toolchain, so we want to save the space
@@ -10,8 +11,6 @@ RUN mkdir -p bin && \
   LATEST_VERSION=$(echo $LATEST_RELEASE | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/') && \
   ARTIFACT_URL="https://github.com/concourse/concourse/releases/download/$LATEST_VERSION/fly_linux_amd64" && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
-
-ARG GITHUB_TOKEN=local
 
 COPY install_miniconda.sh /build_scripts/
 WORKDIR /build_scripts
