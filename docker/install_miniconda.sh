@@ -1,8 +1,7 @@
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
 fname="$(ls -t /home/dev/Miniconda-* | head -1)"
 
-echo /bin/bash $fname -b -p /opt/miniconda
-/bin/bash $fname -b -p /opt/miniconda
+bash $fname -b -p /opt/miniconda
 rm $fname
 /opt/miniconda/bin/conda config --set show_channel_urls True
 /opt/miniconda/bin/conda update --yes --all

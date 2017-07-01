@@ -1,5 +1,4 @@
 FROM centos:6.9
-ARG GITHUB_TOKEN
 MAINTAINER Michael Sarahan <msarahan@continuum.io>
 
 RUN mkdir -p bin && \
