@@ -13,7 +13,7 @@ RUN mkdir -p bin && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
 
 COPY install_miniconda.sh /build_scripts/
-COPY ../../miniconda-repo-source/bootstrap/Miniconda*.sh /build_scripts/
+COPY ../../miniconda-repo-source/bootstrap/Miniconda-* /build_scripts/
 WORKDIR /build_scripts
 RUN bash install_miniconda.sh && \
     mkdir -p /opt/share && \
