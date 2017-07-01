@@ -1,5 +1,4 @@
-FROM continuumio/miniconda3
-
+FROM centos:6.9
 MAINTAINER Michael Sarahan <msarahan@continuum.io>
 
 RUN echo "export PATH=$PATH:~/bin" >> ~/.bashrc
@@ -10,15 +9,28 @@ RUN conda config --set anaconda_upload True
 
 # minimal subset of build-essentials.  We provide our own toolchain, so we want to save the space
 #    for that as much as possible.
-RUN apt-get install -y make
-
-RUN conda update -qy --all && conda install -qy -c conda_build_test -c conda-canary -c msarahan conda-build conda-concourse-ci anaconda-client && conda clean -pty
+RUN yum install -y make
 
 RUN mkdir -p bin && \
   LATEST_RELEASE=$(curl -L -s -H 'Accept: application/json' https://github.com/concourse/concourse/releases/latest) && \
   LATEST_VERSION=$(echo $LATEST_RELEASE | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/') && \
   ARTIFACT_URL="https://github.com/concourse/concourse/releases/download/$LATEST_VERSION/fly_linux_amd64" && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
+
+ARG GITHUB_TOKEN=local
+ENV GITHUB_TOKEN ${GITHUB_TOKEN}
+
+COPY install_miniconda.sh /build_scripts/
+RUN bash install_miniconda.sh ${GITHUB_TOKEN} && \
+    mkdir -p /opt/share && \
+    mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
+    mkdir -p /opt/miniconda/conda-bld/work/linux-32 && \
+    mkdir -p /opt/miniconda/conda-bld/work/noarch && \
+    chmod -R 777 /opt && \
+    useradd -m --uid 1000 dev
+
+WORKDIR /home/dev
+USER dev
 
 ENTRYPOINT [ "/usr/bin/tini", "--" ]
 CMD [ "/bin/bash" ]
