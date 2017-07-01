@@ -1,6 +1,6 @@
 set -e -x
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
-bash "$(ls -t /home/dev/Miniconda-* | head -1)" -b -p /home/dev/miniconda
+bash $(ls -t /home/dev/Miniconda-* | head -1) -h
 rm /home/dev/Miniconda-*
 /home/dev/miniconda/bin/conda config --set show_channel_urls True
 /home/dev/miniconda/bin/conda update --yes --all
