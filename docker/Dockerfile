@@ -1,9 +1,6 @@
 FROM centos:6.9
 MAINTAINER Michael Sarahan <msarahan@continuum.io>
 
-RUN echo "export PATH=$PATH:~/bin" >> ~/.bashrc
-RUN echo "add_pip_as_python_dependency: False" >> ~/.condarc
-
 # minimal subset of build-essentials.  We provide our own toolchain, so we want to save the space
 #    for that as much as possible.
 RUN yum install -y make
@@ -17,8 +14,8 @@ RUN mkdir -p bin && \
 ARG GITHUB_TOKEN=local
 ENV GITHUB_TOKEN ${GITHUB_TOKEN}
 
+COPY install_miniconda.sh /build_scripts/
 WORKDIR /build_scripts
-COPY docker/install_miniconda.sh /build_scripts/
 RUN bash install_miniconda.sh ${GITHUB_TOKEN} && \
     mkdir -p /opt/share && \
     mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
@@ -27,12 +24,17 @@ RUN bash install_miniconda.sh ${GITHUB_TOKEN} && \
     chmod -R 777 /opt && \
     useradd -m --uid 1000 dev
 
-RUN conda config --add channels msarahan
-RUN conda config --add channels rdonnelly
-RUN conda config --set anaconda_upload True
+
 
 WORKDIR /home/dev
+RUN
 USER dev
+
+RUN echo "export PATH=$PATH:~/bin" >> .bashrc && \
+    conda config --set add_pip_as_python_dependency False && \
+    conda config --add channels msarahan && \
+    conda config --add channels rdonnelly && \
+    conda config --set anaconda_upload True
 
 ENTRYPOINT [ "/usr/bin/tini", "--" ]
 CMD [ "/bin/bash" ]
