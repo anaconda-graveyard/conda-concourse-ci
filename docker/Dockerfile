@@ -3,9 +3,6 @@ MAINTAINER Michael Sarahan <msarahan@continuum.io>
 
 RUN echo "export PATH=$PATH:~/bin" >> ~/.bashrc
 RUN echo "add_pip_as_python_dependency: False" >> ~/.condarc
-RUN conda config --add channels msarahan
-RUN conda config --add channels rdonnelly
-RUN conda config --set anaconda_upload True
 
 # minimal subset of build-essentials.  We provide our own toolchain, so we want to save the space
 #    for that as much as possible.
@@ -28,6 +25,10 @@ RUN bash install_miniconda.sh ${GITHUB_TOKEN} && \
     mkdir -p /opt/miniconda/conda-bld/work/noarch && \
     chmod -R 777 /opt && \
     useradd -m --uid 1000 dev
+
+RUN conda config --add channels msarahan
+RUN conda config --add channels rdonnelly
+RUN conda config --set anaconda_upload True
 
 WORKDIR /home/dev
 USER dev
