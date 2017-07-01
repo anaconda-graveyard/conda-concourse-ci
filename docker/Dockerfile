@@ -17,7 +17,8 @@ RUN mkdir -p bin && \
 ARG GITHUB_TOKEN=local
 ENV GITHUB_TOKEN ${GITHUB_TOKEN}
 
-COPY install_miniconda.sh /build_scripts/
+WORKDIR /build_scripts
+COPY docker/install_miniconda.sh /build_scripts/
 RUN bash install_miniconda.sh ${GITHUB_TOKEN} && \
     mkdir -p /opt/share && \
     mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
