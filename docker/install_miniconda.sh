@@ -7,4 +7,6 @@ rm $fname
 /home/dev/miniconda/bin/conda install --yes -c conda-canary git conda-build curl anaconda-client
 /home/dev/miniconda/bin/conda install --yes -c msarahan conda-concourse-ci
 /home/dev/miniconda/bin/conda config --add channels rdonnelly
+/home/dev/miniconda/bin/conda config --set add_pip_as_python_dependency False
+/home/dev/miniconda/bin/conda config --set anaconda_upload True
 /home/dev/miniconda/bin/conda clean -ptiy
