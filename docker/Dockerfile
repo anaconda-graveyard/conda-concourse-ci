@@ -9,14 +9,11 @@ RUN mkdir -p bin && \
 
 RUN yum install -y util-linux
 
-RUN useradd -ms /bin/bash dev
-WORKDIR /home/dev
-USER dev
-
-COPY install_miniconda.sh /home/dev
-COPY Miniconda-* /home/dev
+WORKDIR /build_scripts
+COPY install_miniconda.sh /build_scripts
+COPY Miniconda-* /build_scripts
 RUN ./install_miniconda.sh
 
-ENV PATH="/home/dev/miniconda/bin:${PATH}"
+ENV PATH="/opt/miniconda/bin:${PATH}"
 
 CMD [ "/bin/bash" ]
