@@ -13,7 +13,7 @@ USER dev
 
 COPY install_miniconda.sh /home/dev
 COPY Miniconda-* /home/dev
-RUN install_miniconda.sh
+RUN ./install_miniconda.sh
 
 RUN echo "export PATH=$PATH:~/miniconda/bin" >> .bashrc && \
     conda config --set add_pip_as_python_dependency False && \
