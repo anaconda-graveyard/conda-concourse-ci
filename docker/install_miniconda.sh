@@ -1,5 +1,5 @@
 set -e -x
-fname=$(ls -t /home/dev/Miniconda-* | head -1)
+fname=$(ls -t Miniconda-* | head -1)
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
 $fname -b -p /home/dev/miniconda
 rm $fname
