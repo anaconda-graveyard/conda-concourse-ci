@@ -28,9 +28,29 @@ jobs:
           - --token
           - {{anaconda_org_upload_token}}
           - recipe-repo-source/conda.recipe
+  - task: consolidate-miniconda-docker-folder
+    config:
+      platform: linux
+      image_resource:
+        source:
+          repository: busybox
+        type: docker-image
+      inputs:
+        - name: recipe-repo-source
+          trigger: True
+        - name: miniconda-repo-source
+      outputs:
+        - name: docker-build
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            cp -r recipe-repo-source/docker/* docker-build
+            cp miniconda-repo-source/bootstrap/Miniconda* docker-build
   - put: docker-image
     params:
-      build: recipe-repo-source/docker
+      build: docker-build
     get_params:
       skip_download: true
 
