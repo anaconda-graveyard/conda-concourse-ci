@@ -12,7 +12,6 @@ RUN mkdir -p bin && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
 
 ARG GITHUB_TOKEN=local
-ENV GITHUB_TOKEN ${GITHUB_TOKEN}
 
 COPY install_miniconda.sh /build_scripts/
 WORKDIR /build_scripts
@@ -27,7 +26,6 @@ RUN bash install_miniconda.sh ${GITHUB_TOKEN} && \
 
 
 WORKDIR /home/dev
-RUN
 USER dev
 
 RUN echo "export PATH=$PATH:~/bin" >> .bashrc && \

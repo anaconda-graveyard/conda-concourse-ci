@@ -1,4 +1,5 @@
 TOKEN=$1
+echo $TOKEN
 
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
 curl --header 'Authorization: token $TOKEN' \
