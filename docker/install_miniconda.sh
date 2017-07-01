@@ -1,4 +1,3 @@
-set -e -x
 fname=$(ls -t Miniconda-* | head -1 | tr -d '\n')
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
 ./$fname -bfp /home/dev/miniconda
