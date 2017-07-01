@@ -5,6 +5,7 @@ jobs:
   plan:
   - get: recipe-repo-source
     trigger: true
+  - get: miniconda-repo-source
   - task: build-conda-package
     config:
       image_resource:
@@ -16,6 +17,7 @@ jobs:
       inputs:
       - name: recipe-repo-source
         trigger: True
+      - name: miniconda-repo-source
       platform: linux
       run:
         path: conda-build
@@ -29,8 +31,6 @@ jobs:
   - put: docker-image
     params:
       build: recipe-repo-source/docker
-      build_args:
-        GITHUB_TOKEN: {{github-token}}
     get_params:
       skip_download: true
 
@@ -47,3 +47,9 @@ resources:
   type: git
   source:
     uri: {{recipe-repo}}
+
+- name: miniconda-repo-source
+  type: git
+  source:
+    uri: {{miniconda-repo}}
+    private_key: {{miniconda-repo-private-key}}

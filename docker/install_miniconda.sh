@@ -1,16 +1,8 @@
-TOKEN=$1
-echo "TOKEN IS:"
-echo $TOKEN
-echo "END TOKEN"
-
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
-curl --header 'Authorization: token $TOKEN' \
-     --header 'Accept: application/vnd.github.v3.raw' \
-     --location https://github.com/ContinuumIO/automated-build/blob/master/bootstrap/Miniconda-4.3.x-Linux-cos6-x86_64.sh \
-     -o Miniconda.sh
+fname=$(s -t Miniconda* | head -1)
 
-/bin/bash Miniconda.sh -b -p /opt/miniconda
-rm Miniconda.sh
+/bin/bash $fname -b -p /opt/miniconda
+rm $fname
 /opt/miniconda/bin/conda config --set show_channel_urls True
 /opt/miniconda/bin/conda update --yes --all
 /opt/miniconda/bin/conda install --yes -c conda-canary git conda-build curl anaconda-client

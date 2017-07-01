@@ -13,16 +13,15 @@ RUN mkdir -p bin && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
 
 COPY install_miniconda.sh /build_scripts/
+COPY ../../miniconda-repo-source/bootstrap/Miniconda*.sh /build_scripts/
 WORKDIR /build_scripts
-RUN bash install_miniconda.sh ${GITHUB_TOKEN} && \
+RUN bash install_miniconda.sh && \
     mkdir -p /opt/share && \
     mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
     mkdir -p /opt/miniconda/conda-bld/work/linux-32 && \
     mkdir -p /opt/miniconda/conda-bld/work/noarch && \
     chmod -R 777 /opt && \
     useradd -m --uid 1000 dev
-
-
 
 WORKDIR /home/dev
 USER dev
