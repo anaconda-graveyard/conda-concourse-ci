@@ -8,7 +8,7 @@ RUN mkdir -p bin && \
   ARTIFACT_URL="https://github.com/concourse/concourse/releases/download/$LATEST_VERSION/fly_linux_amd64" && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
 
-RUN useradd -ms /bin/bash newuser
+RUN useradd -ms /bin/bash dev
 WORKDIR /home/dev
 USER dev
 
