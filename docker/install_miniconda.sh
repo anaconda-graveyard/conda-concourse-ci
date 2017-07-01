@@ -1,5 +1,5 @@
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
-fname=$(ls -t Miniconda* | head -1)
+fname="$(ls -t Miniconda* | head -1)"
 
 /bin/bash $fname -b -p /opt/miniconda
 rm $fname

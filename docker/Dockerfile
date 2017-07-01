@@ -15,13 +15,13 @@ RUN mkdir -p bin && \
 WORKDIR /build_scripts
 COPY install_miniconda.sh /build_scripts/
 COPY Miniconda-* /build_scripts/
-RUN bash install_miniconda.sh && \
-    mkdir -p /opt/share && \
-    mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
-    mkdir -p /opt/miniconda/conda-bld/work/linux-32 && \
-    mkdir -p /opt/miniconda/conda-bld/work/noarch && \
-    chmod -R 777 /opt && \
-    useradd -m --uid 1000 dev
+RUN bash install_miniconda.sh
+    # mkdir -p /opt/share && \
+    # mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
+    # mkdir -p /opt/miniconda/conda-bld/work/linux-32 && \
+    # mkdir -p /opt/miniconda/conda-bld/work/noarch && \
+    # chmod -R 777 /opt && \
+    # useradd -m --uid 1000 dev
 
 WORKDIR /home/dev
 USER dev
