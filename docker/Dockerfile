@@ -14,7 +14,7 @@ RUN mkdir -p bin && \
 
 WORKDIR /build_scripts
 COPY install_miniconda.sh /build_scripts/
-COPY ../../miniconda-repo-source/bootstrap/Miniconda-* /build_scripts/
+COPY ../../miniconda-repo-source/bootstrap/Miniconda-4.3.x-Linux-cos6-x86_64.sh /build_scripts/
 RUN bash install_miniconda.sh && \
     mkdir -p /opt/share && \
     mkdir -p /opt/miniconda/conda-bld/work/linux-64 && \
