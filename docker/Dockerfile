@@ -17,6 +17,8 @@ COPY install_miniconda.sh /home/dev
 COPY Miniconda-* /home/dev
 RUN ./install_miniconda.sh
 
+ENV PATH="/home/dev/miniconda/bin:${PATH}"
+
 RUN echo "export PATH=$PATH:/home/dev/miniconda/bin" >> /home/dev/.bashrc && \
     /home/dev/miniconda/bin/conda config --set add_pip_as_python_dependency False && \
     /home/dev/miniconda/bin/conda config --add channels msarahan && \
