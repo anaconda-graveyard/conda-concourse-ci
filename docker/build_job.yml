@@ -29,6 +29,8 @@ jobs:
   - put: docker-image
     params:
       build: recipe-repo-source/docker
+      build_args:
+        GITHUB_TOKEN: {{github-token}}
     get_params:
       skip_download: true
 
@@ -40,8 +42,6 @@ resources:
     password: {{docker-hub-password}}
     # can't template just part of a line: https://github.com/concourse/concourse/issues/545
     repository: msarahan/conda-concourse-ci
-    build_args:
-      GITHUB_TOKEN: {{github-token}}
 
 - name: recipe-repo-source
   type: git
