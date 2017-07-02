@@ -7,7 +7,7 @@ RUN mkdir -p bin && \
   ARTIFACT_URL="https://github.com/concourse/concourse/releases/download/$LATEST_VERSION/fly_linux_amd64" && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
 
-RUN yum install -y util-linux
+RUN yum install -y util-linux openssh-clients
 
 WORKDIR /build_scripts
 COPY install_miniconda.sh /build_scripts
