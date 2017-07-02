@@ -124,8 +124,10 @@ def test_compute_builds(testing_workdir, mocker, monkeypatch):
     files = os.listdir(output)
     assert 'plan.yml' in files
 
-    assert os.path.isfile(os.path.join(output, 'frank-centos5-64', 'meta.yaml'))
-    assert os.path.isfile(os.path.join(output, 'frank-centos5-64/', 'conda_build_config.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-python2.7-centos5-64', 'meta.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-python2.7-centos5-64/', 'conda_build_config.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-python3.6-centos5-64', 'meta.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-python3.6-centos5-64/', 'conda_build_config.yaml'))
     assert os.path.isfile(os.path.join(output, 'dummy_conda_forge_test-centos5-64', 'meta.yaml'))
     with open(os.path.join(output, 'dummy_conda_forge_test-centos5-64/', 'conda_build_config.yaml')) as f:
         cfg = f.read()

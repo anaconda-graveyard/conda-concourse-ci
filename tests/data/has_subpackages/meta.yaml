@@ -1,0 +1,10 @@
+package:
+  name: has_subpackages_toplevel
+  version: 1.0
+
+requirements:
+  run:
+    - has_subpackages_subpackage
+
+outputs:
+  - name: has_subpackages_subpackage
