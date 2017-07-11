@@ -68,7 +68,7 @@ jobs:
       image_resource:
         type: docker-image
         source:
-          repository: msarahan/conda-concourse-ci
+          repository: continuumio/conda-concourse-ci
       platform: linux
       run:
         # this should output plan.yaml (credentials baked in) and recipes.  These will be in a folder
@@ -100,7 +100,7 @@ jobs:
       image_resource:
         type: docker-image
         source:
-          repository: msarahan/conda-concourse-ci
+          repository: continuumio/conda-concourse-ci
       platform: linux
       run:
         path: c3i

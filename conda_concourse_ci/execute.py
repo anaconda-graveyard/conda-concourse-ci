@@ -80,7 +80,7 @@ def update_index_task(subdir):
         'image_resource': {
             'type': 'docker-image',
             'source': {
-                'repository': 'msarahan/conda-concourse-ci',
+                'repository': 'continuumio/conda-concourse-ci',
                 'tag': 'latest',
                 }
             },

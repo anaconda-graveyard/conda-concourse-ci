@@ -24,7 +24,7 @@ def _base_task(upload_job_name):
                 'inputs': [{'name': 'output-artifacts'}],
                 'image_resource': {
                     'type': 'docker-image',
-                    'source': {'repository': 'msarahan/conda-concourse-ci',
+                    'source': {'repository': 'continuumio/conda-concourse-ci',
                                'tag': 'latest'}},
                 'platform': 'linux',
                 'run': {}
