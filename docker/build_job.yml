@@ -11,7 +11,7 @@ jobs:
       image_resource:
         source:
           # can't template just part of a line: https://github.com/concourse/concourse/issues/545
-          repository: msarahan/conda-concourse-ci
+          repository: continuumio/conda-concourse-ci
           tag: latest
         type: docker-image
       inputs:
@@ -24,7 +24,7 @@ jobs:
         args:
           - --no-test
           - -c
-          - msarahan
+          - c3i_test
           - --token
           - {{anaconda_org_upload_token}}
           - recipe-repo-source/conda.recipe
@@ -61,7 +61,7 @@ resources:
     username: {{docker-hub-username}}
     password: {{docker-hub-password}}
     # can't template just part of a line: https://github.com/concourse/concourse/issues/545
-    repository: msarahan/conda-concourse-ci
+    repository: continuumio/conda-concourse-ci
 
 - name: recipe-repo-source
   type: git
