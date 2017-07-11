@@ -170,6 +170,8 @@ def add_intradependencies(graph):
     """ensure that downstream packages wait for upstream build/test (not use existing
     available packages)"""
     for node in graph.nodes():
+        if 'meta' not in graph.node[node]:
+            continue
         # get build dependencies
         m = graph.node[node]['meta']
         # this is pretty hard. Realistically, we would want to know
