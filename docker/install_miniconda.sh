@@ -1,4 +1,4 @@
-fname=$(find . -name Miniconda* -type f -exec ls -1t "{}" +; )
+fname=$(ls Miniconda-*-x86_64* | tail -n 1)
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
 bash -x $fname -bfp /opt/miniconda
 rm $fname
@@ -11,3 +11,4 @@ rm $fname
 /opt/miniconda/bin/conda config --set add_pip_as_python_dependency False
 /opt/miniconda/bin/conda config --set anaconda_upload True
 /opt/miniconda/bin/conda clean -ptiy
+rm -rf Miniconda*
