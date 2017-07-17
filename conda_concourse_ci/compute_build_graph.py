@@ -3,6 +3,7 @@ from __future__ import print_function, division
 
 import logging
 import os
+import pkg_resources
 import re
 import subprocess
 
@@ -66,7 +67,24 @@ def _get_base_folders(base_dir, changed_files):
     return recipe_dirs
 
 
-def git_changed_recipes(git_rev, stop_rev=None, git_root=''):
+def git_changed_submodules(git_root='.'):
+    diff_script = pkg_resources.resource_filename('conda_concourse_ci', 'diff-script.sh')
+
+    diff = subprocess.check_output(['bash', diff_script], cwd=git_root,
+                                   universal_newlines=True).splitlines()
+
+    submodule_changed_files = [line.split() for line in diff]
+
+    submodules_with_recipe_changes = []
+    for submodule in submodule_changed_files:
+        for file in submodule:
+            if 'recipe/' in file and submodule[0] not in submodules_with_recipe_changes:
+                submodules_with_recipe_changes.append(submodule[0])
+
+    return submodules_with_recipe_changes
+
+
+def git_changed_recipes(git_rev, stop_rev=None, git_root='.'):
     """
     Get the list of files changed in a git revision and return a list of
     package directories that have been modified.
@@ -85,8 +103,9 @@ def git_changed_recipes(git_rev, stop_rev=None, git_root=''):
                                                              one before it
     """
     changed_files = _git_changed_files(git_rev, stop_rev=stop_rev, git_root=git_root)
+    changed_submodules = git_changed_submodules(git_root=git_root)
     recipe_dirs = _get_base_folders(git_root, changed_files)
-    return recipe_dirs
+    return recipe_dirs + changed_submodules
 
 
 def _deps_to_version_dict(deps):
@@ -283,6 +302,7 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
     if not folders:
         if not git_rev:
             git_rev = 'HEAD'
+
         folders = git_changed_recipes(git_rev, stop_rev=stop_rev,
                                       git_root=recipes_dir)
 
