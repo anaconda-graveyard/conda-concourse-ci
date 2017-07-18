@@ -360,3 +360,13 @@ def test_version_matching(testing_conda_resolve):
     assert len(g.nodes()) == 4
     assert ('downstream-1.0-upstream1.0-linux', 'upstream-1.0.1-linux') in g.edges()
     assert ('downstream-1.0-upstream2.0-linux', 'upstream-2.0.2-linux') in g.edges()
+
+
+def test_submodules(testing_submodules_repo):
+    assert 'conda-feedstock' in compute_build_graph.git_changed_submodules('.')
+
+    new_submodules = compute_build_graph.git_new_submodules('.')
+    assert 'conda-env-feedstock' in new_submodules
+    assert 'conda-verify' not in new_submodules
+
+    assert 'cb3-feedstock' in compute_build_graph.git_renamed_folders('.')

@@ -84,6 +84,23 @@ def git_changed_submodules(git_root='.'):
     return submodules_with_recipe_changes
 
 
+def git_new_submodules(git_root='.'):
+    new_submodule_script = pkg_resources.resource_filename('conda_concourse_ci', 'new-submodule-script.sh')
+
+    diff = subprocess.check_output(['bash', new_submodule_script], cwd=git_root,
+                                   universal_newlines=True).splitlines()
+
+    return diff
+
+
+def git_renamed_folders(git_root='.'):
+    status = subprocess.Popen(['git', 'status'], stdout=subprocess.PIPE, universal_newlines=True)
+    grep = subprocess.Popen(['grep', '-F', "renamed"], stdin=status.stdout, stdout=subprocess.PIPE, universal_newlines=True)
+    renamed_folders = subprocess.check_output(['awk', "{print $4}"], stdin=grep.stdout, universal_newlines=True)
+
+    return renamed_folders.splitlines()
+
+
 def git_changed_recipes(git_rev, stop_rev=None, git_root='.'):
     """
     Get the list of files changed in a git revision and return a list of
@@ -104,8 +121,10 @@ def git_changed_recipes(git_rev, stop_rev=None, git_root='.'):
     """
     changed_files = _git_changed_files(git_rev, stop_rev=stop_rev, git_root=git_root)
     changed_submodules = git_changed_submodules(git_root=git_root)
+    new_submodules = git_new_submodules(git_root=git_root)
+    renamed_folders = git_renamed_folders(git_root=git_root)
     recipe_dirs = _get_base_folders(git_root, changed_files)
-    return recipe_dirs + changed_submodules
+    return recipe_dirs + changed_submodules + new_submodules + renamed_folders
 
 
 def _deps_to_version_dict(deps):

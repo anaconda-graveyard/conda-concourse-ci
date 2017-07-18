@@ -64,6 +64,33 @@ def testing_git_repo(testing_workdir, request):
 
 
 @pytest.fixture(scope='function')
+def testing_submodules_repo(testing_workdir, request):
+    subprocess.check_call(['git', 'init'])
+
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda-forge/conda-feedstock.git'])
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda-forge/conda-build-feedstock.git'])
+
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added submodules'])
+
+    os.chdir('conda-feedstock')
+    subprocess.check_call(['git', 'checkout', '4648194ca029603b90de22e16b59949b5f68d2d5'])
+    os.chdir(testing_workdir)
+
+    subprocess.check_call(['git', 'mv', 'conda-build-feedstock', 'cb3-feedstock'])
+
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda-forge/conda-env-feedstock.git'])
+
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda/conda-verify.git'])
+
+    return testing_workdir
+
+
+@pytest.fixture(scope='function')
 def testing_graph(request):
     g = nx.DiGraph()
     a = render(os.path.join(graph_data_dir, 'a'), finalize=False)[0][0]
