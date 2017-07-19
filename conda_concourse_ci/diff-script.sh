@@ -5,7 +5,7 @@ for submodule in $submodules; do
     (
         if [[ -n "$revision" ]] ; then
             cd "$submodule" || exit
-            echo "$submodule" "$(git diff "$revision" --name-only)"
+            echo $submodule $(git diff "$revision" --name-only)
         fi
     )
 done
