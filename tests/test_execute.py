@@ -124,12 +124,12 @@ def test_compute_builds(testing_workdir, mocker, monkeypatch):
     files = os.listdir(output)
     assert 'plan.yml' in files
 
-    assert os.path.isfile(os.path.join(output, 'frank-python2.7-centos5-64', 'meta.yaml'))
-    assert os.path.isfile(os.path.join(output, 'frank-python2.7-centos5-64/', 'conda_build_config.yaml'))
-    assert os.path.isfile(os.path.join(output, 'frank-python3.6-centos5-64', 'meta.yaml'))
-    assert os.path.isfile(os.path.join(output, 'frank-python3.6-centos5-64/', 'conda_build_config.yaml'))
-    assert os.path.isfile(os.path.join(output, 'dummy_conda_forge_test-centos5-64', 'meta.yaml'))
-    with open(os.path.join(output, 'dummy_conda_forge_test-centos5-64/', 'conda_build_config.yaml')) as f:
+    assert os.path.isfile(os.path.join(output, 'frank-1.0-python2.7-centos5-64', 'meta.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-1.0-python2.7-centos5-64/', 'conda_build_config.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-1.0-python3.6-centos5-64', 'meta.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-1.0-python3.6-centos5-64/', 'conda_build_config.yaml'))
+    assert os.path.isfile(os.path.join(output, 'dummy_conda_forge_test-1.0-centos5-64', 'meta.yaml'))
+    with open(os.path.join(output, 'dummy_conda_forge_test-1.0-centos5-64/', 'conda_build_config.yaml')) as f:
         cfg = f.read()
 
     assert cfg is not None
@@ -157,8 +157,8 @@ def test_compute_builds_intradependencies(testing_workdir, monkeypatch, mocker):
     with open(os.path.join(output_dir, 'plan.yml')) as f:
         plan = yaml.load(f)
 
-    uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'uses_zlib-centos5-64'][0]
-    assert any(task.get('passed') == ['zlib-centos5-64']
+    uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'uses_zlib-1.0-centos5-64'][0]
+    assert any(task.get('passed') == ['zlib-1.2.8-centos5-64']
                for task in uses_zlib_job['plan'])
 
 
@@ -179,8 +179,8 @@ def test_python_build_matrix_expansion(monkeypatch):
     tasks = execute.collect_tasks('.', matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
                                   folders=['python_test'])
     assert len(tasks.nodes()) == 2
-    assert 'frank-python2.7-centos5-64' in tasks.nodes()
-    assert 'frank-python3.6-centos5-64' in tasks.nodes()
+    assert 'frank-1.0-python2.7-centos5-64' in tasks.nodes()
+    assert 'frank-1.0-python3.6-centos5-64' in tasks.nodes()
 
 
 def test_subpackage_matrix_no_subpackages(monkeypatch):
@@ -192,10 +192,10 @@ def test_subpackage_matrix_no_subpackages(monkeypatch):
     tasks = execute.collect_tasks('.', matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
                                   folders=['has_subpackages', 'depends_on_subpackage'])
     assert len(tasks.nodes()) == 2
-    assert 'has_subpackages_toplevel-centos5-64' in tasks.nodes()
-    assert 'depends_on_subpackage-centos5-64' in tasks.nodes()
-    assert 'has_subpackages_subpackage-centos5-64' not in tasks.nodes()
+    assert 'has_subpackages_toplevel-1.0-centos5-64' in tasks.nodes()
+    assert 'depends_on_subpackage-1.0-centos5-64' in tasks.nodes()
+    assert 'has_subpackages_subpackage-1.0-centos5-64' not in tasks.nodes()
     # this is the actual dependency
-    assert ('depends_on_subpackage-centos5-64', 'has_subpackages_subpackage-centos5-64') not in tasks.edges()
+    assert ('depends_on_subpackage-1.0-centos5-64', 'has_subpackages_subpackage-1.0-centos5-64') not in tasks.edges()
     # this is what we remap it to
-    assert ('depends_on_subpackage-centos5-64', 'has_subpackages_toplevel-centos5-64') in tasks.edges()
+    assert ('depends_on_subpackage-1.0-centos5-64', 'has_subpackages_toplevel-1.0-centos5-64') in tasks.edges()
