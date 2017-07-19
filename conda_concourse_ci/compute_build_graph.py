@@ -85,7 +85,8 @@ def git_changed_submodules(git_root='.'):
 
 
 def git_new_submodules(git_root='.'):
-    new_submodule_script = pkg_resources.resource_filename('conda_concourse_ci', 'new-submodule-script.sh')
+    new_submodule_script = pkg_resources.resource_filename('conda_concourse_ci',
+                                                           'new-submodule-script.sh')
 
     diff = subprocess.check_output(['bash', new_submodule_script], cwd=git_root,
                                    universal_newlines=True).splitlines()
@@ -95,8 +96,10 @@ def git_new_submodules(git_root='.'):
 
 def git_renamed_folders(git_root='.'):
     status = subprocess.Popen(['git', 'status'], stdout=subprocess.PIPE, universal_newlines=True)
-    grep = subprocess.Popen(['grep', '-F', "renamed"], stdin=status.stdout, stdout=subprocess.PIPE, universal_newlines=True)
-    renamed_folders = subprocess.check_output(['awk', "{print $4}"], stdin=grep.stdout, universal_newlines=True)
+    grep = subprocess.Popen(['grep', '-F', "renamed"], stdin=status.stdout, stdout=subprocess.PIPE,
+                            universal_newlines=True)
+    renamed_folders = subprocess.check_output(['awk', "{print $4}"], stdin=grep.stdout,
+                                              universal_newlines=True)
 
     return renamed_folders.splitlines()
 
