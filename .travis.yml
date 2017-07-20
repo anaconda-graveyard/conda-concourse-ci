@@ -24,6 +24,7 @@ install:
   # take care of c-b's dependencies
   - conda install -q conda-build
   - conda remove -q conda-build
+  # install from source so we can test against master
   - git clone https://github.com/conda/conda-build
   - pushd conda-build
   - python setup.py install

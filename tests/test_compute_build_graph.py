@@ -65,7 +65,7 @@ def test_platform_specific_graph(mocker, testing_conda_resolve):
     worker = {'platform': 'win', 'arch': '32', 'label': 'linux'}
     mocker.patch.object(compute_build_graph, '_installable')
     mocker.patch.object(compute_build_graph, '_buildable',
-            lambda meta, version, worker, recipes_dir: os.path.join(recipes_dir, meta.name()))
+                lambda name, version, recipes_dir, worker, config: os.path.join(recipes_dir, name))
     compute_build_graph._installable.return_value = False
     g = compute_build_graph.construct_graph(graph_data_dir, worker,
                                             folders=('a', 'b', 'c', 'd', 'e'),
@@ -128,20 +128,15 @@ def test_add_dependency_nodes_and_edges(mocker, testing_graph, testing_conda_res
 
 
 def test_buildable(monkeypatch, testing_metadata):
-    monkeypatch.chdir(test_data_dir)
-    testing_metadata.meta['package']['name'] = 'somepackage'
-    testing_metadata.meta['package']['version'] = 'any'
-    assert compute_build_graph._buildable(testing_metadata, 'any', dummy_worker)
-    testing_metadata.meta['package']['version'] = '1.2.8'
-    assert compute_build_graph._buildable(testing_metadata, '1.2.8', dummy_worker)
-    assert compute_build_graph._buildable(testing_metadata, '1.2.*', dummy_worker)
-    testing_metadata.meta['package']['version'] = '5.2.9'
-    assert not compute_build_graph._buildable(testing_metadata, '5.2.9', dummy_worker)
-    testing_metadata.meta['package']['name'] = 'not_a_package'
-    assert not compute_build_graph._buildable(testing_metadata, '5.2.9', dummy_worker)
-
-    a = api.render(os.path.join(graph_data_dir, 'a'))[0][0]
-    assert compute_build_graph._buildable(a, '1.0', dummy_worker, graph_data_dir)
+    config = testing_metadata.config
+    assert compute_build_graph._buildable('somepackage', 'any', test_data_dir, dummy_worker, config)
+    assert compute_build_graph._buildable('somepackage', '1.2.8', test_data_dir, dummy_worker, config)
+    assert compute_build_graph._buildable('somepackage', '1.2.*', test_data_dir, dummy_worker, config)
+    assert compute_build_graph._buildable('somepackage', '>=1.2', test_data_dir, dummy_worker, config)
+    assert compute_build_graph._buildable('somepackage', '<2', test_data_dir, dummy_worker, config)
+    assert compute_build_graph._buildable('somepackage', '>=1.2,<2', test_data_dir, dummy_worker, config)
+    assert not compute_build_graph._buildable('somepackage', '5', test_data_dir, dummy_worker, config)
+    assert not compute_build_graph._buildable('not_a_package', 'any', test_data_dir, dummy_worker, config)
 
 
 def test_installable(testing_conda_resolve, testing_metadata):

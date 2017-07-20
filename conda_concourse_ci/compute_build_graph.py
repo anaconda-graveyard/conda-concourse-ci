@@ -5,7 +5,6 @@ import logging
 import os
 import re
 import subprocess
-import sys
 
 import networkx as nx
 from conda_build import api, conda_interface
@@ -150,9 +149,10 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         if metadata.skip():
             return None
 
-        graph.add_node(name, meta=metadata, worker=worker)
-        add_dependency_nodes_and_edges(name, graph, run, worker, conda_resolve,
-                                    recipes_dir=recipes_dir)
+        if name not in graph.nodes():
+            graph.add_node(name, meta=metadata, worker=worker)
+            add_dependency_nodes_and_edges(name, graph, run, worker, conda_resolve,
+                                        recipes_dir=recipes_dir)
 
         # # add the test equivalent at the same time.  This is so that expanding can find it.
         # if run == 'build':
@@ -306,33 +306,28 @@ def _installable(name, version, build_string, config, conda_resolve):
     """Can Conda install the package we need?"""
     ms = conda_interface.MatchSpec(" ".join([name, _fix_any(version, config),
                                              _fix_any(build_string, config)]))
-    return conda_resolve.find_matches(ms)
+    installable = conda_resolve.find_matches(ms)
+    if not installable:
+            log.warn("Dependency {name}, version {ver} is not installable from your "
+                     "channels: {channels} with subdir {subdir}.  Seeing if we can build it..."
+                     .format(name=name, ver=version, channels=config.channel_urls,
+                             subdir=config.host_subdir))
+    return installable
 
 
-def _buildable(metadata, version, worker, recipes_dir=None):
+def _buildable(name, version, recipes_dir, worker, config):
     """Does the recipe that we have available produce the package we need?"""
-    # best: metadata comes from a real recipe, and we have a path to it.  Version may still
-    #    not match.
-    recipes_dir = recipes_dir or os.getcwd()
     possible_dirs = os.listdir(recipes_dir)
-    if os.path.exists(metadata.meta_path):
-        metadata_tuples = (m for m, _, _ in _get_or_render_metadata(metadata.meta_path, worker))
-    # next best: matching name recipe folder in cwd
-    elif possible_dirs:
-        packagename_re = re.compile(r'%s(?:\-[0-9]+[\.0-9\_\-a-zA-Z]*)?$' % metadata.name())
-        likely_dirs = (dirname for dirname in possible_dirs if
-                       (os.path.isdir(os.path.join(recipes_dir, dirname)) and
-                        packagename_re.match(dirname)))
-        metadata_tuples = [m for path in likely_dirs
-                           for (m, _, _) in _get_or_render_metadata(os.path.join(recipes_dir,
-                                                                                   path), worker)]
-
-    else:
-        return False
+    packagename_re = re.compile(r'%s(?:\-[0-9]+[\.0-9\_\-a-zA-Z]*)?$' % name)
+    likely_dirs = (dirname for dirname in possible_dirs if
+                    (os.path.isdir(os.path.join(recipes_dir, dirname)) and
+                    packagename_re.match(dirname)))
+    metadata_tuples = [m for path in likely_dirs
+                        for (m, _, _) in _get_or_render_metadata(os.path.join(recipes_dir,
+                                                                                path), worker)]
 
     # this is our target match
-    ms = conda_interface.MatchSpec(" ".join([metadata.name(),
-                                             _fix_any(version, metadata.config)]))
+    ms = conda_interface.MatchSpec(" ".join([name, _fix_any(version, config)]))
     available = False
     for m in metadata_tuples:
         available = match_peer_job(ms, m)
@@ -349,54 +344,26 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
     metadata = graph.node[node]['meta']
     # for plain test runs, ignore build reqs.
     deps = get_run_test_deps(metadata)
+    recipes_dir = recipes_dir or os.getcwd()
 
     # cross: need to distinguish between build_subdir (build reqs) and host_subdir
     if run == 'build':
         deps.update(get_build_deps(metadata))
 
     for dep, (version, build_str) in deps.items():
-        dummy_meta = metadata.copy()
-        dummy_meta.meta = {'package': {'name': dep,
-                                       'version': version.replace('.*', '')},
-                           'build': {'string': build_str}}
-        dummy_meta.meta_path = ''
-        dummy_meta.path = ''
-
-        # TODO: need to check if any dependency is another node in the graph.
-        #     If so, we need to add the appropriate edge, so that builds in this batch
-        #     all use the newest possible builds (use builds from this batch where possible)
-
         # we don't need worker info in _installable because it is already part of conda_resolve
-        if not _installable(dep, version, build_str, dummy_meta.config, conda_resolve):
-            log.warn("Dependency {name}, version {ver} is not installable from your "
-                     "channels: {channels} with subdir {subdir}.  Seeing if we can build it..."
-                     .format(name=dep, ver=version, channels=metadata.config.channel_urls,
-                             subdir=(metadata.config.build_subdir if run == 'build' else
-                                     metadata.config.host_subdir)))
-            # version is passed literally here because constraints may make it an invalid version
-            #    for metadata.
-            dep_name = package_key(dummy_meta, worker['label'], run)
-            dep_re = re.sub(r'anyh[0-9a-f]{%d}' % metadata.config.hash_length, '.*', dep_name)
-            if sys.version_info.major < 3:
-                dep_re = re.compile(dep_re.encode('unicode-escape'))
-            else:
-                dep_re = re.compile(dep_re)
-            nodes_in_graph = [dep_re.match(_n) for _n in graph.nodes()]
-            node_in_graph = [_n for _n in nodes_in_graph if _n]
-            if not node_in_graph:
-                recipe_dir = _buildable(dummy_meta, version, worker, recipes_dir)
-                if not recipe_dir:
-                    continue
-                    # raise ValueError("Dependency {} is not installable, and recipe (if "
-                    #                  " available) can't produce desired version ({})."
-                    #                  .format(dep, version))
-                dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', worker,
-                                               conda_resolve, recipes_dir)
-                if not dep_name:
-                    raise ValueError("Tried to build recipe {0} as dependency, which is skipped "
-                                     "in meta.yaml".format(recipe_dir))
-            else:
-                dep_name = node_in_graph[0].string
+        if not _installable(dep, version, build_str, metadata.config, conda_resolve):
+            recipe_dir = _buildable(dep, version, recipes_dir, worker, metadata.config)
+            if not recipe_dir:
+                continue
+                # raise ValueError("Dependency {} is not installable, and recipe (if "
+                #                  " available) can't produce desired version ({})."
+                #                  .format(dep, version))
+            dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', worker,
+                                            conda_resolve, recipes_dir)
+            if not dep_name:
+                raise ValueError("Tried to build recipe {0} as dependency, which is skipped "
+                                 "in meta.yaml".format(recipe_dir))
             graph.add_edge(node, dep_name)
 
 
