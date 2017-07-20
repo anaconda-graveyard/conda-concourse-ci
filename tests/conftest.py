@@ -75,13 +75,19 @@ def testing_submodules_repo(testing_workdir, request):
     subprocess.check_call(['git', 'add', '.'])
     subprocess.check_call(['git', 'commit', '-m', 'Added submodules'])
 
+    return testing_workdir
+
+
+@pytest.fixture(scope="function")
+def testing_submodule_commit(testing_submodules_repo):
     os.chdir('conda-feedstock')
     subprocess.check_call(['git', 'checkout', '4648194ca029603b90de22e16b59949b5f68d2d5'])
-    os.chdir(testing_workdir)
+    os.chdir(testing_submodules_repo)
 
     subprocess.check_call(['git', 'mv', 'conda-build-feedstock', 'cb3-feedstock'])
 
-    return testing_workdir
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Renamed submodules'])
 
 
 @pytest.fixture(scope='function')

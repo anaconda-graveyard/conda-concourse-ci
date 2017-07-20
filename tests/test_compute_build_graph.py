@@ -362,7 +362,7 @@ def test_version_matching(testing_conda_resolve):
     assert ('downstream-1.0-upstream2.0-linux', 'upstream-2.0.2-linux') in g.edges()
 
 
-def test_submodules(testing_submodules_repo):
+def test_submodules(testing_submodule_commit):
     assert 'conda-feedstock' in compute_build_graph.git_changed_submodules('.')
     assert 'cb3-feedstock' in compute_build_graph.git_renamed_folders('.')
 

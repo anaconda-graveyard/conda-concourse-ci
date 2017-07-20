@@ -95,13 +95,13 @@ def git_new_submodules(git_root='.'):
 
 
 def git_renamed_folders(git_root='.'):
-    status = subprocess.Popen(['git', 'status'], stdout=subprocess.PIPE, universal_newlines=True)
-    grep = subprocess.Popen(['grep', '-F', "renamed"], stdin=status.stdout, stdout=subprocess.PIPE,
-                            universal_newlines=True)
-    renamed_folders = subprocess.check_output(['awk', "{print $4}"], stdin=grep.stdout,
-                                              universal_newlines=True)
+    rename_script = pkg_resources.resource_filename('conda_concourse_ci',
+                                                    'rename-script.sh')
 
-    return renamed_folders.splitlines()
+    renamed_files = subprocess.check_output(['bash', rename_script], cwd=git_root,
+                                             universal_newlines=True).splitlines()
+
+    return renamed_files
 
 
 def git_changed_recipes(git_rev, stop_rev=None, git_root='.'):
