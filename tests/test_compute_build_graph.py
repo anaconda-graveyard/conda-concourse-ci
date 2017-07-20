@@ -364,9 +364,10 @@ def test_version_matching(testing_conda_resolve):
 
 def test_submodules(testing_submodules_repo):
     assert 'conda-feedstock' in compute_build_graph.git_changed_submodules('.')
+    assert 'cb3-feedstock' in compute_build_graph.git_renamed_folders('.')
 
+
+def test_new_submodules(testing_new_submodules):
     new_submodules = compute_build_graph.git_new_submodules('.')
     assert 'conda-env-feedstock' in new_submodules
     assert 'conda-verify' not in new_submodules
-
-    assert 'cb3-feedstock' in compute_build_graph.git_renamed_folders('.')
