@@ -1,0 +1,17 @@
+- one version of "upstream"
+- another version of "upstream"
+- a consumer of "upstream", with a conda_build_config.yaml containing inexact matches for both available versions
+
+desired result:
+- 4 total nodes:
+   - upstream 1.0.1
+   - upstream 2.0.2
+   - downstream 1.0 with dependency on upstream 1.0
+   - downstream 1.0 with dependency on upstream 2.0
+- 2 edges:
+   - downstream 1.0 -> upstream 1.0.1
+   - downstream 1.0 -> upstream 2.0.2
+
+The key tricky thing here is getting the inexact matches present in the
+matchspec for downstream to identify that they can be satisfied by the more
+specific versions in the upstream builds

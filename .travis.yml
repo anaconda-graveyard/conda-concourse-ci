@@ -29,7 +29,7 @@ install:
   - python setup.py install
   - popd
   - popd
-  - pip install pytest-xdist
+  - pip install pytest-xdist==1.16.0
   - $HOME/miniconda/bin/pip install pytest-mock
   - pip install --no-deps .
   - conda info -a

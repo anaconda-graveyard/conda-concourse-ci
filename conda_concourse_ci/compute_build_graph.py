@@ -31,7 +31,7 @@ def package_key(metadata, worker_label, run='build'):
         if v in requirements or any(req.startswith(v + ' ') for req in requirements):
             used_variables.add(v)
     build_vars = ''.join([k + str(metadata.config.variant[k]) for k in used_variables])
-    key = [metadata.name()]
+    key = [metadata.name(), metadata.version()]
     if build_vars:
         key.append(build_vars)
     key.append(worker_label)
@@ -123,6 +123,7 @@ def get_run_test_deps(meta):
 _rendered_recipes = {}
 
 
+@conda_interface.memoized
 def _get_or_render_metadata(meta_file_or_recipe_dir, worker):
     global _rendered_recipes
     platform = worker['platform']
@@ -166,6 +167,22 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
     return name
 
 
+def match_peer_job(target_matchspec, m):
+    match_dict = {'name': m.name(),
+                'version': m.version(),
+                'build': _fix_any(m.build_id(), m.config), }
+    if conda_interface.conda_43:
+        match_dict = conda_interface.Dist(name=match_dict['name'],
+                                            dist_name='-'.join((match_dict['name'],
+                                                                match_dict['version'],
+                                                                match_dict['build'])),
+                                            version=match_dict['version'],
+                                            build_string=match_dict['build'],
+                                            build_number=int(m.build_number() or 0),
+                                            channel=None)
+    return target_matchspec.match(match_dict)
+
+
 def add_intradependencies(graph):
     """ensure that downstream packages wait for upstream build/test (not use existing
     available packages)"""
@@ -181,11 +198,14 @@ def add_intradependencies(graph):
         deps = (m.ms_depends('build') + m.ms_depends('host'))
 
         for dep in deps:
-            # are any of these build dependencies also nodes in our graph?
-            dep_test_node = node.replace(m.name(), dep.name, 1)
-            if dep_test_node in graph.nodes() and (node, dep_test_node) not in graph.edges():
-                # add edges if they don't already exist
-                graph.add_edge(node, dep_test_node)
+            name_matches = (n for n in graph.nodes() if graph.node[n]['meta'].name() == dep.name)
+            for matching_node in name_matches:
+                # are any of these build dependencies also nodes in our graph?
+                if (match_peer_job(conda_interface.MatchSpec(dep),
+                                   graph.node[matching_node]['meta']) and
+                         (node, matching_node) not in graph.edges()):
+                    # add edges if they don't already exist
+                    graph.add_edge(node, matching_node)
 
 
 def collapse_subpackage_nodes(graph):
@@ -198,23 +218,24 @@ def collapse_subpackage_nodes(graph):
     # group nodes by their recipe path first, then within those groups by their variant
     node_groups = {}
     for node in graph.nodes():
-        meta = graph.node[node]['meta']
-        meta_path = meta.meta_path or meta.meta['extra']['parent_recipe']['path']
-        master = False
-        if meta.meta_path:
-            master = True
-        group = node_groups.get(meta_path, {})
-        subgroup = group.get(HashableDict(meta.config.variant), {})
-        if master:
-            if 'master' in subgroup:
-                raise ValueError("tried to set more than one node in a group as master")
-            subgroup['master'] = node
-        else:
-            sps = subgroup.get('subpackages', [])
-            sps.append(node)
-            subgroup['subpackages'] = sps
-        group[HashableDict(meta.config.variant)] = subgroup
-        node_groups[meta_path] = group
+        if 'meta' in graph.node[node]:
+            meta = graph.node[node]['meta']
+            meta_path = meta.meta_path or meta.meta['extra']['parent_recipe']['path']
+            master = False
+            if meta.meta_path:
+                master = True
+            group = node_groups.get(meta_path, {})
+            subgroup = group.get(HashableDict(meta.config.variant), {})
+            if master:
+                if 'master' in subgroup:
+                    raise ValueError("tried to set more than one node in a group as master")
+                subgroup['master'] = node
+            else:
+                sps = subgroup.get('subpackages', [])
+                sps.append(node)
+                subgroup['subpackages'] = sps
+            group[HashableDict(meta.config.variant)] = subgroup
+            node_groups[meta_path] = group
 
     for recipe_path, group in node_groups.items():
         for variant, subgroup in group.items():
@@ -293,33 +314,28 @@ def _buildable(metadata, version, worker, recipes_dir=None):
     # best: metadata comes from a real recipe, and we have a path to it.  Version may still
     #    not match.
     recipes_dir = recipes_dir or os.getcwd()
-    path = os.path.join(recipes_dir, metadata.name())
+    possible_dirs = os.listdir(recipes_dir)
     if os.path.exists(metadata.meta_path):
-        metadata_tuples = _get_or_render_metadata(metadata.meta_path, worker)
+        metadata_tuples = (m for m, _, _ in _get_or_render_metadata(metadata.meta_path, worker))
     # next best: matching name recipe folder in cwd
-    elif os.path.isdir(path):
-        metadata_tuples = _get_or_render_metadata(path, worker)
+    elif possible_dirs:
+        packagename_re = re.compile(r'%s(?:\-[0-9]+[\.0-9\_\-a-zA-Z]*)?$' % metadata.name())
+        likely_dirs = (dirname for dirname in possible_dirs if
+                       (os.path.isdir(os.path.join(recipes_dir, dirname)) and
+                        packagename_re.match(dirname)))
+        metadata_tuples = [m for path in likely_dirs
+                           for (m, _, _) in _get_or_render_metadata(os.path.join(recipes_dir,
+                                                                                   path), worker)]
+
     else:
         return False
 
     # this is our target match
     ms = conda_interface.MatchSpec(" ".join([metadata.name(),
                                              _fix_any(version, metadata.config)]))
-    for (m, _, _) in metadata_tuples:
-        # this is what we have available from the recipe
-        match_dict = {'name': m.name(),
-                    'version': m.version(),
-                    'build': _fix_any(m.build_id(), m.config), }
-        if conda_interface.conda_43:
-            match_dict = conda_interface.Dist(name=match_dict['name'],
-                                              dist_name='-'.join((match_dict['name'],
-                                                                  match_dict['version'],
-                                                                  match_dict['build'])),
-                                              version=match_dict['version'],
-                                              build_string=match_dict['build'],
-                                              build_number=int(m.build_number() or 0),
-                                              channel=None)
-        available = ms.match(match_dict)
+    available = False
+    for m in metadata_tuples:
+        available = match_peer_job(ms, m)
         if available:
             break
     return m.meta_path if available else False
@@ -341,7 +357,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
     for dep, (version, build_str) in deps.items():
         dummy_meta = metadata.copy()
         dummy_meta.meta = {'package': {'name': dep,
-                                       'version': version},
+                                       'version': version.replace('.*', '')},
                            'build': {'string': build_str}}
         dummy_meta.meta_path = ''
         dummy_meta.path = ''
@@ -370,9 +386,10 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
             if not node_in_graph:
                 recipe_dir = _buildable(dummy_meta, version, worker, recipes_dir)
                 if not recipe_dir:
-                    raise ValueError("Dependency {} is not installable, and recipe (if "
-                                     " available) can't produce desired version ({})."
-                                     .format(dep, version))
+                    continue
+                    # raise ValueError("Dependency {} is not installable, and recipe (if "
+                    #                  " available) can't produce desired version ({})."
+                    #                  .format(dep, version))
                 dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', worker,
                                                conda_resolve, recipes_dir)
                 if not dep_name:
@@ -380,8 +397,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
                                      "in meta.yaml".format(recipe_dir))
             else:
                 dep_name = node_in_graph[0].string
-
-            graph.add_edge(node, package_key(dummy_meta, worker['label'], run))
+            graph.add_edge(node, dep_name)
 
 
 def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
