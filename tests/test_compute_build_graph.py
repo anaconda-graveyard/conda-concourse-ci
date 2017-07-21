@@ -110,7 +110,7 @@ def test_git_changed_recipes_head(testing_submodules_repo):
 
 
 def test_git_changed_recipes_earlier_rev(testing_submodules_repo):
-    assert set(compute_build_graph.git_changed_recipes('HEAD@{1}')) == set(
+    assert set(compute_build_graph.git_changed_recipes('HEAD@{1}', 'HEAD@{2}')) == set(
         ('conda-feedstock', 'conda-build-feedstock')
         )
 
@@ -126,7 +126,7 @@ def test_submodules_renaming(testing_submodule_commit):
     The conda-feedstock submodule was set to a different revision and the
     conda-build-feedstock was renamed to cb3-feedstock.
     """
-    changed = compute_build_graph.git_changed_recipes('.')
+    changed = compute_build_graph.git_changed_recipes('HEAD')
     assert 'conda-feedstock' in changed
     assert 'cb3-feedstock' in changed
     assert 'conda-build-feedstock' not in changed
@@ -138,7 +138,7 @@ def test_new_submodules(testing_new_submodules):
     The conda-env-feedstock is a new submodule that contains a recipe
     while the conda-verify submodule does not include a recipe.
     """
-    new_submodules = compute_build_graph.git_changed_recipes('.')
+    new_submodules = compute_build_graph.git_changed_recipes()
     assert 'conda-env-feedstock' in new_submodules
     assert 'conda-verify' not in new_submodules
 

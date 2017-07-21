@@ -46,20 +46,29 @@ def testing_submodules_repo(testing_workdir, request):
     """Initialize a new git directory with two submodules."""
     subprocess.check_call(['git', 'init'])
 
+    # adding a commit for a readme since git diff behaves weird if
+    # submodules are the first ever commit
+    subprocess.check_call(['touch', 'readme.txt'])
+    with open('readme.txt', 'w') as readme:
+        readme.write('stuff')
+
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added readme'])
+
     subprocess.check_call(['git', 'submodule', 'add',
                            'https://github.com/conda-forge/conda-feedstock.git'])
     subprocess.check_call(['git', 'submodule', 'add',
                            'https://github.com/conda-forge/conda-build-feedstock.git'])
 
     subprocess.check_call(['git', 'add', '.'])
-    subprocess.check_call(['git', 'commit', '-m', 'Added submodules'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added conda and cb submodules'])
 
     # a second commit, for testing trips back in history
     subprocess.check_call(['git', 'submodule', 'add',
                            'https://github.com/conda-forge/conda-build-all-feedstock.git'])
 
     subprocess.check_call(['git', 'add', '.'])
-    subprocess.check_call(['git', 'commit', '-m', 'Added submodules'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added cba submodule'])
 
     return testing_workdir
 
