@@ -42,28 +42,6 @@ def testing_workdir(tmpdir, request):
 
 
 @pytest.fixture(scope='function')
-def testing_git_repo(testing_workdir, request):
-    subprocess.check_call(['git', 'init'])
-    with open('sample_file', 'w') as f:
-        f.write('weee')
-    subprocess.check_call(['git', 'add', 'sample_file'])
-    subprocess.check_call(['git', 'commit', '-m', 'commit 1'])
-    os.makedirs('not_a_recipe')
-    with open(os.path.join('not_a_recipe', 'testfile'), 'w') as f:
-        f.write('weee')
-    make_recipe('test_dir_1')
-    subprocess.check_call(['git', 'add', 'test_dir_1'])
-    subprocess.check_call(['git', 'commit', '-m', 'commit 2'])
-    make_recipe('test_dir_2', ['test_dir_1'])
-    subprocess.check_call(['git', 'add', 'test_dir_2'])
-    subprocess.check_call(['git', 'commit', '-m', 'commit 3'])
-    make_recipe('test_dir_3', ['test_dir_2'])
-    subprocess.check_call(['git', 'add', 'test_dir_3'])
-    subprocess.check_call(['git', 'commit', '-m', 'commit 4'])
-    return testing_workdir
-
-
-@pytest.fixture(scope='function')
 def testing_submodules_repo(testing_workdir, request):
     """Initialize a new git directory with two submodules."""
     subprocess.check_call(['git', 'init'])
@@ -72,6 +50,13 @@ def testing_submodules_repo(testing_workdir, request):
                            'https://github.com/conda-forge/conda-feedstock.git'])
     subprocess.check_call(['git', 'submodule', 'add',
                            'https://github.com/conda-forge/conda-build-feedstock.git'])
+
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added submodules'])
+
+    # a second commit, for testing trips back in history
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda-forge/conda-build-all-feedstock.git'])
 
     subprocess.check_call(['git', 'add', '.'])
     subprocess.check_call(['git', 'commit', '-m', 'Added submodules'])

@@ -32,13 +32,13 @@ def test_construct_graph(mocker, testing_conda_resolve):
     assert set(g.nodes()) == set(['b-1.0-linux'])
 
 
-def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
-    g = compute_build_graph.construct_graph('.', dummy_worker, 'build',
-                                            matrix_base_dir=test_config_dir,
-                                            conda_resolve=testing_conda_resolve)
-    assert set(g.nodes()) == {'test_dir_3-1.0-linux', 'test_dir_2-1.0-linux', 'test_dir_1-1.0-linux'}
-    assert set(g.edges()) == {('test_dir_2-1.0-linux', 'test_dir_1-1.0-linux'),
-                              ('test_dir_3-1.0-linux', 'test_dir_2-1.0-linux')}
+# def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
+#     g = compute_build_graph.construct_graph('.', dummy_worker, 'build',
+#                                             matrix_base_dir=test_config_dir,
+#                                             conda_resolve=testing_conda_resolve)
+#     assert set(g.nodes()) == {'test_dir_3-1.0-linux', 'test_dir_2-1.0-linux', 'test_dir_1-1.0-linux'}
+#     assert set(g.edges()) == {('test_dir_2-1.0-linux', 'test_dir_1-1.0-linux'),
+#                               ('test_dir_3-1.0-linux', 'test_dir_2-1.0-linux')}
 
 
 def test_package_key(testing_metadata):
@@ -103,19 +103,44 @@ def test_run_test_graph(testing_conda_resolve):
     assert set(g.nodes()) == set(['c3itest-a-1.0-linux', 'c3itest-b-1.0-linux', 'c3itest-c-1.0-linux'])
 
 
-def test_git_changed_recipes_head(testing_git_repo):
-    assert (compute_build_graph.git_changed_recipes('HEAD') ==
-            ['test_dir_3'])
+def test_git_changed_recipes_head(testing_submodules_repo):
+    assert set(compute_build_graph.git_changed_recipes('HEAD')) == set(
+        ['conda-build-all-feedstock']
+    )
 
 
-def test_git_changed_recipes_earlier_rev(testing_git_repo):
-    assert (compute_build_graph.git_changed_recipes('HEAD@{1}') ==
-            ['test_dir_2'])
+def test_git_changed_recipes_earlier_rev(testing_submodules_repo):
+    assert set(compute_build_graph.git_changed_recipes('HEAD@{1}')) == set(
+        ('conda-feedstock', 'conda-build-feedstock')
+        )
 
 
-def test_git_changed_recipes_rev_range(testing_git_repo):
-    assert (compute_build_graph.git_changed_recipes('HEAD@{3}', 'HEAD@{1}') ==
-            ['test_dir_1', 'test_dir_2'])
+def test_git_changed_recipes_rev_range(testing_submodule_commit):
+    assert set(compute_build_graph.git_changed_recipes('HEAD@{3}', 'HEAD')) == set(
+        ('conda-build-all-feedstock', 'conda-feedstock', 'cb3-feedstock'))
+
+
+def test_submodules_renaming(testing_submodule_commit):
+    """Test that c3i recognizes submodules with changes or new names.
+
+    The conda-feedstock submodule was set to a different revision and the
+    conda-build-feedstock was renamed to cb3-feedstock.
+    """
+    changed = compute_build_graph.git_changed_recipes('.')
+    assert 'conda-feedstock' in changed
+    assert 'cb3-feedstock' in changed
+    assert 'conda-build-feedstock' not in changed
+
+
+def test_new_submodules(testing_new_submodules):
+    """Test that c3i recognizes new submodules with recipes.
+
+    The conda-env-feedstock is a new submodule that contains a recipe
+    while the conda-verify submodule does not include a recipe.
+    """
+    new_submodules = compute_build_graph.git_changed_recipes('.')
+    assert 'conda-env-feedstock' in new_submodules
+    assert 'conda-verify' not in new_submodules
 
 
 def test_add_dependency_nodes_and_edges(mocker, testing_graph, testing_conda_resolve):
@@ -267,18 +292,6 @@ def test_order_build(testing_graph):
     assert order.index('c3itest-c-linux') > order.index('b-linux')
 
 
-def test_get_base_folders(testing_workdir):
-    make_recipe('some_recipe')
-    os.makedirs('not_a_recipe')
-    with open(os.path.join('not_a_recipe', 'testfile'), 'w') as f:
-        f.write('weee')
-
-    changed_files = ['some_recipe/meta.yaml', 'not_a_recipe/testfile']
-    assert (compute_build_graph._get_base_folders(testing_workdir, changed_files) ==
-            ['some_recipe'])
-    assert not compute_build_graph._get_base_folders(testing_workdir, changed_files[1:])
-
-
 def test_deps_to_version_dict():
     deps = ['a', 'b 1.0', 'c 1.0 0']
     d = compute_build_graph._deps_to_version_dict(deps)
@@ -360,24 +373,3 @@ def test_version_matching(testing_conda_resolve):
     assert len(g.nodes()) == 4
     assert ('downstream-1.0-upstream1.0-linux', 'upstream-1.0.1-linux') in g.edges()
     assert ('downstream-1.0-upstream2.0-linux', 'upstream-2.0.2-linux') in g.edges()
-
-
-def test_submodules(testing_submodule_commit):
-    """Test that c3i recognizes submodules with changes or new names.
-
-    The conda-feedstock submodule was set to a different revision and the
-    conda-build-feedstock was renamed to cb3-feedstock.
-    """
-    assert 'conda-feedstock' in compute_build_graph.git_changed_submodules('.')
-    assert 'cb3-feedstock' in compute_build_graph.git_renamed_folders('.')
-
-
-def test_new_submodules(testing_new_submodules):
-    """Test that c3i recognizes new submodules with recipes.
-
-    The conda-env-feedstock is a new submodule that contains a recipe
-    while the conda-verify submodule does not include a recipe.
-    """
-    new_submodules = compute_build_graph.git_new_submodules('.')
-    assert 'conda-env-feedstock' in new_submodules
-    assert 'conda-verify' not in new_submodules

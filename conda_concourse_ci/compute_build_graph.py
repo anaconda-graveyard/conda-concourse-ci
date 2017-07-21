@@ -41,32 +41,6 @@ def package_key(metadata, worker_label, run='build'):
     return key
 
 
-def _git_changed_files(git_rev, stop_rev=None, git_root=''):
-    if not git_root:
-        git_root = os.getcwd()
-    if stop_rev:
-        git_rev = "{0}..{1}".format(git_rev, stop_rev)
-    output = subprocess.check_output(['git', 'diff-tree', '--no-commit-id',
-                                      '--name-only', '-r', git_rev],
-                                     cwd=git_root)
-    files = output.decode().splitlines()
-    return files
-
-
-def _get_base_folders(base_dir, changed_files):
-    recipe_dirs = []
-    for f in changed_files:
-        # only consider files that come from folders
-        if '/' in f:
-            f = f.split('/')[0]
-        try:
-            find_recipe(os.path.join(base_dir, f))
-            recipe_dirs.append(f)
-        except IOError:
-            pass
-    return recipe_dirs
-
-
 def git_changed_submodules(git_root='.'):
     diff_script = pkg_resources.resource_filename('conda_concourse_ci', 'diff-script.sh')
 
@@ -122,12 +96,10 @@ def git_changed_recipes(git_rev, stop_rev=None, git_root='.'):
              git_rev=SOME_REV@{2} and stop_rev=SOME_REV   => two commits, SOME_REV and the
                                                              one before it
     """
-    changed_files = _git_changed_files(git_rev, stop_rev=stop_rev, git_root=git_root)
     changed_submodules = git_changed_submodules(git_root=git_root)
     new_submodules = git_new_submodules(git_root=git_root)
     renamed_folders = git_renamed_folders(git_root=git_root)
-    recipe_dirs = _get_base_folders(git_root, changed_files)
-    return recipe_dirs + changed_submodules + new_submodules + renamed_folders
+    return changed_submodules + new_submodules + renamed_folders
 
 
 def _deps_to_version_dict(deps):
