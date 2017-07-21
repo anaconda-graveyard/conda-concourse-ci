@@ -57,6 +57,7 @@ jobs:
   #     path: recipe-repo-source
   #     status: pending
   - get: rsync-config
+    trigger: true
   - task: c3i-examine
     config:
       # seems redundant, but you need this in order to have the repo source code folder show up
