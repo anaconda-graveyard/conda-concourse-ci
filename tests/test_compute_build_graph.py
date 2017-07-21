@@ -32,13 +32,13 @@ def test_construct_graph(mocker, testing_conda_resolve):
     assert set(g.nodes()) == set(['b-1.0-linux'])
 
 
-# def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
-#     g = compute_build_graph.construct_graph('.', dummy_worker, 'build',
-#                                             matrix_base_dir=test_config_dir,
-#                                             conda_resolve=testing_conda_resolve)
-#     assert set(g.nodes()) == {'test_dir_3-1.0-linux', 'test_dir_2-1.0-linux', 'test_dir_1-1.0-linux'}
-#     assert set(g.edges()) == {('test_dir_2-1.0-linux', 'test_dir_1-1.0-linux'),
-#                               ('test_dir_3-1.0-linux', 'test_dir_2-1.0-linux')}
+def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
+    g = compute_build_graph.construct_graph('.', dummy_worker, 'build',
+                                            matrix_base_dir=test_config_dir,
+                                            conda_resolve=testing_conda_resolve)
+    assert set(g.nodes()) == {'test_dir_3-1.0-linux', 'test_dir_2-1.0-linux', 'test_dir_1-1.0-linux'}
+    assert set(g.edges()) == {('test_dir_2-1.0-linux', 'test_dir_1-1.0-linux'),
+                              ('test_dir_3-1.0-linux', 'test_dir_2-1.0-linux')}
 
 
 def test_package_key(testing_metadata):
@@ -290,6 +290,18 @@ def test_order_build(testing_graph):
     order = compute_build_graph.order_build(testing_graph)
     assert order.index('b-linux') > order.index('a-linux')
     assert order.index('c3itest-c-linux') > order.index('b-linux')
+
+
+def test_get_base_folders(testing_workdir):
+    make_recipe('some_recipe')
+    os.makedirs('not_a_recipe')
+    with open(os.path.join('not_a_recipe', 'testfile'), 'w') as f:
+        f.write('weee')
+
+    changed_files = ['some_recipe/meta.yaml', 'not_a_recipe/testfile']
+    assert (compute_build_graph._get_base_folders(testing_workdir, changed_files) ==
+            ['some_recipe'])
+    assert not compute_build_graph._get_base_folders(testing_workdir, changed_files[1:])
 
 
 def test_deps_to_version_dict():
