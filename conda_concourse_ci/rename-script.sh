@@ -1,5 +1,5 @@
 #!/bin/bash
-new_submodules=$(git diff HEAD~1 | grep -F 'rename to' | awk '{print $3}')
+new_submodules=$(git diff $1 | grep -F 'rename to' | awk '{print $3}')
 for new_submodule in $new_submodules; do
     (
         cd "$new_submodule" || exit
