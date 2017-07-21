@@ -65,6 +65,7 @@ def testing_git_repo(testing_workdir, request):
 
 @pytest.fixture(scope='function')
 def testing_submodules_repo(testing_workdir, request):
+    """Initialize a new git directory with two submodules."""
     subprocess.check_call(['git', 'init'])
 
     subprocess.check_call(['git', 'submodule', 'add',
@@ -80,6 +81,11 @@ def testing_submodules_repo(testing_workdir, request):
 
 @pytest.fixture(scope="function")
 def testing_submodule_commit(testing_submodules_repo):
+    """Change submodule revisions and names then commit.
+
+    The conda-feedstock is changed to a prior revision and the conda-build-feedstock
+    is renamed to cb3-feedstock. These changes are then committed and tested to see
+    if c3i recognizes the changes."""
     os.chdir('conda-feedstock')
     subprocess.check_call(['git', 'checkout', '4648194ca029603b90de22e16b59949b5f68d2d5'])
     os.chdir(testing_submodules_repo)
@@ -92,6 +98,12 @@ def testing_submodule_commit(testing_submodules_repo):
 
 @pytest.fixture(scope='function')
 def testing_new_submodules(testing_submodules_repo):
+    """Add new submodules and commit.
+
+    The conda-env-feedstock and conda-verify repositories are added as submodules.
+    The conda-env-feedstock repository contains a recipe while the conda-verify
+    repository does not. c3i should recognize the conda-env-feedstock submodule
+    but not the conda-verify submodule."""
     subprocess.check_call(['git', 'submodule', 'add',
                            'https://github.com/conda-forge/conda-env-feedstock.git'])
 

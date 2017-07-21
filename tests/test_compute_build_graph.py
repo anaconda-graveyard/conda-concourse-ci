@@ -363,11 +363,21 @@ def test_version_matching(testing_conda_resolve):
 
 
 def test_submodules(testing_submodule_commit):
+    """Test that c3i recognizes submodules with changes or new names.
+
+    The conda-feedstock submodule was set to a different revision and the
+    conda-build-feedstock was renamed to cb3-feedstock.
+    """
     assert 'conda-feedstock' in compute_build_graph.git_changed_submodules('.')
     assert 'cb3-feedstock' in compute_build_graph.git_renamed_folders('.')
 
 
 def test_new_submodules(testing_new_submodules):
+    """Test that c3i recognizes new submodules with recipes.
+
+    The conda-env-feedstock is a new submodule that contains a recipe
+    while the conda-verify submodule does not include a recipe.
+    """
     new_submodules = compute_build_graph.git_new_submodules('.')
     assert 'conda-env-feedstock' in new_submodules
     assert 'conda-verify' not in new_submodules
