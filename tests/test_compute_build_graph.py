@@ -103,19 +103,44 @@ def test_run_test_graph(testing_conda_resolve):
     assert set(g.nodes()) == set(['c3itest-a-1.0-linux', 'c3itest-b-1.0-linux', 'c3itest-c-1.0-linux'])
 
 
-def test_git_changed_recipes_head(testing_git_repo):
-    assert (compute_build_graph.git_changed_recipes('HEAD') ==
-            ['test_dir_3'])
+def test_git_changed_recipes_head(testing_submodules_repo):
+    assert set(compute_build_graph.git_changed_recipes('HEAD')) == set(
+        ['conda-build-all-feedstock']
+    )
 
 
-def test_git_changed_recipes_earlier_rev(testing_git_repo):
-    assert (compute_build_graph.git_changed_recipes('HEAD@{1}') ==
-            ['test_dir_2'])
+def test_git_changed_recipes_earlier_rev(testing_submodules_repo):
+    assert set(compute_build_graph.git_changed_recipes('HEAD@{1}', 'HEAD@{2}')) == set(
+        ('conda-feedstock', 'conda-build-feedstock')
+        )
 
 
-def test_git_changed_recipes_rev_range(testing_git_repo):
-    assert (compute_build_graph.git_changed_recipes('HEAD@{3}', 'HEAD@{1}') ==
-            ['test_dir_1', 'test_dir_2'])
+def test_git_changed_recipes_rev_range(testing_submodule_commit):
+    assert set(compute_build_graph.git_changed_recipes('HEAD@{3}', 'HEAD')) == set(
+        ('conda-build-all-feedstock', 'conda-feedstock', 'cb3-feedstock'))
+
+
+def test_submodules_renaming(testing_submodule_commit):
+    """Test that c3i recognizes submodules with changes or new names.
+
+    The conda-feedstock submodule was set to a different revision and the
+    conda-build-feedstock was renamed to cb3-feedstock.
+    """
+    changed = compute_build_graph.git_changed_recipes('HEAD')
+    assert 'conda-feedstock' in changed
+    assert 'cb3-feedstock' in changed
+    assert 'conda-build-feedstock' not in changed
+
+
+def test_new_submodules(testing_new_submodules):
+    """Test that c3i recognizes new submodules with recipes.
+
+    The conda-env-feedstock is a new submodule that contains a recipe
+    while the conda-verify submodule does not include a recipe.
+    """
+    new_submodules = compute_build_graph.git_changed_recipes()
+    assert 'conda-env-feedstock' in new_submodules
+    assert 'conda-verify' not in new_submodules
 
 
 def test_add_dependency_nodes_and_edges(mocker, testing_graph, testing_conda_resolve):

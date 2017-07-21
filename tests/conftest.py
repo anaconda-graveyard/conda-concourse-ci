@@ -43,6 +43,7 @@ def testing_workdir(tmpdir, request):
 
 @pytest.fixture(scope='function')
 def testing_git_repo(testing_workdir, request):
+    """Initialize a new git directory with two submodules."""
     subprocess.check_call(['git', 'init'])
     with open('sample_file', 'w') as f:
         f.write('weee')
@@ -60,7 +61,75 @@ def testing_git_repo(testing_workdir, request):
     make_recipe('test_dir_3', ['test_dir_2'])
     subprocess.check_call(['git', 'add', 'test_dir_3'])
     subprocess.check_call(['git', 'commit', '-m', 'commit 4'])
+
+
+@pytest.fixture(scope='function')
+def testing_submodules_repo(testing_workdir, request):
+    """Initialize a new git directory with two submodules."""
+    subprocess.check_call(['git', 'init'])
+
+    # adding a commit for a readme since git diff behaves weird if
+    # submodules are the first ever commit
+    subprocess.check_call(['touch', 'readme.txt'])
+    with open('readme.txt', 'w') as readme:
+        readme.write('stuff')
+
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added readme'])
+
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda-forge/conda-feedstock.git'])
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda-forge/conda-build-feedstock.git'])
+
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added conda and cb submodules'])
+
+    # a second commit, for testing trips back in history
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda-forge/conda-build-all-feedstock.git'])
+
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added cba submodule'])
+
     return testing_workdir
+
+
+@pytest.fixture(scope="function")
+def testing_submodule_commit(testing_submodules_repo):
+    """Change submodule revisions and names then commit.
+
+    The conda-feedstock is changed to a prior revision and the conda-build-feedstock
+    is renamed to cb3-feedstock. These changes are then committed and tested to see
+    if c3i recognizes the changes."""
+    os.chdir('conda-feedstock')
+    subprocess.check_call(['git', 'checkout', '4648194ca029603b90de22e16b59949b5f68d2d5'])
+    os.chdir(testing_submodules_repo)
+
+    subprocess.check_call(['git', 'mv', 'conda-build-feedstock', 'cb3-feedstock'])
+
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Renamed submodules'])
+
+
+@pytest.fixture(scope='function')
+def testing_new_submodules(testing_submodules_repo):
+    """Add new submodules and commit.
+
+    The conda-env-feedstock and conda-verify repositories are added as submodules.
+    The conda-env-feedstock repository contains a recipe while the conda-verify
+    repository does not. c3i should recognize the conda-env-feedstock submodule
+    but not the conda-verify submodule."""
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda-forge/conda-env-feedstock.git'])
+
+    subprocess.check_call(['git', 'submodule', 'add',
+                           'https://github.com/conda/conda-verify.git'])
+
+    subprocess.check_call(['git', 'add', '.'])
+    subprocess.check_call(['git', 'commit', '-m', 'Added more submodules'])
+
+    return testing_submodules_repo
 
 
 @pytest.fixture(scope='function')
