@@ -21,6 +21,8 @@ requirements:
     - networkx
     - python
     - requests
+    # we use pkg_resources, so yes, this is a runtime dep
+    - setuptools
     - six
     - yaml
 
