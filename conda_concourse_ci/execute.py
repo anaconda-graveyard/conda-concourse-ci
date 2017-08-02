@@ -204,6 +204,16 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
+                  }},
+                 {'name': 'rsync-source',
+                  'type': 'rsync-resource',
+                      'source': {
+                      'server': config_vars['intermediate-server'],
+                      'base_dir': os.path.join(config_vars['intermediate-source-folder'],
+                                               commit_id),
+                      'user': config_vars['intermediate-user'],
+                      'private_key': config_vars['intermediate-private-key'],
+                      'disable_version_path': True,
                   }}]
 
     # each package is a unit in the concourse graph.  This step recombines our separate steps.

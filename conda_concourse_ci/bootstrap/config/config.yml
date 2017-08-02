@@ -10,6 +10,7 @@ intermediate-server: your-intermediate-server
 intermediate-config-folder: your-intermediate-base-folder/base-name/config
 intermediate-recipe-folder: your-intermediate-base-folder/base-name/plan_and_recipes
 intermediate-artifacts-folder: your-intermediate-base-folder/base-name/artifacts
+intermedia-source-folder: your-intermediate-base-folder/base-name/source
 intermediate-user: your-intermediate-user
 intermediate-private-key: |
   private-key-to-use-for-connecting-to-intermediate-server
