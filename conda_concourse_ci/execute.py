@@ -98,9 +98,8 @@ def update_index_task(subdir):
 
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False):
     meta = graph.node[node]['meta']
-    output_folder = os.path.join('output-artifacts')
-    build_args = ['--no-anaconda-upload', '--output-folder', output_folder,
-                  '-c', os.path.join('indexed-artifacts')]
+    build_args = ['--no-anaconda-upload', '--output-folder', 'output-artifacts',
+                  '-c', os.path.join('indexed-artifacts'), '--cache-dir', 'output-source']
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     # this is the recipe path to build
@@ -113,7 +112,7 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         # dependency inputs are down below
         'inputs': inputs,
-        'outputs': [{'name': 'output-artifacts'}],
+        'outputs': [{'name': 'output-artifacts'}, {'name': 'output_source'}],
         'run': {
             'path': 'conda-build',
             'args': build_args,
@@ -205,6 +204,16 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
+                  }},
+                 {'name': 'rsync-source',
+                  'type': 'rsync-resource',
+                      'source': {
+                      'server': config_vars['intermediate-server'],
+                      'base_dir': os.path.join(config_vars['intermediate-source-folder'],
+                                               commit_id),
+                      'user': config_vars['intermediate-user'],
+                      'private_key': config_vars['intermediate-private-key'],
+                      'disable_version_path': True,
                   }}]
 
     # each package is a unit in the concourse graph.  This step recombines our separate steps.
@@ -276,6 +285,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
         plan_dict['tasks'].append({'put': 'rsync-artifacts',
                                    'params': {'sync_dir': 'output-artifacts'}})
+        plan_dict['tasks'].append({'put': 'rsync-source',
+                                   'params': {'sync_dir': 'output-source'}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
     # convert types for smoother output to yaml

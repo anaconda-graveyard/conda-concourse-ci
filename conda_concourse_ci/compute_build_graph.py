@@ -433,8 +433,8 @@ def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
 
     # for build, we get test automatically.  Give people the max_downstream in terms
     #   of packages, not tasks
-    if run == 'build':
-        max_downstream *= 2
+    # if run == 'build':
+    #     max_downstream *= 2
 
     def expand_step(task_graph, full_graph, downstream):
         for node in task_graph.nodes():
