@@ -30,6 +30,7 @@ test:
   requires:
     - pytest
     - pytest-cov
+    - pytest-mock
   commands:
     - pip install pytest-mock
     - py.test tests --cov conda_concourse_ci
