@@ -23,12 +23,17 @@ def package_key(metadata, worker_label, run='build'):
     # get the build string from whatever conda-build makes of the configuration
     variables = metadata.get_loop_vars()
     used_variables = set()
-    requirements = (metadata.get_value('requirements/build') +
-                    metadata.get_value('requirements/host') +
-                    metadata.get_value('requirements/run'))
-
+    requirements = metadata.extract_requirements_text()
     for v in variables:
-        if v in requirements or any(req.startswith(v + ' ') for req in requirements):
+        variant_regex = r"\s*\{\{\s*%s\s*(?:.*?)?\}\}" % v
+        requirement_regex = r"\s*\-\s+%s[\s\n$]+" % v
+        all_res = '|'.join((variant_regex, requirement_regex))
+        compiler_match = re.match(r'(.*?)_compiler$', v)
+        if compiler_match:
+            compiler_regex = (
+                r"\s*\{\{\s*compiler\([\'\"]%s[\"\'].*\)\s*\}\}" % compiler_match.group(1))
+            all_res = '|'.join((all_res, compiler_regex))
+        if re.search(all_res, requirements):
             used_variables.add(v)
     build_vars = ''.join([k + str(metadata.config.variant[k]) for k in used_variables])
     key = [metadata.name(), metadata.version()]
@@ -192,6 +197,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         log.debug('invalid recipe dir: %s - skipping', recipe_dir)
         return None
 
+    name = None
     for (metadata, _, _) in rendered:
         name = package_key(metadata, worker['label'], run)
 
