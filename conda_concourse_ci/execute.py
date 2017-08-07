@@ -10,8 +10,9 @@ import subprocess
 import tempfile
 
 import conda_build.api
-from conda_build.conda_interface import Resolve
+from conda_build.conda_interface import Resolve, TemporaryDirectory
 from conda_build.index import get_build_index
+from conda_build.variants import list_of_dicts_to_dict_of_lists
 import networkx as nx
 import yaml
 
@@ -25,6 +26,8 @@ bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
 
 # get rid of the special object notation in the yaml file for HashableDict instances that we dump
 yaml.add_representer(HashableDict, yaml.representer.SafeRepresenter.represent_dict)
+yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
+yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
 
 conda_platform_to_concourse_platform = {
@@ -328,14 +331,14 @@ def checkout_git_rev(checkout_rev, path):
 
 
 def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
-           public=True, output_dir='../output', **kw):
+           public=True, config_overrides=None, **kw):
     """submit task that will monitor changes and trigger other build tasks
 
     This gets the ball rolling.  Once submitted, you don't need to manually trigger
     builds.  This is creating the task that monitors git changes and triggers regeneration
     of the dynamic job.
     """
-    git_identifier = _get_current_git_rev(src_dir)
+    git_identifier = _get_current_git_rev(src_dir) if config_overrides else None
     pipeline_name = pipeline_name.format(base_name=base_name,
                                          git_identifier=git_identifier)
     pipeline_file = pipeline_file.format(git_identifier=git_identifier)
@@ -344,6 +347,9 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     with open(config_path) as src:
         data = yaml.load(src)
 
+    if config_overrides:
+        data.update(config_overrides)
+
     key_handle, key_file = tempfile.mkstemp()
     key_handle = os.fdopen(key_handle, 'w')
     key_handle.write(data['intermediate-private-key'])
@@ -351,18 +357,28 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     os.chmod(key_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
-                           '-o', 'StrictHostKeyChecking=no',
-                           '-i', key_file,
+                           '-o', 'StrictHostKeyChecking=no', '-i', key_file,
                            '{intermediate-user}@{intermediate-server}'.format(**data),
                            'mkdir -p {intermediate-config-folder}'.format(**data)])
-    # TODO: rsync config folder to intermediate server
-    subprocess.check_call(['rsync', '--delete', '-av', '-e', 'ssh -o UserKnownHostsFile=/dev/null '
-                           '-o StrictHostKeyChecking=no -i ' + key_file,
-                           config_root_dir + '/',
-                           ('{intermediate-user}@{intermediate-server}:'
-                            '{intermediate-config-folder}'.format(**data))
-                           ])
-
+    # this is a plan director job.  Sync config.
+    if not config_overrides:
+        subprocess.check_call(['rsync', '--delete', '-av', '-e',
+                               'ssh -o UserKnownHostsFile=/dev/null '
+                               '-o StrictHostKeyChecking=no -i ' + key_file,
+                               config_root_dir + '/',
+                               ('{intermediate-user}@{intermediate-server}:'
+                                '{intermediate-config-folder}'.format(**data))
+                               ])
+    # this is a one-off job.  Sync the recipes we've computed locally.
+    else:
+        # TODO: rsync config folder to intermediate server
+        subprocess.check_call(['rsync', '--delete', '-av', '-e',
+                               'ssh -o UserKnownHostsFile=/dev/null '
+                               '-o StrictHostKeyChecking=no -i ' + key_file,
+                               src_dir + '/',
+                               ('{intermediate-user}@{intermediate-server}:'
+                                '{intermediate-recipe-folder}'.format(**data))
+                               ])
     os.remove(key_file)
 
     # make sure we are logged in to the configured server
@@ -393,9 +409,11 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
-def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix_base_dir=None,
+def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
-                   **kw):
+                   output_folder_label='git', config_overrides=None, **kw):
+    if not git_rev and not folders:
+        raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
     folders = folders
     path = path.replace('"', '')
@@ -408,25 +426,34 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
     # clean up quoting from concourse template evaluation
     matrix_base_dir = matrix_base_dir.replace('"', '')
 
-    with checkout_git_rev(checkout_rev, path):
+    repo_commit = ''
+    git_identifier = ''
+    if checkout_rev:
+        with checkout_git_rev(checkout_rev, path):
+            git_identifier = _get_current_git_rev(path)
+            task_graph = collect_tasks(path, folders=folders, steps=steps,
+                                    max_downstream=max_downstream, test=test,
+                                    matrix_base_dir=matrix_base_dir)
+            try:
+                repo_commit = _get_current_git_rev(path)
+            except subprocess.CalledProcessError:
+                repo_commit = 'master'
+    else:
         task_graph = collect_tasks(path, folders=folders, steps=steps,
-                                   max_downstream=max_downstream, test=test,
-                                   matrix_base_dir=matrix_base_dir)
-        try:
-            repo_commit = _get_current_git_rev(path)
-        except subprocess.CalledProcessError:
-            repo_commit = 'master'
+                                max_downstream=max_downstream, test=test,
+                                matrix_base_dir=matrix_base_dir)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         data = yaml.load(src)
     data['recipe-repo-commit'] = repo_commit
 
+    if config_overrides:
+        data.update(config_overrides)
+
     plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
                                    commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
                                    config_vars=data, public=public)
 
-    git_identifier = _get_current_git_rev(path)
-    # here's how we fill in recipe output destination for the git commit we're working with
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
     if not os.path.isdir(output_dir):
@@ -452,10 +479,11 @@ def compute_builds(path, base_name, git_rev, stop_rev=None, folders=None, matrix
         if os.path.isdir(out_folder):
             shutil.rmtree(out_folder)
         shutil.copytree(os.path.join(path, recipe), out_folder)
-        # write the conda_build_config.yaml for this particular metadata into that recipe
+        # write the conda_build_config.yml for this particular metadata into that recipe
         #   This should sit alongside meta.yaml, where conda-build will be able to find it
+        squished_variants = list_of_dicts_to_dict_of_lists(meta.config.variants)
         with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
-            yaml.dump(meta.config.variant, f, default_flow_style=False)
+            yaml.dump(squished_variants, f, default_flow_style=False)
 
 
 def _copy_yaml_if_not_there(path, base_name):
@@ -463,7 +491,7 @@ def _copy_yaml_if_not_there(path, base_name):
     dir. If not, copy them there from our central install.
 
     path looks something like:
-    my_config_folder/config/config.yaml
+    my_config_folder/config/config.yml
     """
     bootstrap_config_path = os.path.join(bootstrap_path, 'config')
     path_without_config = []
@@ -515,3 +543,38 @@ Overview:
       is optional.
     - Finally, submit this configuration with 'c3i submit {0}'
     """.format(base_name))
+
+
+def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **kwargs):
+    """A 'one-off' job is a submission of local recipes that use the concourse build workers.
+
+    Submitting one of these involves a few steps:
+        1. actual build recipes are computed locally (as opposed to on the concourse host
+           with plan directors)
+        2. rsync those to a remote location based on the config_root, but with the base_name
+           replaced with the pipeline_label here
+        3. submit the generated plan created by step 1
+    """
+
+    with open(os.path.join(config_root_dir, 'config.yml')) as src:
+        data = yaml.load(src)
+
+    # the intermediate paths are set up for the configuration name.  With one-offs, we're ignoring
+    #    the configuration's tie to a github repo.  What we should do is replace the base_name in
+    #    the configuration locations with our pipeline label
+    original_base_name = data['base-name']
+    config_overrides = {'base_name': pipeline_label,
+                    'intermediate-config-folder': data['intermediate-config-folder'].replace(
+                        original_base_name, pipeline_label),
+                    'intermediate-recipe-folder': data['intermediate-recipe-folder'].replace(
+                        original_base_name, pipeline_label),
+                    'intermediate-artifacts-folder': data['intermediate-artifacts-folder'].replace(
+                        original_base_name, pipeline_label),
+                        }
+    with TemporaryDirectory() as tmpdir:
+        compute_builds(path=recipe_root_dir, base_name=pipeline_label, folders=folders,
+                       matrix_base_dir=config_root_dir, config_overrides=config_overrides,
+                       output_dir=tmpdir, **kwargs)
+        submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
+               pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
+               config_overrides=config_overrides, **kwargs)

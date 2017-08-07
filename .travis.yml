@@ -40,7 +40,8 @@ script:
   # tests utilize automated git repo creation and commits.  Need to set this up.
   - git config --global user.email "you@example.com"
   - git config --global user.name "Your Name"
-  - $HOME/miniconda/bin/py.test -v --cov conda_concourse_ci --cov-report xml tests -n 4
+  - $HOME/miniconda/bin/py.test -v --cov conda_concourse_ci --cov-report xml tests -n 4 -m "not serial"
+  - $HOME/miniconda/bin/py.test -v --cov conda_concourse_ci --cov-report xml --cov-append tests -m "serial"
   - flake8
 
 notifications:

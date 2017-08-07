@@ -17,28 +17,22 @@ def parse_args(parse_this=None):
                                 help="name of your project, to distinguish it from other projects")
     examine_parser.add_argument("path", default='.', nargs='?',
                         help="path in which to examine/build/test recipes")
-    examine_parser.add_argument('--folders',
-                        default=[],
-                        nargs="+",
+    examine_parser.add_argument('--folders', default=[], nargs="+",
                         help="Rather than determine tree from git, specify folders to build")
-    examine_parser.add_argument('--steps',
-                        type=int,
+    examine_parser.add_argument('--steps', type=int,
                         help=("Number of downstream steps to follow in the DAG when "
                               "computing what to test.  Used for making sure that an "
                               "update does not break downstream packages.  Set to -1 "
                               "to follow the complete dependency tree."),
                         default=0),
-    examine_parser.add_argument('--max-downstream',
-                        default=5,
-                        type=int,
+    examine_parser.add_argument('--max-downstream', default=5, type=int,
                         help=("Limit the total number of downstream packages built.  Only applies "
                               "if steps != 0.  Set to -1 for unlimited."))
     examine_parser.add_argument('--git-rev',
                         default='HEAD',
                         help=('start revision to examine.  If stop not '
                               'provided, changes are THIS_VAL~1..THIS_VAL'))
-    examine_parser.add_argument('--stop-rev',
-                        default=None,
+    examine_parser.add_argument('--stop-rev', default=None,
                         help=('stop revision to examine.  When provided,'
                               'changes are git_rev..stop_rev'))
     examine_parser.add_argument('--test', action='store_true',
@@ -56,7 +50,7 @@ def parse_args(parse_this=None):
     submit_parser.add_argument('--pipeline-file', default='plan_director.yml',
                                help="path to pipeline .yml file containing plan")
     submit_parser.add_argument('--config-root-dir',
-                               help="path containing config.yaml and matrix definitions")
+                               help="path containing config.yml and matrix definitions")
     submit_parser.add_argument('--src-dir', help="folder where git repo of source code lives",
                                default=os.getcwd())
     submit_parser.add_argument('--private', action='store_false',
@@ -67,6 +61,21 @@ def parse_args(parse_this=None):
                                      help="create default configuration files to help you start")
     bootstrap_parser.add_argument('base_name',
                             help="name of your project, to distinguish it from other projects")
+
+    one_off_parser = sp.add_parser('one-off',
+                                   help="submit local recipes and plan to configured server")
+    one_off_parser.add_argument('pipeline_label',
+                                help="name of your project, to distinguish it from other projects")
+    one_off_parser.add_argument('folders', nargs="+",
+                                help=("Specify folders, relative to --recipe-root-dir, to upload "
+                                      "and build"))
+    one_off_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
+                                help="path containing recipe folders to upload")
+    one_off_parser.add_argument('--config-root-dir',
+                                help="path containing config.yml and matrix definitions")
+    one_off_parser.add_argument('--private', action='store_false',
+                        help='hide build logs (overall graph still shown in Concourse web view)',
+                        dest='public')
 
     return parser.parse_args(parse_this)
 
@@ -91,6 +100,8 @@ def main(args=None):
         execute.bootstrap(**args.__dict__)
     elif args.subparser_name == 'examine':
         execute.compute_builds(**args.__dict__)
+    elif args.subparser_name == 'one-off':
+        execute.submit_one_off(**args.__dict__)
     else:
         # this is here so that if future subcommands are added, you don't forget to add a bit
         #     here to enable them.

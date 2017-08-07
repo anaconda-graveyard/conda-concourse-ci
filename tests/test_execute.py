@@ -92,6 +92,24 @@ def test_submit(mocker):
                    src_dir='.', config_root_dir=os.path.join(test_data_dir, 'config-test'))
 
 
+@pytest.mark.serial
+def test_submit_one_off(mocker):
+    check_call = mocker.patch.object(execute.subprocess, 'check_call')
+    execute.submit_one_off('frank', os.path.join(test_data_dir, 'one-off-recipes'),
+                           folders=('bzip2', 'pytest', 'pytest-cov'),
+                           config_root_dir=test_config_dir)
+    # basically what we're checking here is that the config_overrides have been passed correctly
+    check_call.assert_has_calls([mocker.call(['rsync', '--delete', '-av', '-e',
+                               mocker.ANY,  # ssh command that we don't care about much
+                               mocker.ANY,  # temp source directory that we don't care about
+                               ('your-intermediate-user@your-intermediate-server:'
+                                # this is what we care about.  The middle entry here
+                                #    needs 'test' replaced with 'frank'.  Also, we're syncing a
+                                #    plan and recipe folder, not a config folder
+                                'your-intermediate-base-folder/frank/plan_and_recipes')
+                               ])])
+
+
 def test_bootstrap(mocker, testing_workdir):
     execute.bootstrap('frank')
     assert os.path.isfile('plan_director.yml')

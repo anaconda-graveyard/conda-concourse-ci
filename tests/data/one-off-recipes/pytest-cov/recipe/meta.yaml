@@ -1,0 +1,40 @@
+{% set version = "2.4.0" %}
+
+package:
+  name: pytest-cov
+  version: {{ version }}
+
+source:
+  fn: pytest-cov-{{version}}.tar.gz
+  url: https://pypi.io/packages/source/p/pytest-cov/pytest-cov-{{version}}.tar.gz
+  sha256: 53d4179086e1eec1c688705977387432c01031b0a7bd91b8ff6c912c08c3820d
+
+build:
+    script: ${PYTHON} setup.py install --single-version-externally-managed --record record.txt
+    number: 0
+
+requirements:
+  host:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - setuptools
+    - pytest
+    - coverage
+
+test:
+  commands:
+    - "py.test --traceconfig | grep pytest-cov-{{version}}"
+
+about:
+  home: https://github.com/pytest-dev/pytest-cov
+  license: MIT
+  summary: 'Pytest plugin for measuring coverage'
+
+extra:
+  recipe-maintainers:
+    - dopplershift
+    - nicoddemus
+    - mingwandroid
