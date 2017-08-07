@@ -346,8 +346,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     os.chmod(key_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
-                           '-o', 'StrictHostKeyChecking=no',
-                           '-i', key_file,
+                           '-o', 'StrictHostKeyChecking=no', '-i', key_file,
                            '{intermediate-user}@{intermediate-server}'.format(**data),
                            'mkdir -p {intermediate-config-folder}'.format(**data)])
     # this is a plan director job.  Sync config.

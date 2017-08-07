@@ -23,6 +23,16 @@ def test_submit(mocker):
                                                subparser_name='submit')
 
 
+def test_submit_one_off(mocker):
+    mocker.patch.object(cli.execute, 'submit_one_off')
+    args = ['one-off', 'frank', 'bzip2', '--config-root-dir', '../config']
+    cli.main(args)
+    cli.execute.submit_one_off.assert_called_once_with(pipeline_label='frank',
+                                                       config_root_dir='../config', debug=False,
+                                                       public=True, recipe_root_dir=os.getcwd(),
+                                                       subparser_name='one-off', folders=['bzip2'])
+
+
 def test_submit_without_base_name_raises():
     with pytest.raises(SystemExit):
         args = ['submit']
