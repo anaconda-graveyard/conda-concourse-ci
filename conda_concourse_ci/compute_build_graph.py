@@ -41,6 +41,11 @@ def package_key(metadata, worker_label, run='build'):
         if re.search(all_res, requirements, flags=re.MULTILINE | re.DOTALL):
             used_variables.add(v)
     build_vars = ''.join([k + str(metadata.config.variant[k]) for k in used_variables])
+    # kind of a special case.  Target platform determines a lot of output behavior, but may not be
+    #    explicitly listed in the recipe.
+    if (len(metadata.get_variants_as_dict_of_lists().get('target_platform', [])) > 1 and
+            'target_platform' not in build_vars):
+        build_vars += '_' + metadata.config.variant['target_platform']
     key = [metadata.name(), metadata.version()]
     if build_vars:
         key.append(build_vars)

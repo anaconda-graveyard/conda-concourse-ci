@@ -115,7 +115,7 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         # dependency inputs are down below
         'inputs': inputs,
-        'outputs': [{'name': 'output-artifacts'}, {'name': 'output_source'}],
+        'outputs': [{'name': 'output-artifacts'}, {'name': 'output-source'}],
         'run': {
             'path': 'conda-build',
             'args': build_args,
@@ -287,9 +287,11 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         # name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
         name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
         plan_dict['tasks'].append({'put': 'rsync-artifacts',
-                                   'params': {'sync_dir': 'output-artifacts'}})
+                                   'params': {'sync_dir': 'output-artifacts',
+                                              'rsync_opts': ["--omit-dir-times"]}})
         plan_dict['tasks'].append({'put': 'rsync-source',
-                                   'params': {'sync_dir': 'output-source'}})
+                                   'params': {'sync_dir': 'output-source',
+                                              'rsync_opts': ["--omit-dir-times"]}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
     # convert types for smoother output to yaml
