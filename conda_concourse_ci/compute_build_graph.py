@@ -23,7 +23,7 @@ def package_key(metadata, worker_label, run='build'):
     # get the build string from whatever conda-build makes of the configuration
     variables = metadata.get_loop_vars()
     used_variables = set()
-    requirements = metadata.extract_requirements_text()
+    requirements = metadata.extract_requirements_text().rstrip()
     if not requirements:
         requirements = (metadata.get_value('requirements/build') +
                 metadata.get_value('requirements/run') +
@@ -43,13 +43,13 @@ def package_key(metadata, worker_label, run='build'):
     build_vars = ''.join([k + str(metadata.config.variant[k]) for k in used_variables])
     # kind of a special case.  Target platform determines a lot of output behavior, but may not be
     #    explicitly listed in the recipe.
-    if (len(metadata.get_variants_as_dict_of_lists().get('target_platform', [])) > 1 and
-            'target_platform' not in build_vars):
-        build_vars += '_' + metadata.config.variant['target_platform']
+    tp = metadata.config.variant.get('target_platform')
+    if tp and tp != metadata.config.subdir and 'target_platform' not in build_vars:
+        build_vars += 'target-' + tp
     key = [metadata.name(), metadata.version()]
     if build_vars:
         key.append(build_vars)
-    key.append(worker_label)
+    key.extend(['on', worker_label])
     key = "-".join(key)
     if run == 'test':
         key = '-'.join(('c3itest', key))
@@ -431,6 +431,11 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
                 raise ValueError("Tried to build recipe {0} as dependency, which is skipped "
                                  "in meta.yaml".format(recipe_dir))
             graph.add_edge(node, dep_name)
+
+
+def expand_run_upstream(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
+                        recipes_dir=None, matrix_base_dir=None):
+    pass
 
 
 def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,

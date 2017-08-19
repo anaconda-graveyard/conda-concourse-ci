@@ -104,7 +104,7 @@ def test_get_upload_tasks(mocker, testing_graph):
     uploads.upload_scp.return_value = [], [], []
     mocker.patch.object(uploads, 'upload_commands')
     uploads.upload_commands.return_value = [], [], []
-    uploads.get_upload_tasks(testing_graph, 'b-linux',
+    uploads.get_upload_tasks(testing_graph, 'b-on-linux',
                              os.path.join(test_config_dir, 'uploads.d'),
                              config_vars, commit_id='abc123')
     subdir = conda_interface.subdir

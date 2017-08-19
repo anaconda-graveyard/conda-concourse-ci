@@ -1,52 +1,85 @@
 resource_types:
-
-# used to check for PRs and update status at Github
-# - name: pull-request
-#   type: docker-image
-#   source:
-#     repository: jtarchie/pr
-
 - name: rsync-resource
   type: docker-image
   source:
       repository: msarahan/concourse-rsync-resource
       tag: latest
 
-
 resources:
-# - name: recipe-repo-source
-#   type: pull-request
-#   source:
-#     repo: {{recipe-repo}}
-#     access_token: {{recipe-repo-access-token}}
+- name: tracker-timer
+  type: time
+  source: {interval: 1h}
 
 - name: recipe-repo-source
   type: git
   source:
-    uri: {{recipe-repo}}
+    uri: ((recipe-repo))
     submodules: all
 
 - name: rsync-config
   type: rsync-resource
   source:
-    server: {{intermediate-server}}
-    base_dir: {{intermediate-config-folder}}
-    user : {{intermediate-user}}
-    private_key: {{intermediate-private-key}}
+    server: ((intermediate-server))
+    base_dir: ((intermediate-base-folder))/config
+    user : ((intermediate-user))
+    private_key: ((intermediate-private-key))
     disable_version_path: true
 
 - name: rsync-recipes
   type: rsync-resource
   source:
-    server: {{intermediate-server}}
-    base_dir: {{intermediate-recipe-folder}}
-    user : {{intermediate-user}}
-    private_key: {{intermediate-private-key}}
+    server: ((intermediate-server))
+    base_dir: ((intermediate-base-folder))/plan_and_recipes
+    user : ((intermediate-user))
+    private_key: ((intermediate-private-key))
     disable_version_path: true
 
 jobs:
-- name: collect-tasks
+- name: track-submodules
   public: True
+  plan:
+    - get: tracker-timer
+      trigger: true
+    - get: recipe-repo-source
+    - task: gather
+      config:
+        platform: linux
+        inputs:
+          - name: recipe-repo-source
+        image_resource:
+          type: docker-image
+          source:
+            repository: continuumio/conda-concourse-ci
+        params:
+          GITHUB_TOKEN: ((recipe-repo-access-token))
+        run:
+          path: conda-tracker
+          dir: recipe-repo-source
+          args:
+            - gather
+            - ((recipe-org))
+            - recipe-repo-source
+    - task: update
+      config:
+        platform: linux
+        inputs:
+          - name: recipe-repo-source
+        image_resource:
+          type: docker-image
+          source:
+            repository: continuumio/conda-concourse-ci
+        params:
+          GITHUB_TOKEN: ((recipe-repo-access-token))
+        run:
+          path: conda-tracker
+          dir: recipe-repo-source
+          args:
+            - update
+            - recipe-repo-source
+    - put: recipe-repo-source
+
+- name: compute-jobs
+  public: False
   plan:
   # pull down any PR submitted
   - get: recipe-repo-source
@@ -78,7 +111,7 @@ jobs:
         dir: recipe-repo-source
         args:
           - examine
-          - {{base-name}}
+          - ((base-name))
           - .
           - --matrix-base-dir
           - ../rsync-config/
@@ -108,7 +141,7 @@ jobs:
         # TODO: need to determine what private/public status is, and set child accordingly
         args:
           - submit
-          - {{base-name}}
+          - ((base-name))
           - --pipeline-file
           - "output/{git_identifier}/plan.yml"
           - --pipeline-name
