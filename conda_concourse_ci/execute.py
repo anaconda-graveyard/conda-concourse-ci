@@ -288,10 +288,10 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
         plan_dict['tasks'].append({'put': 'rsync-artifacts',
                                    'params': {'sync_dir': 'output-artifacts',
-                                              'rsync_opts': ["--omit-dir-times"]}})
+                                              'rsync_opts': ["--archive", "--no-perms", "--omit-dir-times", "--verbose"]}})
         plan_dict['tasks'].append({'put': 'rsync-source',
                                    'params': {'sync_dir': 'output-source',
-                                              'rsync_opts': ["--omit-dir-times"]}})
+                                              'rsync_opts': ["--archive", "--no-perms", "--omit-dir-times", "--verbose"]}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
     # convert types for smoother output to yaml
