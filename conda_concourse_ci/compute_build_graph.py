@@ -402,7 +402,8 @@ def _buildable(name, version, recipes_dir, worker, config):
     return m.meta_path if available else False
 
 
-def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, recipes_dir=None):
+def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, recipes_dir=None,
+                                   force_build=False):
     '''add build nodes for any upstream deps that are not yet installable
 
     changes graph in place.
@@ -418,7 +419,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
 
     for dep, (version, build_str) in deps.items():
         # we don't need worker info in _installable because it is already part of conda_resolve
-        if not _installable(dep, version, build_str, metadata.config, conda_resolve):
+        if not _installable(dep, version, build_str, metadata.config, conda_resolve) or force_build:
             recipe_dir = _buildable(dep, version, recipes_dir, worker, metadata.config)
             if not recipe_dir:
                 continue
@@ -431,6 +432,31 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
                 raise ValueError("Tried to build recipe {0} as dependency, which is skipped "
                                  "in meta.yaml".format(recipe_dir))
             graph.add_edge(node, dep_name)
+
+
+def expand_run_upstream(graph, conda_resolve, worker, run, recipes_dir=None, matrix_base_dir=None):
+    """Apply the build label to any nodes that need (re)building or testing.
+
+    "need rebuilding" means both packages that our target package depends on,
+    but are not yet built, as well as packages that depend on our target
+    package. For the latter, you can specify how many dependencies deep (steps)
+    to follow that chain, since it can be quite large.
+
+    If steps is -1, all upstream dependencies are rebuilt or retested
+    """
+    def expand_step(task_graph, nodes):
+        for node in nodes:
+            add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, recipes_dir,
+                                           force_build=True)
+
+    # starting from our initial collection of dirty nodes, trace the tree up to packages
+    #   that are dependencies of of initial collection.
+
+    while True:
+        nodes = graph.nodes().copy()
+        expand_step(graph, nodes)
+        if nodes == graph.nodes():
+            break
 
 
 def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
