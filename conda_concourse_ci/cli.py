@@ -76,7 +76,9 @@ def parse_args(parse_this=None):
     one_off_parser.add_argument('--private', action='store_false',
                         help='hide build logs (overall graph still shown in Concourse web view)',
                         dest='public')
-
+    one_off_parser.add_argument('--rebuild-world', action='store_true',
+                                help=("Recurse up dependency tree, rebuilding all recipes from"
+                                      "specified packages"))
     return parser.parse_args(parse_this)
 
 

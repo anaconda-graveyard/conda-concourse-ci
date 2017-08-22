@@ -17,7 +17,7 @@ import networkx as nx
 import yaml
 
 from .compute_build_graph import (construct_graph, expand_run, order_build, git_changed_recipes,
-                                  package_key)
+                                  package_key, expand_run_upstream)
 from .uploads import get_upload_channels  # get_upload_tasks,
 from .utils import HashableDict, load_yaml_config_dir
 
@@ -45,7 +45,8 @@ def parse_platforms(matrix_base_dir, run):
     return platforms
 
 
-def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downstream=5):
+def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downstream=5,
+                  rebuild_world=False):
     # runs = ['test']
     upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     # not testing means build and test
@@ -67,10 +68,14 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
             # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
                                 matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve)
+            if rebuild_world:
+                expand_run_upstream(g, conda_resolve=conda_resolve, worker=platform, run=run,
+                       recipes_dir=path, matrix_base_dir=matrix_base_dir)
             # Apply the build label to any nodes that need (re)building or testing
             expand_run(g, conda_resolve=conda_resolve, worker=platform, run=run,
                        steps=steps, max_downstream=max_downstream, recipes_dir=path,
                        matrix_base_dir=matrix_base_dir)
+
             # merge this graph with the main one
             task_graph = nx.compose(task_graph, g)
     return task_graph
@@ -251,6 +256,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
             else:
                 del tasks[1]
 
+        # tasks.append(echo_worker_info(graph.node[node]['meta']))
+
         # TODO: currently tests for things that have no build are broken and skipped
 
         if node.startswith('test-'):
@@ -413,7 +420,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
 
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
-                   output_folder_label='git', config_overrides=None, **kw):
+                   output_folder_label='git', config_overrides=None, rebuild_world=False, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -434,16 +441,18 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         with checkout_git_rev(checkout_rev, path):
             git_identifier = _get_current_git_rev(path)
             task_graph = collect_tasks(path, folders=folders, steps=steps,
-                                    max_downstream=max_downstream, test=test,
-                                    matrix_base_dir=matrix_base_dir)
+                                       max_downstream=max_downstream, test=test,
+                                       matrix_base_dir=matrix_base_dir,
+                                       rebuild_world=rebuild_world)
             try:
                 repo_commit = _get_current_git_rev(path)
             except subprocess.CalledProcessError:
                 repo_commit = 'master'
     else:
         task_graph = collect_tasks(path, folders=folders, steps=steps,
-                                max_downstream=max_downstream, test=test,
-                                matrix_base_dir=matrix_base_dir)
+                                   max_downstream=max_downstream, test=test,
+                                   matrix_base_dir=matrix_base_dir,
+                                   rebuild_world=rebuild_world)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         data = yaml.load(src)
@@ -547,7 +556,8 @@ Overview:
     """.format(base_name))
 
 
-def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **kwargs):
+def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, rebuild_world,
+                   **kwargs):
     """A 'one-off' job is a submission of local recipes that use the concourse build workers.
 
     Submitting one of these involves a few steps:
@@ -576,7 +586,7 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **
     with TemporaryDirectory() as tmpdir:
         compute_builds(path=recipe_root_dir, base_name=pipeline_label, folders=folders,
                        matrix_base_dir=config_root_dir, config_overrides=config_overrides,
-                       output_dir=tmpdir, **kwargs)
+                       output_dir=tmpdir, rebuild_world=rebuild_world, **kwargs)
         submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
                pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
                config_overrides=config_overrides, **kwargs)
