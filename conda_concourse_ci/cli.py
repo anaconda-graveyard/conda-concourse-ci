@@ -41,8 +41,6 @@ def parse_args(parse_this=None):
                         help='path to matrix configuration, if different from recipe path')
     examine_parser.add_argument('--output-dir', help="folder where output plan and recipes live",
                                 default='../output')
-    examine_parser.add_argument('--order', action='store_true',
-                                help='output general folder build order')
 
     submit_parser = sp.add_parser('submit', help="submit plan director to configured server")
     submit_parser.add_argument('base_name',
