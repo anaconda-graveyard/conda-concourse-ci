@@ -188,12 +188,17 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                            'tag': 'latest'
                            }
                        }]
+    base_folder = os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'])
+    recipe_folder = os.path.join(base_folder, 'plan_and_recipes')
+    artifact_folder = os.path.join(base_folder, 'artifacts')
+    if commit_id:
+        recipe_folder = os.path.join(recipe_folder, commit_id)
+        artifact_folder = os.path.join(artifact_folder, commit_id)
     resources = [{'name': 'rsync-recipes',
                   'type': 'rsync-resource',
                   'source': {
                       'server': config_vars['intermediate-server'],
-                      'base_dir': os.path.join(config_vars['intermediate-recipe-folder'],
-                                               commit_id),
+                      'base_dir': recipe_folder,
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
@@ -202,8 +207,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                   'type': 'rsync-resource',
                   'source': {
                       'server': config_vars['intermediate-server'],
-                      'base_dir': os.path.join(config_vars['intermediate-artifacts-folder'],
-                                               commit_id),
+                      'base_dir': artifact_folder,
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
@@ -212,8 +216,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                   'type': 'rsync-resource',
                       'source': {
                       'server': config_vars['intermediate-server'],
-                      'base_dir': os.path.join(config_vars['intermediate-source-folder'],
-                                               commit_id),
+                      'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'source'),
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
@@ -288,10 +291,12 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
         plan_dict['tasks'].append({'put': 'rsync-artifacts',
                                    'params': {'sync_dir': 'output-artifacts',
-                                              'rsync_opts': ["--archive", "--no-perms", "--omit-dir-times", "--verbose"]}})
+                                              'rsync_opts': ["--archive", "--no-perms",
+                                                             "--omit-dir-times", "--verbose"]}})
         plan_dict['tasks'].append({'put': 'rsync-source',
                                    'params': {'sync_dir': 'output-source',
-                                              'rsync_opts': ["--archive", "--no-perms", "--omit-dir-times", "--verbose"]}})
+                                              'rsync_opts': ["--archive", "--no-perms",
+                                                             "--omit-dir-times", "--verbose"]}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
     # convert types for smoother output to yaml
@@ -358,28 +363,33 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     key_handle.close()
     os.chmod(key_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
-    subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
-                           '-o', 'StrictHostKeyChecking=no', '-i', key_file,
-                           '{intermediate-user}@{intermediate-server}'.format(**data),
-                           'mkdir -p {intermediate-config-folder}'.format(**data)])
     # this is a plan director job.  Sync config.
     if not config_overrides:
+        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
+                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
+                        '{intermediate-user}@{intermediate-server}'.format(**data),
+                        'mkdir -p {intermediate-base-folder}/{base-name}/config'.format(**data)])
         subprocess.check_call(['rsync', '--delete', '-av', '-e',
                                'ssh -o UserKnownHostsFile=/dev/null '
                                '-o StrictHostKeyChecking=no -i ' + key_file,
                                config_root_dir + '/',
                                ('{intermediate-user}@{intermediate-server}:'
-                                '{intermediate-config-folder}'.format(**data))
+                                '{intermediate-base-folder}/{base-name}/config'.format(**data))
                                ])
     # this is a one-off job.  Sync the recipes we've computed locally.
     else:
+        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
+                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
+                        '{intermediate-user}@{intermediate-server}'.format(**data),
+                        'mkdir -p {intermediate-base-folder}/{base-name}'.format(**data)])
         # TODO: rsync config folder to intermediate server
         subprocess.check_call(['rsync', '--delete', '-av', '-e',
                                'ssh -o UserKnownHostsFile=/dev/null '
                                '-o StrictHostKeyChecking=no -i ' + key_file,
                                src_dir + '/',
                                ('{intermediate-user}@{intermediate-server}:'
-                                '{intermediate-recipe-folder}'.format(**data))
+                                '{intermediate-base-folder}/{base-name}/plan_and_recipes'
+                                .format(**data))
                                ])
     os.remove(key_file)
 
@@ -521,6 +531,7 @@ def bootstrap(base_name, **kw):
     with open('{0}/config.yml'.format(base_name)) as f:
         config = yaml.load(f)
     config['base-name'] = base_name
+    config['intermediate-base-folder'] = '/ci'
     config['execute-job-name'] = 'execute-' + base_name
     with open('{0}/config.yml'.format(base_name), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
@@ -558,21 +569,10 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **
         3. submit the generated plan created by step 1
     """
 
-    with open(os.path.join(config_root_dir, 'config.yml')) as src:
-        data = yaml.load(src)
-
     # the intermediate paths are set up for the configuration name.  With one-offs, we're ignoring
     #    the configuration's tie to a github repo.  What we should do is replace the base_name in
     #    the configuration locations with our pipeline label
-    original_base_name = data['base-name']
-    config_overrides = {'base_name': pipeline_label,
-                    'intermediate-config-folder': data['intermediate-config-folder'].replace(
-                        original_base_name, pipeline_label),
-                    'intermediate-recipe-folder': data['intermediate-recipe-folder'].replace(
-                        original_base_name, pipeline_label),
-                    'intermediate-artifacts-folder': data['intermediate-artifacts-folder'].replace(
-                        original_base_name, pipeline_label),
-                        }
+    config_overrides = {'base-name': pipeline_label}
     with TemporaryDirectory() as tmpdir:
         compute_builds(path=recipe_root_dir, base_name=pipeline_label, folders=folders,
                        matrix_base_dir=config_root_dir, config_overrides=config_overrides,

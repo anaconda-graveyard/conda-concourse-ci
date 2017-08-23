@@ -7,7 +7,7 @@ rm $fname
 # /opt/miniconda/bin/conda update --yes --all
 /opt/miniconda/bin/conda config --add channels c3i_test
 /opt/miniconda/bin/conda install --yes git conda-build curl anaconda-client
-/opt/miniconda/bin/conda install --yes conda-concourse-ci
+/opt/miniconda/bin/conda install --yes conda-concourse-ci conda-tracker
 /opt/miniconda/bin/conda config --set add_pip_as_python_dependency False
 /opt/miniconda/bin/conda config --set anaconda_upload True
 /opt/miniconda/bin/conda clean -ptiy

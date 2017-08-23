@@ -136,14 +136,14 @@ def testing_new_submodules(testing_submodules_repo):
 def testing_graph(request):
     g = nx.DiGraph()
     a = render(os.path.join(graph_data_dir, 'a'), finalize=False)[0][0]
-    g.add_node('a-linux', meta=a, env={}, worker=default_worker)
+    g.add_node('a-on-linux', meta=a, env={}, worker=default_worker)
     b = render(os.path.join(graph_data_dir, 'b'), finalize=False)[0][0]
-    g.add_node('b-linux', meta=b, env={}, worker=default_worker)
-    g.add_edge('b-linux', 'a-linux')
+    g.add_node('b-on-linux', meta=b, env={}, worker=default_worker)
+    g.add_edge('b-on-linux', 'a-on-linux')
     # semi-detached recipe (test-only, does not have a build part)
     c = render(os.path.join(graph_data_dir, 'c'), finalize=False)[0][0]
-    g.add_node('c3itest-c-linux', meta=c, env={}, worker=default_worker)
-    g.add_edge('c3itest-c-linux', 'b-linux')
+    g.add_node('c3itest-c-on-linux', meta=c, env={}, worker=default_worker)
+    g.add_edge('c3itest-c-on-linux', 'b-on-linux')
     return g
 
 
