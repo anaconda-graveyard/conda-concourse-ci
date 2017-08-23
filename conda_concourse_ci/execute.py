@@ -103,14 +103,15 @@ def update_index_task(subdir):
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False):
     meta = graph.node[node]['meta']
     build_args = ['--no-anaconda-upload', '--output-folder', 'output-artifacts',
-                  '-c', os.path.join('indexed-artifacts'), '--cache-dir', 'output-source']
+                  '--cache-dir', 'output-source']
+    inputs = [{'name': 'rsync-recipes'}]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
-    # this is the recipe path to build
-    build_args.append(os.path.join('rsync-recipes', node))
-    inputs = [{'name': 'rsync-recipes'}]
     if artifact_input:
         inputs.append({'name': 'indexed-artifacts'})
+        build_args.extend(('-c', os.path.join('indexed-artifacts')))
+    # this is the recipe path to build
+    build_args.append(os.path.join('rsync-recipes', node))
 
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
@@ -293,11 +294,13 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         plan_dict['tasks'].append({'put': 'rsync-artifacts',
                                    'params': {'sync_dir': 'output-artifacts',
                                               'rsync_opts': ["--archive", "--no-perms",
-                                                             "--omit-dir-times", "--verbose"]}})
+                                                             "--omit-dir-times", "--verbose",
+                                                             "--exclude", '"*.json*"']}})
         plan_dict['tasks'].append({'put': 'rsync-source',
                                    'params': {'sync_dir': 'output-source',
                                               'rsync_opts': ["--archive", "--no-perms",
-                                                             "--omit-dir-times", "--verbose"]}})
+                                                             "--omit-dir-times", "--verbose",
+                                                             "--exclude", '"*.json*"']}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
     # convert types for smoother output to yaml
