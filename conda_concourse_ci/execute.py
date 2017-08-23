@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 from collections import OrderedDict
 import contextlib
+import glob
 import logging
 import os
 import re
@@ -463,8 +464,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         data.update(config_overrides)
 
     plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
-                                   commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
-                                   config_vars=data, public=public)
+                                commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
+                                config_vars=data, public=public)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
@@ -476,7 +477,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     # expand folders to include any dependency builds or tests
     if not os.path.isabs(path):
         path = os.path.normpath(os.path.join(os.getcwd(), path))
-    for node in task_graph:
+    for fn in glob.glob(os.path.join(output_dir, 'output_order*')):
+        os.remove(fn)
+    for node in nx.topological_sort(task_graph, reverse=True):
         meta = task_graph.node[node]['meta']
         if meta.meta_path:
             recipe = os.path.dirname(meta.meta_path)
@@ -496,6 +499,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         squished_variants = list_of_dicts_to_dict_of_lists(meta.config.variants)
         with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
             yaml.dump(squished_variants, f, default_flow_style=False)
+        order_fn = 'output_order_' + task_graph.node[node]['worker']['label']
+        with open(os.path.join(output_dir, order_fn), 'a') as f:
+            f.write(node + '\n')
 
 
 def _copy_yaml_if_not_there(path, base_name):

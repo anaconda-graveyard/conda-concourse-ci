@@ -519,7 +519,7 @@ def order_build(graph):
         order = nx.topological_sort(graph, reverse=True)
     except nx.exception.NetworkXUnfeasible:
         raise ValueError("Cycles detected in graph: %s", nx.find_cycle(graph,
-                                                                       orientation='ignore'))
+                                                                       orientation='reverse'))
 
     return order
 
