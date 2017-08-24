@@ -34,6 +34,6 @@ COPY install_miniconda.sh /build_scripts
 COPY Miniconda-* /build_scripts/
 RUN ./install_miniconda.sh
 
-ENV PATH="/opt/miniconda/bin:${PATH}"
+ENV PATH="/opt/conda/bin:${PATH}"
 
 CMD [ "/bin/bash" ]
