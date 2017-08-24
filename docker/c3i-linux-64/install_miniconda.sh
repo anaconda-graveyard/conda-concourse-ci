@@ -1,14 +1,15 @@
-fname=$(ls Miniconda-*-x86_64* | tail -n 1)
 # this is Ray Donnelly's custom Miniconda, built with our new gcc toolchain
-bash -x $fname -bfp /opt/miniconda
-rm $fname
-/opt/miniconda/bin/conda config --set show_channel_urls True
+fname="Miniconda3-4.3.22.dev3-Linux-x86_64.sh"
+curl -LO https://repo.continuum.io/pkgs/misc/preview/$fname
+bash -x $fname -bfp /opt/conda
+
+/opt/conda/bin/conda config --set show_channel_urls True
 # update --all is pulling in replacements from defaults
-# /opt/miniconda/bin/conda update --yes --all
-/opt/miniconda/bin/conda config --add channels c3i_test
-/opt/miniconda/bin/conda install --yes git conda-build curl anaconda-client
-/opt/miniconda/bin/conda install --yes conda-concourse-ci conda-tracker
-/opt/miniconda/bin/conda config --set add_pip_as_python_dependency False
-/opt/miniconda/bin/conda config --set anaconda_upload True
-/opt/miniconda/bin/conda clean -ptiy
+# /opt/conda/bin/conda update --yes --all
+/opt/conda/bin/conda config --add channels c3i_test
+/opt/conda/bin/conda install --yes git conda-build curl anaconda-client
+/opt/conda/bin/conda install --yes conda-concourse-ci conda-tracker
+/opt/conda/bin/conda config --set add_pip_as_python_dependency False
+/opt/conda/bin/conda config --set anaconda_upload True
+/opt/conda/bin/conda clean -ptiy
 rm -rf Miniconda*
