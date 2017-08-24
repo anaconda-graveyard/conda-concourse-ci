@@ -31,7 +31,6 @@ RUN yum install -y \
 
 WORKDIR /build_scripts
 COPY install_miniconda.sh /build_scripts
-COPY Miniconda-* /build_scripts/
 RUN ./install_miniconda.sh
 
 ENV PATH="/opt/conda/bin:${PATH}"
