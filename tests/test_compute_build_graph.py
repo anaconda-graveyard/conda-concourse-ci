@@ -1,6 +1,5 @@
 import os
 
-from conda_build import api
 from conda_build.metadata import MetaData
 import networkx as nx
 import pytest
@@ -9,7 +8,7 @@ from conda_concourse_ci import compute_build_graph
 from .utils import make_recipe, test_config_dir, graph_data_dir, default_worker, test_data_dir
 
 dummy_worker = {'platform': 'linux', 'arch': '64', 'label': 'linux',
-                'connector': {'image': 'continuumio/conda-concourse-ci'}}
+                'connector': {'image': 'conda/c3i-linux-64'}}
 
 
 def test_get_build_deps(testing_metadata):
