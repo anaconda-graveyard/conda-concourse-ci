@@ -1,10 +1,6 @@
 FROM conda/centos6-32-minimal-base:6.9
 MAINTAINER Michael Sarahan <msarahan@continuum.io>
 
-# locales
-RUN yum reinstall -y glibc-common \
-  && yum clean all
-
 # Set the locale
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
