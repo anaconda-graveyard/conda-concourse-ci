@@ -355,6 +355,8 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
     graph = nx.DiGraph()
     for folder in folders:
         recipe_dir = os.path.join(recipes_dir, folder)
+        if not os.path.isdir(recipe_dir):
+            raise ValueError("Specified folder {} does not exist".format(recipe_dir))
         add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                             recipes_dir)
     add_intradependencies(graph)

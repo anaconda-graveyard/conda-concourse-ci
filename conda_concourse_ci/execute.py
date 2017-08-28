@@ -105,6 +105,7 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     build_args = ['--no-anaconda-upload', '--output-folder', 'output-artifacts',
                   '--cache-dir', 'output-source']
     inputs = [{'name': 'rsync-recipes'}]
+    worker = graph.node[node]['worker']
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     if artifact_input:
@@ -118,11 +119,16 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
         # dependency inputs are down below
         'inputs': inputs,
         'outputs': [{'name': 'output-artifacts'}, {'name': 'output-source'}],
-        'run': {
-            'path': 'conda-build',
-            'args': build_args,
-                }
-         }
+        'run': {}}
+
+    if worker['platform'] == 'win':
+        task_dict['run'].update({'path': 'cmd.exe',
+            'args': ['/c', 'hostname && conda info && conda-build ' + " ".join(build_args)]
+        })
+    else:
+        task_dict['run'].update({'path': 'sh',
+            'args': ['-exc', 'hostname && conda info && conda-build ' + " ".join(build_args)]
+        })
 
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
@@ -138,22 +144,28 @@ def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=Tr
 
     args = ['--test']
     meta = graph.node[node]['meta']
+    worker = graph.node[node]['worker']
     for channel in meta.config.channel_urls:
         args.extend(['-c', channel])
     args.append(recipe_folder_name)
     task_dict = {
         'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
         'inputs': [{'name': 'rsync-recipes'}],
-        'run': {
-             'path': 'conda-build',
-             'args': args,
-             'dir': os.path.join('rsync-recipes', commit_id),
-                }
+        'run': {'dir': os.path.join('rsync-recipes', commit_id)}
          }
+    if worker['platform'] == 'win':
+        task_dict['run'].update({'path': 'cmd.exe',
+            'args': ['/c', 'hostname && conda info && conda-build ' + " ".join(args)]
+        })
+    else:
+        task_dict['run'].update({'path': 'sh',
+            'args': ['-exc', 'hostname && conda info && conda-build ' + " ".join(args)]
+        })
+
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
-    task_dict.update(graph.node[node]['worker'].get('connector', {}))
+    task_dict.update(worker.get('connector', {}))
     return {'task': node, 'config': task_dict}
 
 
@@ -233,8 +245,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         artifact_input = False
 
         tasks = jobs.get(pkgs, {}).get('tasks',
-                                [{'get': 'rsync-recipes',
-                                    'trigger': True}])
+                                [{'get': 'rsync-recipes', 'trigger': True}])
 
         prereqs = set(graph.successors(node))
         if prereqs:

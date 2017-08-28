@@ -46,7 +46,7 @@ jobs:
         args:
           - -exc
           - |
-            cp -r recipe-repo-source/docker/* docker-build
+            cp -r recipe-repo-source/docker/c3i-linux-64/* docker-build
             cp miniconda-repo-source/bootstrap/Miniconda* docker-build
   - put: docker-image
     params:
