@@ -9,18 +9,18 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import time
 
 import conda_build.api
 from conda_build.conda_interface import Resolve, TemporaryDirectory
 from conda_build.index import get_build_index
-from conda_build.variants import list_of_dicts_to_dict_of_lists
 import networkx as nx
 import yaml
 
 from .compute_build_graph import (construct_graph, expand_run, order_build, git_changed_recipes,
                                   package_key)
 from .uploads import get_upload_channels  # get_upload_tasks,
-from .utils import HashableDict, load_yaml_config_dir
+from .utils import HashableDict, load_yaml_config_dir, ensure_list
 
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
@@ -31,10 +31,12 @@ yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
 yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
 
-conda_platform_to_concourse_platform = {
-    'win': 'windows',
-    'osx': 'darwin',
-    'linux': 'linux',
+conda_subdir_to_concourse_platform = {
+    'win-64': 'windows',
+    'win-32': 'windows',
+    'osx-64': 'darwin',
+    'linux-64': 'linux',
+    'linux-32': 'linux32',
 }
 
 
@@ -111,24 +113,36 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     if artifact_input:
         inputs.append({'name': 'indexed-artifacts'})
         build_args.extend(('-c', os.path.join('indexed-artifacts')))
-    # this is the recipe path to build
-    build_args.append(os.path.join('rsync-recipes', node))
+    subdir = '-'.join((worker['platform'], str(worker['arch'])))
+
 
     task_dict = {
-        'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
+        'platform': conda_subdir_to_concourse_platform[subdir],
         # dependency inputs are down below
         'inputs': inputs,
         'outputs': [{'name': 'output-artifacts'}, {'name': 'output-source'}],
         'run': {}}
 
     if worker['platform'] == 'win':
-        task_dict['run'].update({'path': 'cmd.exe',
-            'args': ['/c', 'hostname && conda info && conda-build ' + " ".join(build_args)]
-        })
+        task_dict['run'].update({'path': 'cmd.exe', 'args': ['/c']})
+        build_args.extend(['--croot', 'C:\\ci'])
     else:
-        task_dict['run'].update({'path': 'sh',
-            'args': ['-exc', 'hostname && conda info && conda-build ' + " ".join(build_args)]
-        })
+        task_dict['run'].update({'path': 'sh', 'args': ['-exc']})
+        build_args.extend(['--croot', '.'])
+
+    # this is the recipe path to build
+    build_args.append(os.path.join('rsync-recipes', node))
+
+    cmds = 'hostname && conda update -y conda-build && conda info && conda-build ' + \
+           " ".join(build_args)
+    prefix_commands = " && ".join(ensure_list(worker.get('prefix_commands')))
+    suffix_commands = " && ".join(ensure_list(worker.get('suffix_commands')))
+    if prefix_commands:
+        cmds = prefix_commands + ' && ' + cmds
+    if suffix_commands:
+        cmds = cmds + ' && ' + suffix_commands
+
+    task_dict['run']['args'].append(cmds)
 
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
@@ -145,22 +159,33 @@ def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=Tr
     args = ['--test']
     meta = graph.node[node]['meta']
     worker = graph.node[node]['worker']
+    subdir = '-'.join((worker['platform'], str(worker['arch'])))
+    prefix_commands = worker.get('prefix_commands')
+    suffix_commands = worker.get('suffix_commands')
     for channel in meta.config.channel_urls:
         args.extend(['-c', channel])
     args.append(recipe_folder_name)
     task_dict = {
-        'platform': conda_platform_to_concourse_platform[graph.node[node]['worker']['platform']],
+        'platform': conda_subdir_to_concourse_platform[subdir],
         'inputs': [{'name': 'rsync-recipes'}],
         'run': {'dir': os.path.join('rsync-recipes', commit_id)}
          }
+
+    prefix_commands = " && ".join(prefix_commands)
+    suffix_commands = " && ".join(prefix_commands)
+
     if worker['platform'] == 'win':
-        task_dict['run'].update({'path': 'cmd.exe',
-            'args': ['/c', 'hostname && conda info && conda-build ' + " ".join(args)]
-        })
+        cmds = 'hostname && conda info && conda-build ' + " ".join(args)
+        task_dict['run'].update({'path': 'cmd.exe', 'args': ['/c']})
     else:
-        task_dict['run'].update({'path': 'sh',
-            'args': ['-exc', 'hostname && conda info && conda-build ' + " ".join(args)]
-        })
+        task_dict['run'].update({'path': 'sh', 'args': ['-exc']})
+
+    if prefix_commands:
+        cmds = prefix_commands + ' && ' + cmds
+    if suffix_commands:
+        cmds = cmds + ' && ' + suffix_commands
+
+    task_dict['run']['args'].append(cmds)
 
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
@@ -225,6 +250,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
+                      'version_ref': int(round(time.time()))
                   }},
                  {'name': 'rsync-source',
                   'type': 'rsync-resource',
@@ -314,6 +340,25 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                                              "--exclude", '"*.json*"']},
                                    'get_params': {'skip_download': True}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
+
+    if config_vars.get('anaconda-upload-token'):
+        remapped_jobs.append({'name': 'anaconda_upload',
+                              'plan': [
+                          {'get': 'rsync-artifacts', 'trigger': True, 'passed': order},
+                          {'put': 'anaconda_upload_resource'}
+                      ]})
+        resource_types.append({'name': 'anacondaorg-resource',
+                       'type': 'docker-image',
+                       'source': {
+                           'repository': 'msarahan/concourse-anaconda_org-resource',
+                           'tag': 'latest'
+                           }
+                       })
+        resources.append({'name': 'anaconda_upload_resource',
+                  'type': 'anacondaorg-resource',
+                      'source': {
+                      'token': config_vars['anaconda-upload-token'],
+                  }})
 
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
@@ -512,9 +557,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         shutil.copytree(os.path.join(path, recipe), out_folder)
         # write the conda_build_config.yml for this particular metadata into that recipe
         #   This should sit alongside meta.yaml, where conda-build will be able to find it
-        squished_variants = list_of_dicts_to_dict_of_lists(meta.config.variants)
         with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
-            yaml.dump(squished_variants, f, default_flow_style=False)
+            yaml.dump(meta.config.squished_variants, f, default_flow_style=False)
         order_fn = 'output_order_' + task_graph.node[node]['worker']['label']
         with open(os.path.join(output_dir, order_fn), 'a') as f:
             f.write(node + '\n')
