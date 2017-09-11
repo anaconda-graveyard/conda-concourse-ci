@@ -494,6 +494,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         path = os.path.normpath(os.path.join(os.getcwd(), path))
     for fn in glob.glob(os.path.join(output_dir, 'output_order*')):
         os.remove(fn)
+    last_recipe_dir = None
     for node in nx.topological_sort(task_graph, reverse=True):
         meta = task_graph.node[node]['meta']
         if meta.meta_path:
@@ -517,6 +518,12 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         order_fn = 'output_order_' + task_graph.node[node]['worker']['label']
         with open(os.path.join(output_dir, order_fn), 'a') as f:
             f.write(node + '\n')
+        recipe_dir = os.path.dirname(recipe) if os.sep in recipe else recipe
+        if not last_recipe_dir or last_recipe_dir != recipe_dir:
+            order_recipes_fn = 'output_order_recipes_' + task_graph.node[node]['worker']['label']
+            with open(os.path.join(output_dir, order_recipes_fn), 'a') as f:
+                f.write(recipe_dir + '\n')
+            last_recipe_dir = recipe_dir
 
 
 def _copy_yaml_if_not_there(path, base_name):
