@@ -261,7 +261,9 @@ def add_intradependencies(graph):
         # what the build and host platforms are on the build machine.
         # However, all we know right now is what machine we're actually
         # on (the one calculating the graph).
-        deps = set(m.ms_depends('build') + m.ms_depends('host') + m.ms_depends('run'))
+        deps = set(m.ms_depends('build') + m.ms_depends('host') + m.ms_depends('run') +
+                   [conda_interface.MatchSpec(dep) for dep in
+                    m.meta.get('test', {}).get('requires', [])])
 
         for dep in deps:
             name_matches = (n for n in graph.nodes() if graph.node[n]['meta'].name() == dep.name)

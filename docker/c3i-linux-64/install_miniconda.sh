@@ -10,6 +10,7 @@ bash -x $fname -bfp /opt/conda
 # update --all is pulling in replacements from defaults
 # /opt/conda/bin/conda update --yes --all
 /opt/conda/bin/conda config --add channels c3i_test
+/opt/conda/bin/conda config --add channels c3i_test2
 /opt/conda/bin/conda install --yes --quiet git conda-build curl anaconda-client
 /opt/conda/bin/conda install --yes --quiet conda-concourse-ci
 /opt/conda/bin/conda config --set add_pip_as_python_dependency False
