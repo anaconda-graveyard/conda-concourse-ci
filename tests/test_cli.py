@@ -30,7 +30,8 @@ def test_submit_one_off(mocker):
     cli.execute.submit_one_off.assert_called_once_with(pipeline_label='frank',
                                                        config_root_dir='../config', debug=False,
                                                        public=True, recipe_root_dir=os.getcwd(),
-                                                       subparser_name='one-off', folders=['bzip2'])
+                                                       subparser_name='one-off', folders=['bzip2'],
+                                                       channel=None, variant_config_files=None)
 
 
 def test_submit_without_base_name_raises():
@@ -61,7 +62,8 @@ def test_examine(mocker):
                                                        git_rev='HEAD', matrix_base_dir=None,
                                                        max_downstream=5, output_dir='../output',
                                                        path='.', steps=0, stop_rev=None,
-                                                       subparser_name='examine', test=False)
+                                                       subparser_name='examine', test=False,
+                                                       channel=None, variant_config_files=None)
 
 
 def test_examine_without_base_name_raises():

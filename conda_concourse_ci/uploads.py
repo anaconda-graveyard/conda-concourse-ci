@@ -160,13 +160,13 @@ def get_upload_tasks(graph, node, upload_config_path, config_vars, commit_id, pu
     return upload_tasks
 
 
-def get_upload_channels(upload_config_dir, subdir):
+def get_upload_channels(upload_config_dir, subdir, channels=None):
     """thought here was to provide whatever channel you have set as an output also to be an input
 
     Killed this in favor of setting channels in condarc in the docker image.
     """
     configurations = load_yaml_config_dir(upload_config_dir)
-    channels = []
+    channels = channels or []
 
     for config in configurations:
         if 'token' in config:

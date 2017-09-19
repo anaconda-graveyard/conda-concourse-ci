@@ -187,7 +187,7 @@ _rendered_recipes = {}
 
 
 @conda_interface.memoized
-def _get_or_render_metadata(meta_file_or_recipe_dir, worker):
+def _get_or_render_metadata(meta_file_or_recipe_dir, worker, config=None):
     global _rendered_recipes
     platform = worker['platform']
     arch = str(worker['arch'])
@@ -196,14 +196,14 @@ def _get_or_render_metadata(meta_file_or_recipe_dir, worker):
         _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)] = \
                             api.render(meta_file_or_recipe_dir, platform=platform, arch=arch,
                                        verbose=False, permit_undefined_jinja=True, finalize=False,
-                                       bypass_env_check=True)
+                                       bypass_env_check=True, config=config)
     return _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)]
 
 
 def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
-                        recipes_dir=None):
+                        recipes_dir=None, config=None):
     try:
-        rendered = _get_or_render_metadata(recipe_dir, worker)
+        rendered = _get_or_render_metadata(recipe_dir, worker, config=config)
     except (IOError, SystemExit):
         log.debug('invalid recipe dir: %s - skipping', recipe_dir)
         return None
@@ -335,7 +335,8 @@ def collapse_subpackage_nodes(graph):
 
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
-                    git_rev=None, stop_rev=None, matrix_base_dir=None):
+                    git_rev=None, stop_rev=None, matrix_base_dir=None,
+                    config=None):
     '''
     Construct a directed graph of dependencies from a directory of recipes
 
@@ -361,7 +362,7 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
         if not os.path.isdir(recipe_dir):
             raise ValueError("Specified folder {} does not exist".format(recipe_dir))
         add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
-                            recipes_dir)
+                            recipes_dir, config=config)
     add_intradependencies(graph)
     collapse_subpackage_nodes(graph)
     return graph

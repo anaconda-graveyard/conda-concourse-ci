@@ -19,7 +19,6 @@ import yaml
 
 from .compute_build_graph import (construct_graph, expand_run, order_build, git_changed_recipes,
                                   package_key)
-from .uploads import get_upload_channels  # get_upload_tasks,
 from .utils import HashableDict, load_yaml_config_dir, ensure_list
 
 log = logging.getLogger(__file__)
@@ -48,9 +47,9 @@ def parse_platforms(matrix_base_dir, run):
     return platforms
 
 
-def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downstream=5):
+def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=False,
+                  max_downstream=5, variant_config_files=None):
     # runs = ['test']
-    upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     # not testing means build and test
     # if not test:
     #     runs.insert(0, 'build')
@@ -64,12 +63,14 @@ def collect_tasks(path, folders, matrix_base_dir, steps=0, test=False, max_downs
         # each platform will be submitted with a different label
         for platform in platforms:
             index_key = '-'.join([platform['platform'], str(platform['arch'])])
-            config.channel_urls = get_upload_channels(upload_config_path, index_key)
+            config.channel_urls = channels or []
+            config.variant_config_files = variant_config_files or []
             conda_resolve = Resolve(get_build_index(subdir=index_key,
                                                     bldpkgs_dir=config.bldpkgs_dir)[0])
             # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
-                                matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve)
+                                matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve,
+                                config=config)
             # Apply the build label to any nodes that need (re)building or testing
             expand_run(g, conda_resolve=conda_resolve, worker=platform, run=run,
                        steps=steps, max_downstream=max_downstream, recipes_dir=path,
@@ -97,7 +98,9 @@ def update_index_task(subdir):
             'path': 'sh',
             'args': ['-exc',
                      ('mv rsync-artifacts/* indexed-artifacts\n'
-                      'conda-index indexed-artifacts/{subdir}\n'.format(subdir=subdir))]
+                      'conda-index indexed-artifacts/{subdir}\n'
+                      'mkdir -p indexed-artifacts/noarch \n'
+                      'conda-index indexed-artifacts/noarch\n'.format(subdir=subdir))]
         }}
     return {'task': 'update-artifact-index', 'config': task_dict}
 
@@ -114,7 +117,6 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
         inputs.append({'name': 'indexed-artifacts'})
         build_args.extend(('-c', os.path.join('indexed-artifacts')))
     subdir = '-'.join((worker['platform'], str(worker['arch'])))
-
 
     task_dict = {
         'platform': conda_subdir_to_concourse_platform[subdir],
@@ -160,8 +162,6 @@ def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=Tr
     meta = graph.node[node]['meta']
     worker = graph.node[node]['worker']
     subdir = '-'.join((worker['platform'], str(worker['arch'])))
-    prefix_commands = worker.get('prefix_commands')
-    suffix_commands = worker.get('suffix_commands')
     for channel in meta.config.channel_urls:
         args.extend(['-c', channel])
     args.append(recipe_folder_name)
@@ -171,21 +171,20 @@ def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=Tr
         'run': {'dir': os.path.join('rsync-recipes', commit_id)}
          }
 
-    prefix_commands = " && ".join(prefix_commands)
-    suffix_commands = " && ".join(prefix_commands)
+    prefix_commands = " && ".join(ensure_list(worker.get('prefix_commands')))
+    suffix_commands = " && ".join(ensure_list(worker.get('suffix_commands')))
 
-    if worker['platform'] == 'win':
-        cmds = 'hostname && conda info && conda-build ' + " ".join(args)
-        task_dict['run'].update({'path': 'cmd.exe', 'args': ['/c']})
-    else:
-        task_dict['run'].update({'path': 'sh', 'args': ['-exc']})
+    cmds = 'hostname && conda info && conda-build ' + " ".join(args)
 
     if prefix_commands:
         cmds = prefix_commands + ' && ' + cmds
     if suffix_commands:
         cmds = cmds + ' && ' + suffix_commands
 
-    task_dict['run']['args'].append(cmds)
+    if worker['platform'] == 'win':
+        task_dict['run'].update({'path': 'cmd.exe', 'args': ['/c', cmds]})
+    else:
+        task_dict['run'].update({'path': 'sh', 'args': ['-exc', cmds]})
 
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
@@ -443,7 +442,6 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                         '-o', 'StrictHostKeyChecking=no', '-i', key_file,
                         '{intermediate-user}@{intermediate-server}'.format(**data),
                         'mkdir -p {intermediate-base-folder}/{base-name}'.format(**data)])
-        # TODO: rsync config folder to intermediate server
         subprocess.check_call(['rsync', '--delete', '-av', '-e',
                                'ssh -o UserKnownHostsFile=/dev/null '
                                '-o StrictHostKeyChecking=no -i ' + key_file,
@@ -452,6 +450,11 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                 '{intermediate-base-folder}/{base-name}/plan_and_recipes'
                                 .format(**data))
                                ])
+        # remove any existing artifacts for sanity's sake - artifacts are only from this build.
+        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
+                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
+                        '{intermediate-user}@{intermediate-server}'.format(**data),
+                        'rm -rf {intermediate-base-folder}/{base-name}/artifacts'.format(**data)])
     os.remove(key_file)
 
     # make sure we are logged in to the configured server
@@ -505,16 +508,20 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         with checkout_git_rev(checkout_rev, path):
             git_identifier = _get_current_git_rev(path)
             task_graph = collect_tasks(path, folders=folders, steps=steps,
-                                    max_downstream=max_downstream, test=test,
-                                    matrix_base_dir=matrix_base_dir)
+                                       max_downstream=max_downstream, test=test,
+                                       matrix_base_dir=matrix_base_dir,
+                                       channels=kw.get('channel', []),
+                                       variant_config_files=kw.get('variant_config_files', []))
             try:
                 repo_commit = _get_current_git_rev(path)
             except subprocess.CalledProcessError:
                 repo_commit = 'master'
     else:
         task_graph = collect_tasks(path, folders=folders, steps=steps,
-                                max_downstream=max_downstream, test=test,
-                                matrix_base_dir=matrix_base_dir)
+                                   max_downstream=max_downstream, test=test,
+                                   matrix_base_dir=matrix_base_dir,
+                                   channels=kw.get('channel', []),
+                                   variant_config_files=kw.get('variant_config_files', []))
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         data = yaml.load(src)
@@ -638,7 +645,9 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **
            with plan directors)
         2. rsync those to a remote location based on the config_root, but with the base_name
            replaced with the pipeline_label here
-        3. submit the generated plan created by step 1
+        3. clear out the remote base_name/artifacts folder, to remove previous builds with the same
+           name
+        4. submit the generated plan created by step 1
     """
 
     # the intermediate paths are set up for the configuration name.  With one-offs, we're ignoring

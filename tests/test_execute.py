@@ -5,12 +5,10 @@ from conda_concourse_ci import execute
 import conda_concourse_ci
 from conda_concourse_ci.utils import HashableDict
 
-from conda_build import api
-import networkx as nx
 import pytest
 import yaml
 
-from .utils import test_data_dir, graph_data_dir, default_worker, test_config_dir
+from .utils import test_data_dir, graph_data_dir, test_config_dir
 
 
 def test_collect_tasks(mocker, testing_conda_resolve, testing_graph):
@@ -44,8 +42,8 @@ def test_get_build_task(testing_graph):
                                 commit_id='abc123')
     assert task['config']['platform'] == 'linux'
     assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
-    assert task['config']['run']['args'][-1] == ('rsync-recipes/b-on-linux')
-    assert 'conda_build_test' in task['config']['run']['args']
+    assert 'rsync-recipes/b-on-linux' in task['config']['run']['args'][-1]
+    assert 'conda_build_test' in task['config']['run']['args'][-1]
 
 
 def test_get_test_recipe_task(testing_graph):
@@ -58,9 +56,9 @@ def test_get_test_recipe_task(testing_graph):
     # run the test
     assert task['config']['platform'] == 'linux'
     assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
-    assert task['config']['run']['args'][-1] == 'b'
+    assert task['config']['run']['args'][-1].split()[-1] == 'b'
     assert task['config']['run']['dir'] == os.path.join('rsync-recipes', 'abc123')
-    assert 'conda_build_test' in task['config']['run']['args']
+    assert 'conda_build_test' in task['config']['run']['args'][-1]
 
 
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
@@ -72,7 +70,8 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
         config_vars = yaml.load(f)
     plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
                                                 test_config_dir, config_vars)
-    # rsync-recipes, rsync-artifacts and rsync-source are the only resource.  For each job, we change the 'passed' condition
+    # rsync-recipes, rsync-artifacts and rsync-source are the only resource.
+    # For each job, we change the 'passed' condition
     assert len(plan_dict['resources']) == 3
     # a, b, c
     assert len(plan_dict['jobs']) == 3

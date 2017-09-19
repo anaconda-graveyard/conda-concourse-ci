@@ -41,6 +41,14 @@ def parse_args(parse_this=None):
                         help='path to matrix configuration, if different from recipe path')
     examine_parser.add_argument('--output-dir', help="folder where output plan and recipes live",
                                 default='../output')
+    examine_parser.add_argument('--channel', '-c', action='append',
+                                help="Additional channel to use when building packages")
+    examine_parser.add_argument(
+        '-m', '--variant-config-files',
+        action="append",
+        help="""Additional variant config files to add.  These yaml files can contain
+        keys such as `c_compiler` and `target_platform` to form a build matrix."""
+    )
 
     submit_parser = sp.add_parser('submit', help="submit plan director to configured server")
     submit_parser.add_argument('base_name',
@@ -76,6 +84,14 @@ def parse_args(parse_this=None):
     one_off_parser.add_argument('--private', action='store_false',
                         help='hide build logs (overall graph still shown in Concourse web view)',
                         dest='public')
+    one_off_parser.add_argument('--channel', '-c', action='append',
+                                help="Additional channel to use when building packages")
+    one_off_parser.add_argument(
+        '-m', '--variant-config-files',
+        action="append",
+        help="""Additional variant config files to add.  These yaml files can contain
+        keys such as `c_compiler` and `target_platform` to form a build matrix."""
+    )
 
     return parser.parse_args(parse_this)
 
