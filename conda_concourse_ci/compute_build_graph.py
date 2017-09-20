@@ -213,7 +213,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         name = package_key(metadata, worker['label'], run)
 
         if metadata.skip():
-            return None
+            continue
 
         if name not in graph.nodes():
             graph.add_node(name, meta=metadata, worker=worker)
