@@ -92,6 +92,9 @@ def parse_args(parse_this=None):
         help="""Additional variant config files to add.  These yaml files can contain
         keys such as `c_compiler` and `target_platform` to form a build matrix."""
     )
+    one_off_parser.add_argument('--output-dir', help=("folder where output plan and recipes live."
+                                "Defaults to temp folder.  Set to something to save output."),
+                                default=None)
 
     return parser.parse_args(parse_this)
 

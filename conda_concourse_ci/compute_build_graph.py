@@ -233,7 +233,10 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
     return name
 
 
-def match_peer_job(target_matchspec, m):
+def match_peer_job(target_matchspec, target_variant, m):
+    """target_matchspec comes from the recipe.  target_variant is the variant from the recipe whose
+    deps we are matching.  m is the peer job, which must satisfy conda and also have matching keys
+    for any keys that are shared between target_variant and m.config.variant"""
     match_dict = {'name': m.name(),
                 'version': m.version(),
                 'build': _fix_any(m.build_id(), m.config), }
@@ -246,7 +249,13 @@ def match_peer_job(target_matchspec, m):
                                             build_string=match_dict['build'],
                                             build_number=int(m.build_number() or 0),
                                             channel=None)
-    return target_matchspec.match(match_dict)
+    matchspec_matches = target_matchspec.match(match_dict)
+
+    variant_matches = True
+    for variable, value in target_variant.items():
+        if variable in m.config.variant:
+            variant_matches &= m.config.variant[variable] == value
+    return matchspec_matches and variant_matches
 
 
 def add_intradependencies(graph):
@@ -269,7 +278,7 @@ def add_intradependencies(graph):
             name_matches = (n for n in graph.nodes() if graph.node[n]['meta'].name() == dep.name)
             for matching_node in name_matches:
                 # are any of these build dependencies also nodes in our graph?
-                if (match_peer_job(conda_interface.MatchSpec(dep),
+                if (match_peer_job(conda_interface.MatchSpec(dep), m.config.variant,
                                    graph.node[matching_node]['meta']) and
                          (node, matching_node) not in graph.edges()):
                     # add edges if they don't already exist

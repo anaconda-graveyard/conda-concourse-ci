@@ -9,7 +9,6 @@ import shutil
 import stat
 import subprocess
 import tempfile
-import time
 
 import conda_build.api
 from conda_build.conda_interface import Resolve, TemporaryDirectory
@@ -80,7 +79,7 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
     return task_graph
 
 
-def update_index_task(subdir):
+def consolidate_task(inputs, subdir):
     task_dict = {
         # we can always do this on linux, so prefer it for speed.
         'platform': 'linux',
@@ -92,15 +91,16 @@ def update_index_task(subdir):
                 }
             },
 
-        'inputs': [{'name': 'rsync-artifacts'}],
+        'inputs': [{'name': 'rsync_' + req} for req in inputs],
         'outputs': [{'name': 'indexed-artifacts'}],
         'run': {
             'path': 'sh',
             'args': ['-exc',
-                     ('mv rsync-artifacts/* indexed-artifacts\n'
-                      'conda-index indexed-artifacts/{subdir}\n'
-                      'mkdir -p indexed-artifacts/noarch \n'
-                      'conda-index indexed-artifacts/noarch\n'.format(subdir=subdir))]
+                    ('mkdir -p indexed-artifacts/{subdir}\n'
+                    'find . -type f -print0 | xargs -0 -I file mv file indexed-artifacts/{subdir}\n'
+                    'conda-index indexed-artifacts/{subdir}\n'
+                    'mkdir -p indexed-artifacts/noarch \n'
+                    'conda-index indexed-artifacts/noarch\n'.format(subdir=subdir))]
         }}
     return {'task': 'update-artifact-index', 'config': task_dict}
 
@@ -241,16 +241,6 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
                   }},
-                 {'name': 'rsync-artifacts',
-                  'type': 'rsync-resource',
-                  'source': {
-                      'server': config_vars['intermediate-server'],
-                      'base_dir': artifact_folder,
-                      'user': config_vars['intermediate-user'],
-                      'private_key': config_vars['intermediate-private-key'],
-                      'disable_version_path': True,
-                      'version_ref': int(round(time.time()))
-                  }},
                  {'name': 'rsync-source',
                   'type': 'rsync-resource',
                       'source': {
@@ -261,52 +251,48 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'disable_version_path': True,
                   }}]
 
+    rsync_resources = []
+
     # each package is a unit in the concourse graph.  This step recombines our separate steps.
 
     for node in order:
         pkgs = tuple(conda_build.api.get_output_file_paths(graph.node[node]['meta']))
         meta = graph.node[node]['meta']
         worker = graph.node[node]['worker']
-        artifact_input = False
+        resource_name = 'rsync_' + node
+        rsync_resources.append(resource_name)
+
+        resources.append(
+            {'name': resource_name,
+             'type': 'rsync-resource',
+             'source': {
+                 'server': config_vars['intermediate-server'],
+                 'base_dir': os.path.join(config_vars['intermediate-base-folder'],
+                                          config_vars['base-name'], 'artifacts'),
+                 'user': config_vars['intermediate-user'],
+                 'private_key': config_vars['intermediate-private-key'],
+                 'disable_version_path': True,
+             }})
 
         tasks = jobs.get(pkgs, {}).get('tasks',
                                 [{'get': 'rsync-recipes', 'trigger': True}])
 
         prereqs = set(graph.successors(node))
+        for prereq in prereqs:
+            tasks.append({'get': 'rsync_' + prereq,
+                            'trigger': False,
+                            'passed': [prereq]})
+
         if prereqs:
-            artifact_task = {'get': 'rsync-artifacts',
-                             'trigger': True,
-                             'passed': prereqs}
-            if len(tasks) == 1:
-                tasks.append(artifact_task)
-            elif tasks[1].get('get') == 'rsync-artifacts':
-                tasks[1]['passed'] = set(tasks[1]['passed']) | prereqs
-            else:
-                tasks.insert(1, artifact_task)
-            tasks[1]['passed'].discard(node)
-            tasks[1]['passed'] = list(tasks[1]['passed'])
-
-        if len(tasks) > 1 and tasks[1].get('get') == 'rsync-artifacts' and 'passed' in tasks[1]:
-            if tasks[1].get('passed'):
-                artifact_input = True
-            else:
-                del tasks[1]
-
-        # TODO: currently tests for things that have no build are broken and skipped
-
-        if node.startswith('test-'):
-            if not node.replace('test', 'build', 1) in graph.nodes():
-                # we are only testing this package in this plan.  Get from configured channels.
-                tasks.append(get_test_recipe_task(base_path, graph, node,
-                                                  config_vars['base-name'], commit_id, public))
-            # testing for built packages is rolled into the build step.
-            else:
-                pass
-        else:
-            if artifact_input:
-                tasks.append(update_index_task(meta.config.host_subdir))
-            tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
-                                        commit_id, public, artifact_input=artifact_input))
+            tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
+        tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
+                                    commit_id, public, artifact_input=bool(prereqs)))
+        tasks.append({'put': resource_name,
+                      'params': {'sync_dir': 'output-artifacts',
+                                 'rsync_opts': ["--archive", "--no-perms",
+                                                "--omit-dir-times", "--verbose",
+                                                "--exclude", '"*.json*"']},
+                      'get_params': {'skip_download': True}})
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
@@ -327,11 +313,6 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     for plan_dict in jobs.values():
         # name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
         name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
-        plan_dict['tasks'].append({'put': 'rsync-artifacts',
-                                   'params': {'sync_dir': 'output-artifacts',
-                                              'rsync_opts': ["--archive", "--no-perms",
-                                                             "--omit-dir-times", "--verbose",
-                                                             "--exclude", '"*.json*"']}})
         plan_dict['tasks'].append({'put': 'rsync-source',
                                    'params': {'sync_dir': 'output-source',
                                               'rsync_opts': ["--archive", "--no-perms",
@@ -342,10 +323,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
     if config_vars.get('anaconda-upload-token'):
         remapped_jobs.append({'name': 'anaconda_upload',
-                              'plan': [
-                          {'get': 'rsync-artifacts', 'trigger': True, 'passed': order},
-                          {'put': 'anaconda_upload_resource'}
-                      ]})
+                              'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
+                                       for node in order] + [{'put': 'anaconda_upload_resource'}]})
         resource_types.append({'name': 'anacondaorg-resource',
                        'type': 'docker-image',
                        'source': {
@@ -654,10 +633,13 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **
     #    the configuration's tie to a github repo.  What we should do is replace the base_name in
     #    the configuration locations with our pipeline label
     config_overrides = {'base-name': pipeline_label}
-    with TemporaryDirectory() as tmpdir:
+    ctx = (contextlib.contextmanager(lambda: (yield kwargs.get('output_dir'))) if
+           kwargs.get('output_dir') else TemporaryDirectory)
+    with ctx() as tmpdir:
+        kwargs['output_dir'] = tmpdir
         compute_builds(path=recipe_root_dir, base_name=pipeline_label, folders=folders,
                        matrix_base_dir=config_root_dir, config_overrides=config_overrides,
-                       output_dir=tmpdir, **kwargs)
+                       **kwargs)
         submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
                pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
                config_overrides=config_overrides, **kwargs)
