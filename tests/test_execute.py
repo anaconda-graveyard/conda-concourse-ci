@@ -216,3 +216,16 @@ def test_subpackage_matrix_no_subpackages(monkeypatch):
     assert ('depends_on_subpackage-1.0-on-centos5-64', 'has_subpackages_subpackage-1.0-on-centos5-64') not in tasks.edges()
     # this is what we remap it to
     assert ('depends_on_subpackage-1.0-on-centos5-64', 'has_subpackages_toplevel-1.0-on-centos5-64') in tasks.edges()
+
+
+def test_dependency_with_selector_cross_compile(testing_conda_resolve):
+    g = execute.collect_tasks(test_data_dir, ['selector_run', 'functools32-feedstock'],
+                              matrix_base_dir=os.path.join(test_data_dir, 'config-win'),
+                              variant_config_files=os.path.join(test_data_dir, 'conda_build_config.yaml'))
+    assert len(g.nodes()) == 6
+    # native edge
+    assert ('test_run_deps_with_selector-1.0-python2.7-on-win-64',
+            'functools32-3.2.3.2-python2.7-on-win-64') in g.edges()
+    # cross edge
+    assert ('test_run_deps_with_selector-1.0-python2.7target-win-32-on-win-64',
+            'functools32-3.2.3.2-python2.7target-win-32-on-win-64') in g.edges()

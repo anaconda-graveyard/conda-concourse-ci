@@ -97,7 +97,7 @@ def consolidate_task(inputs, subdir):
             'path': 'sh',
             'args': ['-exc',
                     ('mkdir -p indexed-artifacts/{subdir}\n'
-                    'find . -type f -print0 | xargs -0 -I file mv file indexed-artifacts/{subdir}\n'
+                     'find . -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/{subdir}\n'
                     'conda-index indexed-artifacts/{subdir}\n'
                     'mkdir -p indexed-artifacts/noarch \n'
                     'conda-index indexed-artifacts/noarch\n'.format(subdir=subdir))]
