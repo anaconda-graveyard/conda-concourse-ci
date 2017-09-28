@@ -1,0 +1,8 @@
+package:
+  name: test_run_deps_with_selector
+  version: 1.0
+
+requirements:
+  run:
+    - python
+    - functools32  # [py27]

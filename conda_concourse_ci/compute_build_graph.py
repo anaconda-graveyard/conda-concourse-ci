@@ -233,13 +233,13 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
     return name
 
 
-def match_peer_job(target_matchspec, target_variant, m):
+def match_peer_job(target_matchspec, this_m, other_m):
     """target_matchspec comes from the recipe.  target_variant is the variant from the recipe whose
     deps we are matching.  m is the peer job, which must satisfy conda and also have matching keys
     for any keys that are shared between target_variant and m.config.variant"""
-    match_dict = {'name': m.name(),
-                'version': m.version(),
-                'build': _fix_any(m.build_id(), m.config), }
+    match_dict = {'name': other_m.name(),
+                'version': other_m.version(),
+                'build': _fix_any(other_m.build_id(), other_m.config), }
     if conda_interface.conda_43:
         match_dict = conda_interface.Dist(name=match_dict['name'],
                                             dist_name='-'.join((match_dict['name'],
@@ -247,14 +247,15 @@ def match_peer_job(target_matchspec, target_variant, m):
                                                                 match_dict['build'])),
                                             version=match_dict['version'],
                                             build_string=match_dict['build'],
-                                            build_number=int(m.build_number() or 0),
+                                            build_number=int(other_m.build_number() or 0),
                                             channel=None)
     matchspec_matches = target_matchspec.match(match_dict)
 
     variant_matches = True
-    for variable, value in target_variant.items():
-        if variable in m.config.variant:
-            variant_matches &= m.config.variant[variable] == value
+    other_m_used_vars = other_m.get_used_loop_vars()
+    for variable in this_m.get_used_loop_vars():
+        if variable in other_m_used_vars:
+            variant_matches &= this_m.config.variant[variable] == other_m.config.variant[variable]
     return matchspec_matches and variant_matches
 
 
@@ -278,7 +279,7 @@ def add_intradependencies(graph):
             name_matches = (n for n in graph.nodes() if graph.node[n]['meta'].name() == dep.name)
             for matching_node in name_matches:
                 # are any of these build dependencies also nodes in our graph?
-                if (match_peer_job(conda_interface.MatchSpec(dep), m.config.variant,
+                if (match_peer_job(conda_interface.MatchSpec(dep), m,
                                    graph.node[matching_node]['meta']) and
                          (node, matching_node) not in graph.edges()):
                     # add edges if they don't already exist

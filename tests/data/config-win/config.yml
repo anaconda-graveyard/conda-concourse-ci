@@ -1,0 +1,13 @@
+concourse-url: your-server
+concourse-team: your-team
+concourse-username: your-user
+concourse-password: your-user
+recipe-repo: your-repo
+# TODO: these need to be dynamically definable based on PR info
+recipe-repo-commit: master
+base-name: test
+intermediate-server: your-intermediate-server
+intermediate-base-folder: /ci
+intermediate-user: your-intermediate-user
+intermediate-private-key: |
+  private-key-to-use-for-connecting-to-intermediate-server
