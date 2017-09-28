@@ -9,7 +9,7 @@ bash -x $fname -bfp /opt/conda
 # update --all is pulling in replacements from defaults
 # /opt/conda/bin/conda update --yes --all
 /opt/conda/bin/conda install --yes --quiet git conda-build curl anaconda-client
-/opt/conda/bin/pip install https://github.com/conda/conda-cocourse-ci/branch/master.zip
+/opt/conda/bin/pip install https://github.com/conda/conda-concourse-ci/archive/master.zip
 /opt/conda/bin/conda config --set add_pip_as_python_dependency False
 /opt/conda/bin/conda clean -ptiy
 rm -rf Miniconda*
