@@ -8,6 +8,7 @@ bash -x $fname -bfp /opt/conda
 /opt/conda/bin/conda config --set show_channel_urls True
 # update --all is pulling in replacements from defaults
 # /opt/conda/bin/conda update --yes --all
+/opt/conda/bin/conda update --yes --quiet --all
 /opt/conda/bin/conda install --yes --quiet git conda-build curl anaconda-client
 /opt/conda/bin/pip install https://github.com/conda/conda-concourse-ci/archive/master.zip
 /opt/conda/bin/conda config --set add_pip_as_python_dependency False
