@@ -70,9 +70,8 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
         config_vars = yaml.load(f)
     plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
                                                 test_config_dir, config_vars)
-    # rsync-recipes, rsync-artifacts and rsync-source are the only resource.
-    # For each job, we change the 'passed' condition
-    assert len(plan_dict['resources']) == 3
+    # rsync-recipes, rsync-source, and one artifact resource per build
+    assert len(plan_dict['resources']) == 5
     # a, b, c
     assert len(plan_dict['jobs']) == 3
 

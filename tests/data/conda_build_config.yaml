@@ -2,5 +2,5 @@ python:
   - 2.7
   - 3.6
 target_platform:
-  - win-32
-  - win-64
+  - win-32  # [win]
+  - win-64  # [win]

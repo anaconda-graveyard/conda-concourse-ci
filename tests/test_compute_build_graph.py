@@ -368,6 +368,8 @@ def test_add_intradependencies():
     a_meta = MetaData.fromdict({'package': {'name': 'a', 'version': '1.0'}})
     b_meta = MetaData.fromdict({'package': {'name': 'b', 'version': '1.0'},
                                 'requirements': {'build': ['a']}})
+    a_meta.config.variants = [{}]
+    b_meta.config.variants = [{}]
     g = nx.DiGraph()
     g.add_node('a', meta=a_meta)
     g.add_node('b', meta=b_meta)

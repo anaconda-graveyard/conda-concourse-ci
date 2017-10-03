@@ -31,7 +31,8 @@ def test_submit_one_off(mocker):
                                                        config_root_dir='../config', debug=False,
                                                        public=True, recipe_root_dir=os.getcwd(),
                                                        subparser_name='one-off', folders=['bzip2'],
-                                                       channel=None, variant_config_files=None)
+                                                       channel=None, variant_config_files=None,
+                                                       output_dir=None)
 
 
 def test_submit_without_base_name_raises():
