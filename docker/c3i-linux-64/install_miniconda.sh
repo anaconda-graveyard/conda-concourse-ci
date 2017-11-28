@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
-fname="Miniconda3-4.3.27-Linux-x86_64.sh"
+fname="Miniconda3-latest-Linux-x86_64.sh"
 curl -LO https://repo.continuum.io/miniconda/$fname
 bash -x $fname -bfp /opt/conda
 
