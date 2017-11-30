@@ -343,7 +343,8 @@ def collapse_subpackage_nodes(graph):
 
                 # remove nodes that have been folded into master nodes
                 for subnode in subpackages:
-                    graph.remove_node(subnode)
+                    if subnode != master_key:
+                        graph.remove_node(subnode)
 
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
