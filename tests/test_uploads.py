@@ -109,13 +109,13 @@ def test_get_upload_tasks(mocker, testing_graph):
                              config_vars, commit_id='abc123')
     subdir = conda_interface.subdir
     uploads.upload_anaconda.assert_called_once_with(
-        'output-artifacts/abc123/{}/b-1.0-hd248202_0.tar.bz2'.format(subdir),
+        'output-artifacts/abc123/{}/b-1.0-0.tar.bz2'.format(subdir),
         token='abc')
     uploads.upload_scp.assert_called_once_with(
-        package_path='output-artifacts/abc123/{}/b-1.0-hd248202_0.tar.bz2'.format(subdir),
+        package_path='output-artifacts/abc123/{}/b-1.0-0.tar.bz2'.format(subdir),
         worker=default_worker, config_vars=config_vars, server='localhost')
     uploads.upload_commands.assert_called_once_with(
-        'output-artifacts/abc123/{}/b-1.0-hd248202_0.tar.bz2'.format(subdir),
+        'output-artifacts/abc123/{}/b-1.0-0.tar.bz2'.format(subdir),
         config_vars=config_vars, commands='weee')
 
     # uploads.load_yaml_config_dir.return_value = [{'bad': 'abc'}]
