@@ -136,11 +136,11 @@ def test_new_submodules(testing_new_submodules):
     """Test that c3i recognizes new submodules with recipes.
 
     The conda-env-feedstock is a new submodule that contains a recipe
-    while the conda-verify submodule does not include a recipe.
+    while the docker-images submodule does not include a recipe.
     """
     new_submodules = compute_build_graph.git_changed_recipes()
     assert 'conda-env-feedstock' in new_submodules
-    assert 'conda-verify' not in new_submodules
+    assert 'docker-images' not in new_submodules
 
 
 def test_add_dependency_nodes_and_edges(mocker, testing_graph, testing_conda_resolve):
