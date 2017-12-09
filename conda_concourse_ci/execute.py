@@ -574,7 +574,7 @@ def _copy_yaml_if_not_there(path, base_name):
     original = os.path.join(bootstrap_config_path, *reversed(path_without_config))
     try:
         os.makedirs(os.path.dirname(path))
-    except:
+    except OSError:
         pass
     # write config
     if not os.path.isfile(path):
