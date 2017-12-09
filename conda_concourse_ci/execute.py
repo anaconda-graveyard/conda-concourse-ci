@@ -98,8 +98,8 @@ def consolidate_task(inputs, subdir):
             'args': ['-exc',
                     ('mkdir -p indexed-artifacts/{subdir}\n'
                      'mkdir -p indexed-artifacts/noarch \n'
-                     'find . -name "indexed-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/{subdir}\n'
-                     'find . -name "indexed-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/noarch\n'
+                     'find . -name "indexed-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/{subdir}\n'  # NOQA
+                     'find . -name "indexed-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/noarch\n'  # NOQA
                      'conda-index indexed-artifacts/{subdir}\n'
                      'conda-index indexed-artifacts/noarch\n'.format(subdir=subdir))]
         }}
