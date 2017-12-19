@@ -117,14 +117,14 @@ def testing_new_submodules(testing_submodules_repo):
     """Add new submodules and commit.
 
     The conda-env-feedstock and conda-verify repositories are added as submodules.
-    The conda-env-feedstock repository contains a recipe while the conda-verify
+    The conda-env-feedstock repository contains a recipe while the docker-images
     repository does not. c3i should recognize the conda-env-feedstock submodule
-    but not the conda-verify submodule."""
+    but not the docker-images submodule."""
     subprocess.check_call(['git', 'submodule', 'add',
                            'https://github.com/conda-forge/conda-env-feedstock.git'])
 
     subprocess.check_call(['git', 'submodule', 'add',
-                           'https://github.com/conda/conda-verify.git'])
+                           'https://github.com/ContinuumIO/docker-images.git'])
 
     subprocess.check_call(['git', 'add', '.'])
     subprocess.check_call(['git', 'commit', '-m', 'Added more submodules'])

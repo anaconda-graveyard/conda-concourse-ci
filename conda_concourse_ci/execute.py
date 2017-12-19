@@ -34,7 +34,7 @@ conda_subdir_to_concourse_platform = {
     'win-32': 'windows',
     'osx-64': 'darwin',
     'linux-64': 'linux',
-    'linux-32': 'linux32',
+    'linux-32': 'linux',
 }
 
 
@@ -98,8 +98,8 @@ def consolidate_task(inputs, subdir):
             'args': ['-exc',
                     ('mkdir -p indexed-artifacts/{subdir}\n'
                      'mkdir -p indexed-artifacts/noarch \n'
-                     'find . -name "indexed-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/{subdir}\n'
-                     'find . -name "indexed-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/noarch\n'
+                     'find . -name "indexed-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/{subdir}\n'  # NOQA
+                     'find . -name "indexed-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/noarch\n'  # NOQA
                      'conda-index indexed-artifacts/{subdir}\n'
                      'conda-index indexed-artifacts/noarch\n'.format(subdir=subdir))]
         }}
@@ -574,7 +574,7 @@ def _copy_yaml_if_not_there(path, base_name):
     original = os.path.join(bootstrap_config_path, *reversed(path_without_config))
     try:
         os.makedirs(os.path.dirname(path))
-    except:
+    except OSError:
         pass
     # write config
     if not os.path.isfile(path):

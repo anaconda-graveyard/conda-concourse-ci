@@ -19,7 +19,7 @@ install:
   - conda config --set auto_update_conda False
   - conda update -q --all
   - conda install -q requests python=$TRAVIS_PYTHON_VERSION pyflakes flake8 mock six
-  - conda install -q pytest-cov networkx boto3 git
+  - conda install -q pytest-cov 'networkx<2' boto3 git
   - pushd ..
   # take care of c-b's dependencies
   - conda install -q conda-build

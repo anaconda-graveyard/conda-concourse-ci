@@ -13,15 +13,15 @@ RUN mkdir -p bin && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
 
 RUN yum install -y \
-  libX11 \
-  libXau \
-  libXcb \
-  libXdmcp \
-  libXext \
-  libXrender \
-  libXt \
-  mesa-libGL \
-  mesa-libGLU \
+  libX11 libX11.i686 \
+  libXau libXau.i686 \
+  libXcb libXcb.i686 \
+  libXdmcp libXdcmp.i686 \
+  libXext libXext.i686 \
+  libXrender libXrender.i686 \
+  libXt libXt.i686 \
+  mesa-libGL mesa-libGL.i686 \
+  mesa-libGLU mesa-libGLU.i686 \
   openssh-clients \
   patch \
   rsync \
