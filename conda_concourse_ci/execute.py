@@ -34,7 +34,7 @@ conda_subdir_to_concourse_platform = {
     'win-32': 'windows',
     'osx-64': 'darwin',
     'linux-64': 'linux',
-    'linux-32': 'linux32',
+    'linux-32': 'linux',
 }
 
 
@@ -136,8 +136,12 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     # this is the recipe path to build
     build_args.append(os.path.join('rsync-recipes', node))
 
-    cmds = 'hostname && conda update -y conda-build && conda info && conda-build ' + \
-           " ".join(build_args)
+    build_prefix_commands = " ".join(ensure_list(worker.get('build_prefix_commands')))
+    build_suffix_commands = " ".join(ensure_list(worker.get('build_suffix_commands')))
+
+    cmds = 'hostname && conda update -y conda-build && conda info && ' + \
+           build_prefix_commands + ' conda-build ' + " ".join(build_args) + \
+           ' ' + build_suffix_commands
     prefix_commands = " && ".join(ensure_list(worker.get('prefix_commands')))
     suffix_commands = " && ".join(ensure_list(worker.get('suffix_commands')))
     if prefix_commands:
