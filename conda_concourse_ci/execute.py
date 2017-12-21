@@ -532,7 +532,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         if meta.meta_path:
             recipe = os.path.dirname(meta.meta_path)
         else:
-            recipe = meta.get('extra', {}).get('parent_recipe', {})
+            recipe = meta.meta.get('extra', {}).get('parent_recipe', {}).get('path', '')
         assert recipe, ("no parent recipe set, and no path associated "
                                 "with this metadata")
         # make recipe path relative

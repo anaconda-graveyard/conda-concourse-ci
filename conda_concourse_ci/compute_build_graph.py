@@ -302,7 +302,9 @@ def collapse_subpackage_nodes(graph):
             meta = graph.node[node]['meta']
             meta_path = meta.meta_path or meta.meta['extra']['parent_recipe']['path']
             master = False
-            if meta.meta_path:
+
+            master_meta = MetaData(meta_path, config=meta.config)
+            if master_meta.name() == meta.name():
                 master = True
             group = node_groups.get(meta_path, {})
             subgroup = group.get(HashableDict(meta.config.variant), {})
