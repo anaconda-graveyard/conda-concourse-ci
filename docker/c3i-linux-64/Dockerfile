@@ -27,6 +27,7 @@ RUN yum install -y \
   rsync \
   util-linux \
   wget \
+  xorg-x11-server-Xvfb \
   && yum clean all
 
 WORKDIR /build_scripts

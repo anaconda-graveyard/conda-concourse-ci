@@ -1,7 +1,6 @@
 from collections import defaultdict
 import os
 import subprocess
-import sys
 
 from conda_build.conda_interface import Resolve
 from conda_build.api import render
@@ -158,10 +157,10 @@ def testing_conda_resolve(request):
                                       build_string='h68c14d1_0',
                                       build_number=0):
                  conda_interface.IndexRecord(arch='x86_64', build='h68c14d1_0',
-                        build_number=0, depends=None,
+                        build_number=0, depends=tuple(),
                         license='GNU Lesser General Public License (LGPL)',
                         md5='7268f7dcc075e615af758d1243ed4f1d', name=pkg,
-                        platform=conda_interface.cc_platform, requires=(), size=192170,
+                        platform=conda_interface.cc_platform, requires=tuple(), size=192170,
                         subdir=conda_interface.subdir,
                         version='920', fn=pkg + '-920-h68c14d1_0.tar.bz2', schannel='r',
                         channel='https://conda.anaconda.org/r/' + conda_interface.subdir,
