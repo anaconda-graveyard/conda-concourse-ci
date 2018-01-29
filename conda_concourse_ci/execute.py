@@ -261,12 +261,12 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     # each package is a unit in the concourse graph.  This step recombines our separate steps.
 
     for node in order:
-        pkgs = tuple(conda_build.api.get_output_file_paths(graph.node[node]['meta']))
         meta = graph.node[node]['meta']
         worker = graph.node[node]['worker']
         resource_name = 'rsync_' + node
         rsync_resources.append(resource_name)
-
+        key = (meta.name(), meta.config.host_subdir,
+               HashableDict({k: meta.config.variant[k] for k in meta.get_used_vars()}))
         resources.append(
             {'name': resource_name,
              'type': 'rsync-resource',
@@ -279,7 +279,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                  'disable_version_path': True,
              }})
 
-        tasks = jobs.get(pkgs, {}).get('tasks',
+        tasks = jobs.get(key, {}).get('tasks',
                                 [{'get': 'rsync-recipes', 'trigger': True}])
 
         prereqs = set(graph.successors(node))
@@ -313,7 +313,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         # else:
         #     raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
         #                                 "start with 'build', 'test', or 'upload'")
-        jobs[pkgs] = {'tasks': tasks, 'meta': meta, 'worker': worker}
+        jobs[key] = {'tasks': tasks, 'meta': meta, 'worker': worker}
     remapped_jobs = []
     for plan_dict in jobs.values():
         # name = _get_successor_condensed_job_name(graph, plan_dict['meta'])

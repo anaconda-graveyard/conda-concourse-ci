@@ -140,10 +140,10 @@ def test_compute_builds(testing_workdir, mocker, monkeypatch):
     files = os.listdir(output)
     assert 'plan.yml' in files
 
-    assert os.path.isfile(os.path.join(output, 'frank-1.0-python2.7-on-centos5-64', 'meta.yaml'))
-    assert os.path.isfile(os.path.join(output, 'frank-1.0-python2.7-on-centos5-64/', 'conda_build_config.yaml'))
-    assert os.path.isfile(os.path.join(output, 'frank-1.0-python3.6-on-centos5-64', 'meta.yaml'))
-    assert os.path.isfile(os.path.join(output, 'frank-1.0-python3.6-on-centos5-64/', 'conda_build_config.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-1.0-python_2.7-on-centos5-64', 'meta.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-1.0-python_2.7-on-centos5-64/', 'conda_build_config.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-1.0-python_3.6-on-centos5-64', 'meta.yaml'))
+    assert os.path.isfile(os.path.join(output, 'frank-1.0-python_3.6-on-centos5-64/', 'conda_build_config.yaml'))
     assert os.path.isfile(os.path.join(output, 'dummy_conda_forge_test-1.0-on-centos5-64', 'meta.yaml'))
     with open(os.path.join(output, 'dummy_conda_forge_test-1.0-on-centos5-64/', 'conda_build_config.yaml')) as f:
         cfg = f.read()
@@ -195,8 +195,8 @@ def test_python_build_matrix_expansion(monkeypatch):
     tasks = execute.collect_tasks('.', matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
                                   folders=['python_test'])
     assert len(tasks.nodes()) == 2
-    assert 'frank-1.0-python2.7-on-centos5-64' in tasks.nodes()
-    assert 'frank-1.0-python3.6-on-centos5-64' in tasks.nodes()
+    assert 'frank-1.0-python_2.7-on-centos5-64' in tasks.nodes()
+    assert 'frank-1.0-python_3.6-on-centos5-64' in tasks.nodes()
 
 
 def test_subpackage_matrix_no_subpackages(monkeypatch):
@@ -223,8 +223,20 @@ def test_dependency_with_selector_cross_compile(testing_conda_resolve):
                               variant_config_files=os.path.join(test_data_dir, 'conda_build_config.yaml'))
     assert len(g.nodes()) == 6
     # native edge
-    assert ('test_run_deps_with_selector-1.0-python2.7-on-win-64',
-            'functools32-3.2.3.2-python2.7-on-win-64') in g.edges()
+    assert ('test_run_deps_with_selector-1.0-python_2.7-on-win-64',
+            'functools32-3.2.3.2-python_2.7-on-win-64') in g.edges()
     # cross edge
-    assert ('test_run_deps_with_selector-1.0-python2.7target-win-32-on-win-64',
-            'functools32-3.2.3.2-python2.7target-win-32-on-win-64') in g.edges()
+    assert ('test_run_deps_with_selector-1.0-python_2.7-target_win-32-on-win-64',
+            'functools32-3.2.3.2-python_2.7-target_win-32-on-win-64') in g.edges()
+
+
+def test_collapse_with_win_matrix_and_subpackages(monkeypatch):
+    monkeypatch.chdir(test_data_dir)
+    tasks = execute.collect_tasks('.', matrix_base_dir=os.path.join(test_data_dir, 'config-win'),
+                                  folders=['win_split_outputs_compiler_reduction'])
+    # 8 subpackages, but 4 total builds - 2 subpackages per build
+    assert len(tasks.nodes()) == 4
+    assert 'postgresql-split-10.1-c_compiler_vs2008-on-win-64' in tasks.nodes()
+    assert 'postgresql-split-10.1-c_compiler_vs2015-on-win-64' in tasks.nodes()
+    assert 'postgresql-split-10.1-c_compiler_vs2008-target_win-32-on-win-64' in tasks.nodes()
+    assert 'postgresql-split-10.1-c_compiler_vs2015-target_win-32-on-win-64' in tasks.nodes()

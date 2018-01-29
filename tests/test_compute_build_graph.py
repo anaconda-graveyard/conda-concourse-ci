@@ -42,9 +42,9 @@ def test_construct_graph_relative_path(testing_git_repo, testing_conda_resolve):
 
 def test_package_key(testing_metadata):
     assert (compute_build_graph.package_key(testing_metadata, 'linux') ==
-            'test_package_key-1.0-python3.6-on-linux')
+            'test_package_key-1.0-python_3.6-on-linux')
     assert (compute_build_graph.package_key(testing_metadata, 'linux', 'test') ==
-            'c3itest-test_package_key-1.0-python3.6-on-linux')
+            'c3itest-test_package_key-1.0-python_3.6-on-linux')
 
 
 def test_platform_specific_graph(mocker, testing_conda_resolve):
@@ -385,5 +385,5 @@ def test_version_matching(testing_conda_resolve):
                                             matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
     assert len(g.nodes()) == 4
-    assert ('downstream-1.0-upstream1.0-on-linux', 'upstream-1.0.1-on-linux') in g.edges()
-    assert ('downstream-1.0-upstream2.0-on-linux', 'upstream-2.0.2-on-linux') in g.edges()
+    assert ('downstream-1.0-upstream_1.0-on-linux', 'upstream-1.0.1-on-linux') in g.edges()
+    assert ('downstream-1.0-upstream_2.0-on-linux', 'upstream-2.0.2-on-linux') in g.edges()

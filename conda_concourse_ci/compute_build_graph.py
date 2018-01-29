@@ -21,31 +21,14 @@ hash_length = api.Config().hash_length
 
 def package_key(metadata, worker_label, run='build'):
     # get the build string from whatever conda-build makes of the configuration
-    variables = metadata.get_loop_vars()
-    used_variables = set()
-    requirements = metadata.extract_requirements_text().rstrip()
-    if not requirements:
-        requirements = (metadata.get_value('requirements/build') +
-                metadata.get_value('requirements/run') +
-                metadata.get_value('requirements/host'))
-        requirements = '- ' + "\n- ".join(requirements)
-    for v in variables:
-        variant_regex = r"(\s*\{\{\s*%s\s*(?:.*?)?\}\})" % v
-        requirement_regex = r"(\-\s+%s(?:\s+|$))" % v
-        all_res = '|'.join((variant_regex, requirement_regex))
-        compiler_match = re.match(r'(.*?)_compiler$', v)
-        if compiler_match:
-            compiler_regex = (
-                r"(\s*\{\{\s*compiler\([\'\"]%s[\"\'].*\)\s*\}\})" % compiler_match.group(1))
-            all_res = '|'.join((all_res, compiler_regex))
-        if re.search(all_res, requirements, flags=re.MULTILINE | re.DOTALL):
-            used_variables.add(v)
-    build_vars = ''.join([k + str(metadata.config.variant[k]) for k in used_variables])
+    used_loop_vars = metadata.get_used_loop_vars()
+    build_vars = '-'.join([k + '_' + str(metadata.config.variant[k]) for k in used_loop_vars
+                          if k != 'target_platform'])
     # kind of a special case.  Target platform determines a lot of output behavior, but may not be
     #    explicitly listed in the recipe.
     tp = metadata.config.variant.get('target_platform')
     if tp and tp != metadata.config.subdir and 'target_platform' not in build_vars:
-        build_vars += 'target-' + tp
+        build_vars += '-target_' + tp
     key = [metadata.name(), metadata.version()]
     if build_vars:
         key.append(build_vars)
@@ -205,7 +188,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
     try:
         rendered = _get_or_render_metadata(recipe_dir, worker, config=config)
     except (IOError, SystemExit):
-        log.debug('invalid recipe dir: %s - skipping', recipe_dir)
+        log.warn('invalid recipe dir: %s - skipping', recipe_dir)
         return None
 
     name = None
