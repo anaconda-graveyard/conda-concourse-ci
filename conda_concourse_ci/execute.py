@@ -38,16 +38,17 @@ conda_subdir_to_concourse_platform = {
 }
 
 
-def parse_platforms(matrix_base_dir, run):
+def parse_platforms(matrix_base_dir, run, platform_filters):
     platform_folder = '{}_platforms.d'.format(run)
-    platforms = load_yaml_config_dir(os.path.join(matrix_base_dir, platform_folder))
+    platforms = load_yaml_config_dir(os.path.join(matrix_base_dir, platform_folder),
+                                     platform_filters)
     log.debug("Platforms found for mode %s:", run)
     log.debug(platforms)
     return platforms
 
 
 def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=False,
-                  max_downstream=5, variant_config_files=None):
+                  max_downstream=5, variant_config_files=None, platform_filters=None):
     # runs = ['test']
     # not testing means build and test
     # if not test:
@@ -56,8 +57,9 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
 
     task_graph = nx.DiGraph()
     config = conda_build.api.Config()
+    platform_filters = ensure_list(platform_filters) if platform_filters else ['*']
     for run in runs:
-        platforms = parse_platforms(matrix_base_dir, run)
+        platforms = parse_platforms(matrix_base_dir, run, platform_filters)
         # loop over platforms here because each platform may have different dependencies
         # each platform will be submitted with a different label
         for platform in platforms:
@@ -471,7 +473,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
 
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
-                   output_folder_label='git', config_overrides=None, **kw):
+                   output_folder_label='git', config_overrides=None, platform_filters=None, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -482,7 +484,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     if not folders:
         print("No folders specified to build, and nothing changed in git.  Exiting.")
         return
-    matrix_base_dir = matrix_base_dir or path
+    matrix_base_dir = os.path.expanduser(matrix_base_dir or path)
     # clean up quoting from concourse template evaluation
     matrix_base_dir = matrix_base_dir.replace('"', '')
 
@@ -495,7 +497,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                        max_downstream=max_downstream, test=test,
                                        matrix_base_dir=matrix_base_dir,
                                        channels=kw.get('channel', []),
-                                       variant_config_files=kw.get('variant_config_files', []))
+                                       variant_config_files=kw.get('variant_config_files', []),
+                                       platform_filters=platform_filters)
             try:
                 repo_commit = _get_current_git_rev(path)
             except subprocess.CalledProcessError:
@@ -505,7 +508,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                    max_downstream=max_downstream, test=test,
                                    matrix_base_dir=matrix_base_dir,
                                    channels=kw.get('channel', []),
-                                   variant_config_files=kw.get('variant_config_files', []))
+                                   variant_config_files=kw.get('variant_config_files', []),
+                                   platform_filters=platform_filters)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         data = yaml.load(src)
@@ -638,6 +642,7 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **
     #    the configuration's tie to a github repo.  What we should do is replace the base_name in
     #    the configuration locations with our pipeline label
     config_overrides = {'base-name': pipeline_label}
+    config_root_dir = os.path.expanduser(config_root_dir)
     ctx = (contextlib.contextmanager(lambda: (yield kwargs.get('output_dir'))) if
            kwargs.get('output_dir') else TemporaryDirectory)
     with ctx() as tmpdir:

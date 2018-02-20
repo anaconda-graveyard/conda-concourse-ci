@@ -3,6 +3,7 @@ import logging
 import os
 
 from conda_concourse_ci import execute, __version__
+from conda_build.conda_interface import cc_conda_build
 
 
 def parse_args(parse_this=None):
@@ -38,11 +39,17 @@ def parse_args(parse_this=None):
     examine_parser.add_argument('--test', action='store_true',
                         help='test packages (instead of building AND testing them)')
     examine_parser.add_argument('--matrix-base-dir',
-                        help='path to matrix configuration, if different from recipe path')
+                                help='path to matrix configuration, if different from recipe path',
+                                default=cc_conda_build.get('matrix_base_dir'))
     examine_parser.add_argument('--output-dir', help="folder where output plan and recipes live",
                                 default='../output')
     examine_parser.add_argument('--channel', '-c', action='append',
                                 help="Additional channel to use when building packages")
+    examine_parser.add_argument('--platform-filter', '-p', action='append',
+                                help="glob pattern(s) to filter build platforms.  For example, "
+                                "linux* will build all platform files whose filenames start with "
+                                "linux",
+                                dest='platform_filters')
     examine_parser.add_argument(
         '-m', '--variant-config-files',
         action="append",
@@ -80,12 +87,17 @@ def parse_args(parse_this=None):
     one_off_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
                                 help="path containing recipe folders to upload")
     one_off_parser.add_argument('--config-root-dir',
-                                help="path containing config.yml and matrix definitions")
+                                help="path containing config.yml and matrix definitions",
+                                default=cc_conda_build.get('matrix_base_dir'))
     one_off_parser.add_argument('--private', action='store_false',
                         help='hide build logs (overall graph still shown in Concourse web view)',
                         dest='public')
     one_off_parser.add_argument('--channel', '-c', action='append',
                                 help="Additional channel to use when building packages")
+    one_off_parser.add_argument('--platform-filter', '-p', action='append',
+                                help="glob pattern(s) to filter build platforms.  For example, "
+                                "linux* will build all platform files whose filenames start with "
+                                "linux", dest='platform_filters')
     one_off_parser.add_argument(
         '-m', '--variant-config-files',
         action="append",
