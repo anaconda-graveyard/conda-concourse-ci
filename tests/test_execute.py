@@ -46,21 +46,6 @@ def test_get_build_task(testing_graph):
     assert 'conda_build_test' in task['config']['run']['args'][-1]
 
 
-def test_get_test_recipe_task(testing_graph):
-    """Test something that already exists.  Note that this is not building any dependencies."""
-    meta = testing_graph.node['b-on-linux']['meta']
-    meta.config.channel_urls = ['conda_build_test']
-    task = execute.get_test_recipe_task(base_path=graph_data_dir, graph=testing_graph,
-                                        node='b-on-linux', base_name="frank",
-                                        commit_id='abc123')
-    # run the test
-    assert task['config']['platform'] == 'linux'
-    assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
-    assert task['config']['run']['args'][-1].split()[-1] == 'b'
-    assert task['config']['run']['dir'] == os.path.join('rsync-recipes', 'abc123')
-    assert 'conda_build_test' in task['config']['run']['args'][-1]
-
-
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
     # stub out uploads, since it depends on config file stuff and we want to manipulate it
     # get_upload = mocker.patch.object(execute, "get_upload_tasks")
@@ -70,8 +55,8 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
         config_vars = yaml.load(f)
     plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
                                                 test_config_dir, config_vars)
-    # rsync-recipes, rsync-source, and one artifact resource per build
-    assert len(plan_dict['resources']) == 5
+    # rsync-recipes, rsync-source, rsync-stats, and one artifact resource per build
+    assert len(plan_dict['resources']) == 6
     # a, b, c
     assert len(plan_dict['jobs']) == 3
 
