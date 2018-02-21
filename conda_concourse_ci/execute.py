@@ -4,11 +4,11 @@ import contextlib
 import glob
 import logging
 import os
-import re
 import shutil
 import stat
 import subprocess
 import tempfile
+import time
 
 import conda_build.api
 from conda_build.conda_interface import Resolve, TemporaryDirectory
@@ -110,8 +110,10 @@ def consolidate_task(inputs, subdir):
 
 def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False):
     meta = graph.node[node]['meta']
-    build_args = ['--no-anaconda-upload', '--output-folder', 'output-artifacts',
-                  '--cache-dir', 'output-source']
+    stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
+    build_args = ['--no-anaconda-upload', '--output-folder=output-artifacts',
+                  '--cache-dir=output-source', '--stats-file={}'.format(
+                      os.path.join('stats', stats_filename))]
     inputs = [{'name': 'rsync-recipes'}]
     worker = graph.node[node]['worker']
     for channel in meta.config.channel_urls:
@@ -125,7 +127,7 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
         'platform': conda_subdir_to_concourse_platform[subdir],
         # dependency inputs are down below
         'inputs': inputs,
-        'outputs': [{'name': 'output-artifacts'}, {'name': 'output-source'}],
+        'outputs': [{'name': 'output-artifacts'}, {'name': 'output-source'}, {'name': 'stats'}],
         'run': {}}
 
     if worker['platform'] == 'win':
@@ -141,8 +143,7 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     build_prefix_commands = " ".join(ensure_list(worker.get('build_prefix_commands')))
     build_suffix_commands = " ".join(ensure_list(worker.get('build_suffix_commands')))
 
-    cmds = 'hostname && conda update -y conda-build && conda info && ' + \
-           build_prefix_commands + ' conda-build ' + " ".join(build_args) + \
+    cmds = build_prefix_commands + ' conda-build ' + " ".join(build_args) + \
            ' ' + build_suffix_commands
     prefix_commands = " && ".join(ensure_list(worker.get('prefix_commands')))
     suffix_commands = " && ".join(ensure_list(worker.get('suffix_commands')))
@@ -158,46 +159,6 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     #   feature right now.
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
     return {'task': 'build', 'config': task_dict}
-
-
-def get_test_recipe_task(base_path, graph, node, base_name, commit_id, public=True):
-    recipe_folder_name = graph.node[node]['meta'].meta_path.replace(base_path, '')
-    if '\\' in recipe_folder_name or '/' in recipe_folder_name:
-        recipe_folder_name = list(filter(None, re.split("[\\/]+", recipe_folder_name)))[0]
-
-    args = ['--test']
-    meta = graph.node[node]['meta']
-    worker = graph.node[node]['worker']
-    subdir = '-'.join((worker['platform'], str(worker['arch'])))
-    for channel in meta.config.channel_urls:
-        args.extend(['-c', channel])
-    args.append(recipe_folder_name)
-    task_dict = {
-        'platform': conda_subdir_to_concourse_platform[subdir],
-        'inputs': [{'name': 'rsync-recipes'}],
-        'run': {'dir': os.path.join('rsync-recipes', commit_id)}
-         }
-
-    prefix_commands = " && ".join(ensure_list(worker.get('prefix_commands')))
-    suffix_commands = " && ".join(ensure_list(worker.get('suffix_commands')))
-
-    cmds = 'hostname && conda info && conda-build ' + " ".join(args)
-
-    if prefix_commands:
-        cmds = prefix_commands + ' && ' + cmds
-    if suffix_commands:
-        cmds = cmds + ' && ' + suffix_commands
-
-    if worker['platform'] == 'win':
-        task_dict['run'].update({'path': 'cmd.exe', 'args': ['/c', cmds]})
-    else:
-        task_dict['run'].update({'path': 'sh', 'args': ['-exc', cmds]})
-
-    # this has details on what image or image_resource to use.
-    #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
-    #   feature right now.
-    task_dict.update(worker.get('connector', {}))
-    return {'task': node, 'config': task_dict}
 
 
 def _resource_type_to_dict(resource_type):
@@ -256,6 +217,15 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key'],
                       'disable_version_path': True,
+                      }},
+                 {'name': 'rsync-stats',
+                  'type': 'rsync-resource',
+                      'source': {
+                      'server': config_vars['intermediate-server'],
+                      'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'stats'),
+                      'user': config_vars['intermediate-user'],
+                      'private_key': config_vars['intermediate-private-key'],
+                      'disable_version_path': True,
                   }}]
 
     rsync_resources = []
@@ -300,7 +270,6 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                                 "--omit-dir-times", "--verbose",
                                                 "--exclude", '"*.json*"']},
                       'get_params': {'skip_download': True}})
-
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
         # appropriately.
@@ -325,6 +294,11 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                               'rsync_opts': ["--archive", "--no-perms",
                                                              "--omit-dir-times", "--verbose",
                                                              "--exclude", '"*.json*"']},
+                                   'get_params': {'skip_download': True}})
+        plan_dict['tasks'].append({'put': 'rsync-stats',
+                                   'params': {'sync_dir': 'stats',
+                                              'rsync_opts': ["--archive", "--no-perms",
+                                                             "--omit-dir-times", "--verbose"]},
                                    'get_params': {'skip_download': True}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
