@@ -1,0 +1,95 @@
+{% set version = "10.1" %}
+{% set sha256 = "3ccb4e25fe7a7ea6308dea103cac202963e6b746697366d72ec2900449a5e713" %}
+{% set libpqver = '.'.join(("5", version.split('.')[0])) %}
+
+package:
+  name: postgresql-split
+  version: {{ version }}
+
+source:
+  fn: postgresql-{{ version }}.tar.bz2
+  url: https://ftp.postgresql.org/pub/source/v{{ version }}/postgresql-{{ version }}.tar.bz2
+  sha256: {{ sha256 }}
+  patches:
+    - 0001-fix-win-zlib-and-openssl-lib-names.patch  # [win]
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - m2-bison         # [win]
+    - m2-diffutils     # [win]
+    - m2-flex          # [win]
+    # perl pinned to older version due to issues with @INC not being recursive or something like that.
+    - perl  5.20.*     # [win]
+    - posix            # [win]
+  host:
+    - krb5             # [not osx]
+    - openssl
+    - readline         # [not win]
+    - zlib
+
+outputs:
+  - name: postgresql
+    requirements:
+      build:
+        # solely for sake of lining up vc versions and other runtimes
+        - {{ compiler('c') }}
+      host:
+        # these are here for sake of run_exports taking effect
+        - krb5             # [not osx]
+        - openssl
+        - readline         # [not win]
+        - zlib
+        - {{ pin_subpackage('libpq', exact=True) }}
+      run:
+        - {{ pin_subpackage('libpq', exact=True) }}
+    test:
+      commands:
+        - postgres --help
+        - conda inspect linkages postgresql  # [not win]
+        - conda inspect objects postgresql  # [osx]
+    about:
+      summary: 'PostgreSQL is a powerful, open source object-relational database system.'
+
+  - name: libpq
+    build:
+      run_exports:
+        - {{ pin_subpackage('libpq') }}
+    requirements:
+      build:
+        # solely for sake of lining up vc versions and other runtimes
+        - {{ compiler('c') }}
+      host:
+        # these are here for sake of run_exports taking effect
+        - krb5     # [not osx]
+        - openssl
+        - readline         # [not win]
+        - zlib
+    test:
+      commands:
+        - pg_config
+        - test -f $PREFIX/lib/libpq.so.{{ libpqver }}      # [linux]
+        - test -f $PREFIX/lib/libpq.so.5                   # [linux]
+        - test -f $PREFIX/lib/libpq.so                     # [linux]
+        - test -f $PREFIX/lib/libpq.{{ libpqver }}.dylib   # [osx]
+        - test -f $PREFIX/lib/libpq.5.dylib                # [osx]
+        - test -f $PREFIX/lib/libpq.dylib                  # [osx]
+        - IF NOT EXIST %LIBRARY_BIN%\libpq.dll EXIT 1      # [win]
+        - IF NOT EXIST %LIBRARY_BIN%\pg_config.exe EXIT 1  # [win]
+    about:
+      summary: The postgres runtime libraries and utilities (not the server itself)
+
+about:
+  home: http://www.postgresql.org/
+  license: PostgreSQL
+  license_file: COPYRIGHT
+
+extra:
+  recipe-maintainers:
+    - gillins
+    - msarahan
+    - ocefpaf
+    - mariusvniekerk
