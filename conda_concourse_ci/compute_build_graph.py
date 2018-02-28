@@ -178,8 +178,8 @@ def _get_or_render_metadata(meta_file_or_recipe_dir, worker, finalize, config=No
         print("rendering {0} for {1}".format(meta_file_or_recipe_dir, worker['label']))
         _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)] = \
                             api.render(meta_file_or_recipe_dir, platform=platform, arch=arch,
-                                       verbose=False, permit_undefined_jinja=True, finalize=finalize,
-                                       bypass_env_check=True, config=config)
+                                       verbose=False, permit_undefined_jinja=True,
+                                       bypass_env_check=True, config=config, finalize=finalize)
     return _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)]
 
 
@@ -405,7 +405,8 @@ def _buildable(name, version, recipes_dir, worker, config, finalize):
     return m.meta_path if available else False
 
 
-def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, recipes_dir=None, finalize=False):
+def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, recipes_dir=None,
+                                   finalize=False):
     '''add build nodes for any upstream deps that are not yet installable
 
     changes graph in place.
@@ -422,7 +423,8 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
     for dep, (version, build_str) in deps.items():
         # we don't need worker info in _installable because it is already part of conda_resolve
         if not _installable(dep, version, build_str, metadata.config, conda_resolve):
-            recipe_dir = _buildable(dep, version, recipes_dir, worker, metadata.config, finalize=finalize)
+            recipe_dir = _buildable(dep, version, recipes_dir, worker, metadata.config,
+                                    finalize=finalize)
             if not recipe_dir:
                 continue
                 # raise ValueError("Dependency {} is not installable, and recipe (if "
