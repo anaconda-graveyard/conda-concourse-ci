@@ -519,7 +519,8 @@ def order_build(graph):
     '''
     reorder_cyclical_test_dependencies(graph)
     try:
-        order = nx.topological_sort(graph, reverse=True)
+        order = list(nx.topological_sort(graph))
+        order.reverse()
     except nx.exception.NetworkXUnfeasible:
         raise ValueError("Cycles detected in graph: %s", nx.find_cycle(graph,
                                                                        orientation='reverse'))
