@@ -170,7 +170,7 @@ _rendered_recipes = {}
 
 
 @conda_interface.memoized
-def _get_or_render_metadata(meta_file_or_recipe_dir, worker, config=None):
+def _get_or_render_metadata(meta_file_or_recipe_dir, worker, finalize, config=None):
     global _rendered_recipes
     platform = worker['platform']
     arch = str(worker['arch'])
@@ -178,15 +178,15 @@ def _get_or_render_metadata(meta_file_or_recipe_dir, worker, config=None):
         print("rendering {0} for {1}".format(meta_file_or_recipe_dir, worker['label']))
         _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)] = \
                             api.render(meta_file_or_recipe_dir, platform=platform, arch=arch,
-                                       verbose=False, permit_undefined_jinja=True, finalize=False,
+                                       verbose=False, permit_undefined_jinja=True, finalize=finalize,
                                        bypass_env_check=True, config=config)
     return _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)]
 
 
 def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
-                        recipes_dir=None, config=None):
+                        recipes_dir=None, config=None, finalize=False):
     try:
-        rendered = _get_or_render_metadata(recipe_dir, worker, config=config)
+        rendered = _get_or_render_metadata(recipe_dir, worker, config=config, finalize=finalize)
     except (IOError, SystemExit):
         log.warn('invalid recipe dir: %s - skipping', recipe_dir)
         return None
@@ -201,7 +201,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         if name not in graph.nodes():
             graph.add_node(name, meta=metadata, worker=worker)
             add_dependency_nodes_and_edges(name, graph, run, worker, conda_resolve,
-                                        recipes_dir=recipes_dir)
+                                        recipes_dir=recipes_dir, finalize=finalize)
 
         # # add the test equivalent at the same time.  This is so that expanding can find it.
         # if run == 'build':
@@ -333,7 +333,7 @@ def collapse_subpackage_nodes(graph):
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
                     git_rev=None, stop_rev=None, matrix_base_dir=None,
-                    config=None):
+                    config=None, finalize=False):
     '''
     Construct a directed graph of dependencies from a directory of recipes
 
@@ -359,7 +359,7 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
         if not os.path.isdir(recipe_dir):
             raise ValueError("Specified folder {} does not exist".format(recipe_dir))
         add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
-                            recipes_dir, config=config)
+                            recipes_dir, config=config, finalize=finalize)
     add_intradependencies(graph)
     collapse_subpackage_nodes(graph)
     return graph
@@ -384,7 +384,7 @@ def _installable(name, version, build_string, config, conda_resolve):
     return installable
 
 
-def _buildable(name, version, recipes_dir, worker, config):
+def _buildable(name, version, recipes_dir, worker, config, finalize):
     """Does the recipe that we have available produce the package we need?"""
     possible_dirs = os.listdir(recipes_dir)
     packagename_re = re.compile(r'%s(?:\-[0-9]+[\.0-9\_\-a-zA-Z]*)?$' % name)
@@ -393,7 +393,7 @@ def _buildable(name, version, recipes_dir, worker, config):
                     packagename_re.match(dirname)))
     metadata_tuples = [m for path in likely_dirs
                         for (m, _, _) in _get_or_render_metadata(os.path.join(recipes_dir,
-                                                                                path), worker)]
+                                                                 path), worker, finalize=finalize)]
 
     # this is our target match
     ms = conda_interface.MatchSpec(" ".join([name, _fix_any(version, config)]))
@@ -405,7 +405,7 @@ def _buildable(name, version, recipes_dir, worker, config):
     return m.meta_path if available else False
 
 
-def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, recipes_dir=None):
+def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, recipes_dir=None, finalize=False):
     '''add build nodes for any upstream deps that are not yet installable
 
     changes graph in place.
@@ -422,14 +422,14 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
     for dep, (version, build_str) in deps.items():
         # we don't need worker info in _installable because it is already part of conda_resolve
         if not _installable(dep, version, build_str, metadata.config, conda_resolve):
-            recipe_dir = _buildable(dep, version, recipes_dir, worker, metadata.config)
+            recipe_dir = _buildable(dep, version, recipes_dir, worker, metadata.config, finalize=finalize)
             if not recipe_dir:
                 continue
                 # raise ValueError("Dependency {} is not installable, and recipe (if "
                 #                  " available) can't produce desired version ({})."
                 #                  .format(dep, version))
             dep_name = add_recipe_to_graph(recipe_dir, graph, 'build', worker,
-                                            conda_resolve, recipes_dir)
+                                            conda_resolve, recipes_dir, finalize=finalize)
             if not dep_name:
                 raise ValueError("Tried to build recipe {0} as dependency, which is skipped "
                                  "in meta.yaml".format(recipe_dir))
@@ -442,7 +442,7 @@ def expand_run_upstream(graph, conda_resolve, worker, run, steps=0, max_downstre
 
 
 def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
-               recipes_dir=None, matrix_base_dir=None):
+               recipes_dir=None, matrix_base_dir=None, finalize=False):
     """Apply the build label to any nodes that need (re)building or testing.
 
     "need rebuilding" means both packages that our target package depends on,
@@ -467,7 +467,7 @@ def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
                     add_recipe_to_graph(
                         os.path.dirname(full_graph.node[predecessor]['meta'].meta_path),
                         task_graph, run=run, worker=worker, conda_resolve=conda_resolve,
-                        recipes_dir=recipes_dir)
+                        recipes_dir=recipes_dir, finalize=finalize)
                     downstream += 1
         return len(graph.nodes())
 
