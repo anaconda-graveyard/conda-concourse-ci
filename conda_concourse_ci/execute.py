@@ -35,6 +35,7 @@ conda_subdir_to_concourse_platform = {
     'osx-64': 'darwin',
     'linux-64': 'linux',
     'linux-32': 'linux',
+    'linux-ppc64le': 'linux-ppc64le'
 }
 
 
