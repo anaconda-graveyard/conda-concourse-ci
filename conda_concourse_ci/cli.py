@@ -105,9 +105,14 @@ def parse_args(parse_this=None):
         keys such as `c_compiler` and `target_platform` to form a build matrix."""
     )
     one_off_parser.add_argument('--output-dir', help=("folder where output plan and recipes live."
-                                "Defaults to temp folder.  Set to something to save output."),
-                                default=None)
+                                "Defaults to temp folder.  Set to something to save output."))
 
+    rm_parser = sp.add_parser('rm', help='remove pipelines from server')
+    rm_parser.add_argument('pipeline_names', nargs="+",
+                           help=("Specify pipeline names on server to remove"))
+    rm_parser.add_argument('--config-root-dir',
+                           help="path containing config.yml and matrix definitions",
+                           default=cc_conda_build.get('matrix_base_dir'))
     return parser.parse_args(parse_this)
 
 
@@ -133,6 +138,8 @@ def main(args=None):
         execute.compute_builds(**args.__dict__)
     elif args.subparser_name == 'one-off':
         execute.submit_one_off(**args.__dict__)
+    elif args.subparser_name == 'rm':
+        execute.rm_pipeline(**args.__dict__)
     else:
         # this is here so that if future subcommands are added, you don't forget to add a bit
         #     here to enable them.
