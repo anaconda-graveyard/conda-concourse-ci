@@ -109,7 +109,8 @@ def consolidate_task(inputs, subdir):
     return {'task': 'update-artifact-index', 'config': task_dict}
 
 
-def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False):
+def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False,
+                   worker_tags=None):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
     build_args = ['--no-anaconda-upload', '--output-folder=output-artifacts',
@@ -161,7 +162,8 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
 
     task_dict = {'task': 'build', 'config': task_dict}
-    worker_tags = ensure_list(meta.meta.get('extra', {}).get('worker_tags'))
+    worker_tags = (ensure_list(worker_tags) +
+                   ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
     if worker_tags:
         task_dict['tags'] = worker_tags
     return task_dict
@@ -188,7 +190,8 @@ def _resource_to_dict(resource):
     return out
 
 
-def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config_vars, public=True):
+def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
+                            worker_tags=None):
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
@@ -269,7 +272,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         if prereqs:
             tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
         tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
-                                    commit_id, public, artifact_input=bool(prereqs)))
+                                    commit_id, public, artifact_input=bool(prereqs),
+                                    worker_tags=worker_tags))
         tasks.append({'put': resource_name,
                       'params': {'sync_dir': 'output-artifacts',
                                  'rsync_opts': ["--archive", "--no-perms",
@@ -453,7 +457,8 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
 
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
-                   output_folder_label='git', config_overrides=None, platform_filters=None, **kw):
+                   output_folder_label='git', config_overrides=None, platform_filters=None,
+                   worker_tags=None, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -500,7 +505,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
 
     plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
                                 commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
-                                config_vars=data, public=public)
+                                   config_vars=data, public=public, worker_tags=worker_tags)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
