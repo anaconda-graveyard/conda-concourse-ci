@@ -113,6 +113,7 @@ def parse_args(parse_this=None):
     rm_parser.add_argument('--config-root-dir',
                            help="path containing config.yml and matrix definitions",
                            default=cc_conda_build.get('matrix_base_dir'))
+    rm_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
     return parser.parse_args(parse_this)
 
 
