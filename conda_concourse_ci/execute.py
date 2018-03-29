@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 from collections import OrderedDict
 import contextlib
+from fnmatch import fnmatch
 import glob
 import logging
 import os
@@ -22,6 +23,11 @@ from .utils import HashableDict, load_yaml_config_dir, ensure_list
 
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
+
+try:
+    input = raw_input
+except NameError:
+    pass
 
 # get rid of the special object notation in the yaml file for HashableDict instances that we dump
 yaml.add_representer(HashableDict, yaml.representer.SafeRepresenter.represent_dict)
@@ -640,7 +646,7 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **
                config_overrides=config_overrides, **kwargs)
 
 
-def rm_pipeline(pipeline_names, config_root_dir, **kwargs):
+def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, **kwargs):
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
         data = yaml.load(src)
@@ -660,7 +666,27 @@ def rm_pipeline(pipeline_names, config_root_dir, **kwargs):
     # sync (possibly update our client version)
     subprocess.check_call('fly -t conda-concourse-server sync'.split())
 
-    # remove the specified pipelines
-    for pipeline_name in ensure_list(pipeline_names):
-        subprocess.check_call(['fly', '-t', 'conda-concourse-server',
-                            'dp', '-np', pipeline_name])
+    existing_pipelines = subprocess.check_output('fly -t conda-concourse-server ps'.split())
+    if hasattr(existing_pipelines, 'decode'):
+        existing_pipelines = existing_pipelines.decode()
+    existing_pipelines = [line.split()[0] for line in existing_pipelines.splitlines()[1:]]
+
+    pipelines_to_remove = []
+    for pattern in ensure_list(pipeline_names):
+        pipelines_to_remove.extend([p for p in existing_pipelines if fnmatch(p, pattern)])
+
+    print("Removing pipelines:")
+    for p in pipelines_to_remove:
+        print(p)
+    if not do_it_dammit:
+        confirmation = input("Confirm [y]/n: ") or 'y'
+    else:
+        print("YOLO! removing all listed pipelines")
+
+    if do_it_dammit or confirmation == 'y':
+        # remove the specified pipelines
+        for pipeline_name in pipelines_to_remove:
+            subprocess.check_call(['fly', '-t', 'conda-concourse-server',
+                                'dp', '-np', pipeline_name])
+    else:
+        print("aborted")
