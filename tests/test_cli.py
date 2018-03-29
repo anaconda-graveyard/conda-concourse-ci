@@ -32,7 +32,8 @@ def test_submit_one_off(mocker):
                                                        public=True, recipe_root_dir=os.getcwd(),
                                                        subparser_name='one-off', folders=['bzip2'],
                                                        channel=None, variant_config_files=None,
-                                                       output_dir=None, platform_filters=None)
+                                                       output_dir=None, platform_filters=None,
+                                                       worker_tags=None)
 
 
 def test_submit_without_base_name_raises():
@@ -65,7 +66,7 @@ def test_examine(mocker):
                                                        path='.', steps=0, stop_rev=None,
                                                        subparser_name='examine', test=False,
                                                        channel=None, variant_config_files=None,
-                                                       platform_filters=None)
+                                                       platform_filters=None, worker_tags=None)
 
 
 def test_examine_without_base_name_raises():

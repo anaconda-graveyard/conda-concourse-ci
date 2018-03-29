@@ -50,6 +50,11 @@ def parse_args(parse_this=None):
                                 "linux* will build all platform files whose filenames start with "
                                 "linux",
                                 dest='platform_filters')
+    examine_parser.add_argument('--worker-tag', '-t', action='append',
+                                help="set worker tag(s) to limit where jobs will run.  Applies "
+                                "to all jobs.  For finer control, use extra/worker_tags in "
+                                "meta.yaml with selectors.",
+                                dest='worker_tags')
     examine_parser.add_argument(
         '-m', '--variant-config-files',
         action="append",
@@ -98,6 +103,11 @@ def parse_args(parse_this=None):
                                 help="glob pattern(s) to filter build platforms.  For example, "
                                 "linux* will build all platform files whose filenames start with "
                                 "linux", dest='platform_filters')
+    one_off_parser.add_argument('--worker-tag', '-t', action='append',
+                                help="set worker tag(s) to limit where jobs will run.  Applies "
+                                "to all jobs.  For finer control, use extra/worker_tags in "
+                                "meta.yaml with selectors.",
+                                dest='worker_tags')
     one_off_parser.add_argument(
         '-m', '--variant-config-files',
         action="append",
