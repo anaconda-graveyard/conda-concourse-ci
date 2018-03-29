@@ -159,7 +159,12 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
-    return {'task': 'build', 'config': task_dict}
+
+    task_dict = {'task': 'build', 'config': task_dict}
+    worker_tags = ensure_list(meta.meta.get('extra', {}).get('worker_tags'))
+    if worker_tags:
+        task_dict['tags'] = worker_tags
+    return task_dict
 
 
 def _resource_type_to_dict(resource_type):
