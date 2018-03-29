@@ -628,3 +628,29 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **
         submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
                pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
                config_overrides=config_overrides, **kwargs)
+
+
+def rm_pipeline(pipeline_names, config_root_dir, **kwargs):
+    config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
+    with open(config_path) as src:
+        data = yaml.load(src)
+
+    # make sure we are logged in to the configured server
+    login_args = ['fly', '-t', 'conda-concourse-server', 'login',
+                  '--concourse-url', data['concourse-url'],
+                  '--team-name', data['concourse-team']]
+    if 'concourse-username' in data:
+        # auth is optional.  With Github OAuth, there's an interactive prompt that asks
+        #   the user to go log in with a web browser.  This should not interfere with that.
+        login_args.extend(['--username', data['concourse-username'],
+                           '--password', data['concourse-password']])
+
+    subprocess.check_call(login_args)
+
+    # sync (possibly update our client version)
+    subprocess.check_call('fly -t conda-concourse-server sync'.split())
+
+    # remove the specified pipelines
+    for pipeline_name in ensure_list(pipeline_names):
+        subprocess.check_call(['fly', '-t', 'conda-concourse-server',
+                            'dp', '-np', pipeline_name])
