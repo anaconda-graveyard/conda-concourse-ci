@@ -13,6 +13,7 @@ RUN mkdir -p bin && \
   curl -L ${ARTIFACT_URL} -o bin/fly && chmod +x bin/fly
 
 RUN yum install -y \
+  gettext gettext.i686 \
   libX11 libX11.i686 \
   libXau libXau.i686 \
   libXcb libXcb.i686 \
