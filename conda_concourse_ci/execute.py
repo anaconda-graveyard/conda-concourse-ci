@@ -526,7 +526,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     for fn in glob.glob(os.path.join(output_dir, 'output_order*')):
         os.remove(fn)
     last_recipe_dir = None
-    for node in nx.topological_sort(task_graph, reverse=True):
+    nodes = list(nx.topological_sort(task_graph))
+    nodes.reverse()
+    for node in nodes:
         meta = task_graph.node[node]['meta']
         if meta.meta_path:
             recipe = os.path.dirname(meta.meta_path)
