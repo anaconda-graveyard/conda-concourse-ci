@@ -119,7 +119,7 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
                    worker_tags=None):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
-    build_args = ['--no-anaconda-upload', '--output-folder=output-artifacts',
+    build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
                   '--cache-dir=output-source', '--stats-file={}'.format(
                       os.path.join('stats', stats_filename))]
     inputs = [{'name': 'rsync-recipes'}]
