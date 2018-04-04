@@ -20,6 +20,7 @@ RUN yum install -y \
   rsync \
   util-linux \
   wget \
+  which \
   bzip2 \
   xorg-x11-server-Xvfb \
   && yum clean all
