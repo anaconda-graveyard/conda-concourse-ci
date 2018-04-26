@@ -263,12 +263,16 @@ def add_intradependencies(graph):
             name_matches = (n for n in graph.nodes() if graph.node[n]['meta'].name() == dep.name)
             for matching_node in name_matches:
                 # are any of these build dependencies also nodes in our graph?
-                if (match_peer_job(conda_interface.MatchSpec(dep),
-                                   graph.node[matching_node]['meta'],
-                                   m) and
+                match_meta = graph.node[matching_node]['meta']
+                if (match_peer_job(conda_interface.MatchSpec(dep), match_meta, m) and
                          (node, matching_node) not in graph.edges()):
-                    # add edges if they don't already exist
-                    graph.add_edge(node, matching_node)
+                    # inside if statement because getting used vars is expensive
+                    shared_vars = set(match_meta.get_used_vars()) & set(m.get_used_vars())
+                    # all vars in variant that they both use must line up
+                    if all(match_meta.config.variant[v] == m.config.variant[v]
+                            for v in shared_vars):
+                        # add edges if they don't already exist
+                        graph.add_edge(node, matching_node)
 
 
 def collapse_subpackage_nodes(graph):
@@ -280,6 +284,7 @@ def collapse_subpackage_nodes(graph):
     top-level recipe."""
     # group nodes by their recipe path first, then within those groups by their variant
     node_groups = {}
+
     for node in graph.nodes():
         if 'meta' in graph.node[node]:
             meta = graph.node[node]['meta']
