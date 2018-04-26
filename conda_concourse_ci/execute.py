@@ -29,6 +29,7 @@ try:
 except NameError:
     pass
 
+
 # get rid of the special object notation in the yaml file for HashableDict instances that we dump
 yaml.add_representer(HashableDict, yaml.representer.SafeRepresenter.represent_dict)
 yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
@@ -421,6 +422,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
         subprocess.check_call(['rsync', '--delete', '-av', '-e',
                                'ssh -o UserKnownHostsFile=/dev/null '
                                '-o StrictHostKeyChecking=no -i ' + key_file,
+                               '-p', '--chmod=a=rwx',
                                src_dir + '/',
                                ('{intermediate-user}@{intermediate-server}:'
                                 '{intermediate-base-folder}/{base-name}/plan_and_recipes'

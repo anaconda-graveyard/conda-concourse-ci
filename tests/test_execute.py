@@ -85,6 +85,8 @@ def test_submit_one_off(mocker):
     check_call.assert_has_calls([mocker.call(['rsync', '--delete', '-av', '-e',
                                mocker.ANY,  # ssh command that we don't care about much
                                mocker.ANY,  # temp source directory that we don't care about
+                               mocker.ANY,  # -p (makes chmod flags work)
+                               mocker.ANY,  # chmod flags
                                ('your-intermediate-user@your-intermediate-server:'
                                 # this is what we care about.  The middle entry here
                                 #    needs 'test' replaced with 'frank'.  Also, we're syncing a
