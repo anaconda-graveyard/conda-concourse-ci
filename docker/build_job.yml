@@ -5,7 +5,6 @@ jobs:
   plan:
   - get: recipe-repo-source
     trigger: true
-  - get: miniconda-repo-source
   - task: build-conda-package
     config:
       image_resource:
@@ -16,8 +15,6 @@ jobs:
         type: docker-image
       inputs:
       - name: recipe-repo-source
-        trigger: True
-      - name: miniconda-repo-source
       platform: linux
       run:
         path: conda-build
@@ -33,12 +30,10 @@ jobs:
       platform: linux
       image_resource:
         source:
-          repository: busybox
+          repository: conda/c3i-linux-64
         type: docker-image
       inputs:
         - name: recipe-repo-source
-          trigger: True
-        - name: miniconda-repo-source
       outputs:
         - name: docker-build
       run:
@@ -47,7 +42,6 @@ jobs:
           - -exc
           - |
             cp -r recipe-repo-source/docker/c3i-linux-64/* docker-build
-            cp miniconda-repo-source/bootstrap/Miniconda* docker-build
   - put: docker-image
     params:
       build: docker-build
@@ -67,9 +61,3 @@ resources:
   type: git
   source:
     uri: {{recipe-repo}}
-
-- name: miniconda-repo-source
-  type: git
-  source:
-    uri: {{miniconda-repo}}
-    private_key: {{miniconda-repo-private-key}}
