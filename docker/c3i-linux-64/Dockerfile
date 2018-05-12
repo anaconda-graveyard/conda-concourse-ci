@@ -23,6 +23,13 @@ RUN yum install -y \
   libXt libXt.i686 \
   mesa-libGL mesa-libGL.i686 \
   mesa-libGLU mesa-libGLU.i686 \
+  libXcomposite libXcomposite.i686 \
+  libXcursor libXcursor.i686 \
+  libXi libXi.i686 \
+  libXtst libXtst.i686 \
+  libXrandr libXrandr.i686 \
+  alsa-lib alsa-lib.i686 \
+  mesa-libEGL mesa-libEGL.i686 \
   openssh-clients \
   patch \
   rsync \
