@@ -28,6 +28,7 @@ RUN yum install -y \
   libXi libXi.i686 \
   libXtst libXtst.i686 \
   libXrandr libXrandr.i686 \
+  libXScrnSaver libXScrnSaver.i686 \
   alsa-lib alsa-lib.i686 \
   mesa-libEGL mesa-libEGL.i686 \
   openssh-clients \
