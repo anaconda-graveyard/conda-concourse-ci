@@ -11,7 +11,7 @@ import networkx as nx
 from conda_build import api, conda_interface
 from conda_build.metadata import find_recipe, MetaData
 
-from .utils import HashableDict
+from .utils import HashableDict, ensure_list
 
 
 log = logging.getLogger(__file__)
@@ -36,6 +36,7 @@ def package_key(metadata, worker_label, run='build'):
     key = "-".join(key)
     if run == 'test':
         key = '-'.join(('c3itest', key))
+    key = key.replace(' ', '_')
     return key
 
 
@@ -258,7 +259,7 @@ def add_intradependencies(graph):
         # on (the one calculating the graph).
         deps = set(m.ms_depends('build') + m.ms_depends('host') + m.ms_depends('run') +
                    [conda_interface.MatchSpec(dep) for dep in
-                    m.meta.get('test', {}).get('requires', [])])
+                    ensure_list((m.meta.get('test') or {}).get('requires', []))])
 
         for dep in deps:
             name_matches = (n for n in graph.nodes() if graph.node[n]['meta'].name() == dep.name)
