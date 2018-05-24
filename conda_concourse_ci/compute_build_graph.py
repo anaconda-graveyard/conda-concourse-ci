@@ -36,6 +36,7 @@ def package_key(metadata, worker_label, run='build'):
     key = "-".join(key)
     if run == 'test':
         key = '-'.join(('c3itest', key))
+    key = key.replace(' ', '_')
     return key
 
 
