@@ -2,7 +2,7 @@ resource_types:
 - name: rsync-resource
   type: docker-image
   source:
-      repository: msarahan/concourse-rsync-resource
+      repository: conda/concourse-rsync-resource
       tag: latest
 
 resources:

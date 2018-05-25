@@ -206,7 +206,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     resource_types = [{'name': 'rsync-resource',
                        'type': 'docker-image',
                        'source': {
-                           'repository': 'msarahan/concourse-rsync-resource',
+                           'repository': 'conda/concourse-rsync-resource',
                            'tag': 'latest'
                            }
                        }]
@@ -326,7 +326,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         resource_types.append({'name': 'anacondaorg-resource',
                        'type': 'docker-image',
                        'source': {
-                           'repository': 'msarahan/concourse-anaconda_org-resource',
+                           'repository': 'conda/concourse-anaconda_org-resource',
                            'tag': 'latest'
                            }
                        })
