@@ -259,7 +259,7 @@ def add_intradependencies(graph):
         # on (the one calculating the graph).
         deps = set(m.ms_depends('build') + m.ms_depends('host') + m.ms_depends('run') +
                    [conda_interface.MatchSpec(dep) for dep in
-                    ensure_list((m.meta.get('test') or {}).get('requires', []))])
+                    ensure_list((m.meta.get('test') or {}).get('requires'))])
 
         for dep in deps:
             name_matches = (n for n in graph.nodes() if graph.node[n]['meta'].name() == dep.name)
@@ -328,14 +328,28 @@ def collapse_subpackage_nodes(graph):
             # fold in dependencies for all of the other subpackages within a group.  This is just
             #     the intersection of the edges between all nodes.  Store this on the "master" node.
             if subpackages:
-                remap_edges = [edge for edge in graph.edges() if edge[1] in subpackages]
-                for edge in remap_edges:
-                    graph.add_edge(edge[0], master_key)
+                # reassign any external dependencies on our subpackages to the top-level package
+                for edge in [edge for edge in graph.edges() if edge[1] in subpackages]:
+                    new_edge = edge[0], master_key
+                    if new_edge not in graph.edges():
+                        graph.add_edge(*new_edge)
+                    graph.remove_edge(*edge)
+
+                # reassign our subpackages' deps to the top-level package
+                for edge in [edge for edge in graph.edges() if edge[0] in subpackages]:
+                    new_edge = master_key, edge[1]
+                    if new_edge not in graph.edges():
+                        graph.add_edge(*new_edge)
                     graph.remove_edge(*edge)
 
                 # remove nodes that have been folded into master nodes
                 for subnode in subpackages:
                     graph.remove_node(subnode)
+
+    # the reassignment can end up with a top-level package depending on itself.  Clean it up.
+    for edge in graph.edges()[:]:
+        if graph.node[edge[0]]['meta'].name() == graph.node[edge[1]]['meta'].name():
+            graph.remove_edge(*edge)
 
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
