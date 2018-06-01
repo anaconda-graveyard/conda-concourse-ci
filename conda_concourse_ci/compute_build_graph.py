@@ -347,9 +347,13 @@ def collapse_subpackage_nodes(graph):
                     graph.remove_node(subnode)
 
     # the reassignment can end up with a top-level package depending on itself.  Clean it up.
-    for edge in graph.edges()[:]:
+    to_remove = set()
+    for edge in graph.edges():
         if graph.node[edge[0]]['meta'].name() == graph.node[edge[1]]['meta'].name():
-            graph.remove_edge(*edge)
+            to_remove.add(edge)
+
+    for edge in to_remove:
+        graph.remove_edge(*edge)
 
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
