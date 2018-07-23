@@ -10,6 +10,7 @@ import subprocess
 import networkx as nx
 from conda_build import api, conda_interface
 from conda_build.metadata import find_recipe, MetaData
+from conda_build.build import is_package_built
 
 from .utils import HashableDict, ensure_list
 
@@ -195,10 +196,10 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
 
     name = None
     for (metadata, _, _) in rendered:
-        name = package_key(metadata, worker['label'], run)
-
-        if metadata.skip():
+        if is_package_built(metadata, 'host') or metadata.skip():
             continue
+
+        name = package_key(metadata, worker['label'], run)
 
         if name not in graph.nodes():
             graph.add_node(name, meta=metadata, worker=worker)
@@ -468,7 +469,7 @@ def expand_run_upstream(graph, conda_resolve, worker, run, steps=0, max_downstre
     pass
 
 
-def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
+def expand_run(graph, config, conda_resolve, worker, run, steps=0, max_downstream=5,
                recipes_dir=None, matrix_base_dir=None, finalize=False):
     """Apply the build label to any nodes that need (re)building or testing.
 
@@ -488,15 +489,17 @@ def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
     #     max_downstream *= 2
 
     def expand_step(task_graph, full_graph, downstream):
-        for node in task_graph.nodes():
+        nodes = list(task_graph.nodes())
+        for node in nodes:
             for predecessor in full_graph.predecessors(node):
                 if max_downstream < 0 or (downstream - initial_nodes) < max_downstream:
                     add_recipe_to_graph(
                         os.path.dirname(full_graph.node[predecessor]['meta'].meta_path),
-                        task_graph, run=run, worker=worker, conda_resolve=conda_resolve,
+                        task_graph, config=config, run=run, worker=worker,
+                        conda_resolve=conda_resolve,
                         recipes_dir=recipes_dir, finalize=finalize)
                     downstream += 1
-        return len(graph.nodes())
+        return len(task_graph.nodes())
 
     # starting from our initial collection of dirty nodes, trace the tree down to packages
     #   that depend on the dirty nodes.  These packages may need to be rebuilt, or perhaps
@@ -530,9 +533,9 @@ def expand_run(graph, conda_resolve, worker, run, steps=0, max_downstream=5,
                 downstream = expand_step(graph, full_graph, downstream)
         else:
             while True:
-                nodes = graph.nodes()
+                nodes = list(graph.nodes())
                 downstream = expand_step(graph, full_graph, downstream)
-                if nodes == graph.nodes():
+                if nodes == list(graph.nodes()):
                     break
 
 

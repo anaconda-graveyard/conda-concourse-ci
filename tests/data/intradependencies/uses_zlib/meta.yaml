@@ -4,4 +4,4 @@ package:
 
 requirements:
   build:
-    - zlib
+    - zlib_wannabe

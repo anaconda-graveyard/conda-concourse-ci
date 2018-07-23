@@ -1,6 +1,7 @@
 import os
 
 from conda_build.metadata import MetaData
+from conda_build.api import Config
 import networkx as nx
 import pytest
 
@@ -188,7 +189,7 @@ def test_installable(testing_conda_resolve, testing_metadata):
 def test_expand_run_no_up_or_down(mocker, testing_graph, testing_conda_resolve):
     initial_length = len(testing_graph)
     # all packages are installable in the default index
-    compute_build_graph.expand_run(testing_graph, testing_conda_resolve,
+    compute_build_graph.expand_run(testing_graph, Config(), testing_conda_resolve,
                                    worker=dummy_worker, run='build')
     assert len(testing_graph) == initial_length
 
@@ -200,7 +201,7 @@ def test_expand_run_step_down(mocker, testing_graph, testing_conda_resolve):
                                             folders=('a',), run='build',
                                             matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
-    compute_build_graph.expand_run(g, testing_conda_resolve,
+    compute_build_graph.expand_run(g, Config(), testing_conda_resolve,
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_config_dir,
@@ -218,7 +219,7 @@ def test_expand_run_two_steps_down(mocker, testing_graph, testing_conda_resolve)
                                             matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
 
-    compute_build_graph.expand_run(g, testing_conda_resolve,
+    compute_build_graph.expand_run(g, Config(), testing_conda_resolve,
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_config_dir,
@@ -242,12 +243,13 @@ def test_expand_run_all_steps_down(mocker, testing_graph, testing_conda_resolve)
                                             matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
 
-    compute_build_graph.expand_run(g, testing_conda_resolve,
+    compute_build_graph.expand_run(g, Config(), testing_conda_resolve,
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_config_dir,
                                    max_downstream=-1, steps=-1)
-    assert set(g.nodes()) == {'a-1.0-on-linux', 'b-1.0-on-linux', 'c-1.0-on-linux', 'd-1.0-on-linux', 'e-1.0-on-linux'}
+    assert set(g.nodes()) == {'a-1.0-on-linux', 'b-1.0-on-linux', 'c-1.0-on-linux',
+                              'd-1.0-on-linux', 'e-1.0-on-linux'}
 
 
 def test_expand_run_all_steps_down_with_max(mocker, testing_conda_resolve):
@@ -258,7 +260,7 @@ def test_expand_run_all_steps_down_with_max(mocker, testing_conda_resolve):
                                             matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
 
-    compute_build_graph.expand_run(g, testing_conda_resolve,
+    compute_build_graph.expand_run(g, Config(), testing_conda_resolve,
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir,
                                    matrix_base_dir=test_config_dir,
@@ -274,12 +276,12 @@ def test_expand_run_build_non_installable_prereq(mocker, testing_conda_resolve):
                                             matrix_base_dir=test_config_dir,
                                             conda_resolve=testing_conda_resolve)
 
-    compute_build_graph.expand_run(g, testing_conda_resolve,
+    compute_build_graph.expand_run(g, Config(), testing_conda_resolve,
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir)
     assert set(g.nodes()) == {'a-1.0-on-linux', 'b-1.0-on-linux'}
 
-    compute_build_graph.expand_run(g, testing_conda_resolve,
+    compute_build_graph.expand_run(g, Config(), testing_conda_resolve,
                                    run='build', worker=dummy_worker,
                                    recipes_dir=graph_data_dir, matrix_base_dir=test_config_dir,
                                    steps=1)

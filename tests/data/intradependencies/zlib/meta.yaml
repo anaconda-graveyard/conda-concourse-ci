@@ -1,7 +1,7 @@
 # this is a dummy package to make sure that we correctly create the build tree
 
 package:
-  name: zlib
+  name: zlib_wannabe
   version: 1.2.8
 
 build:

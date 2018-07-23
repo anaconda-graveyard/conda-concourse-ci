@@ -116,6 +116,18 @@ def parse_args(parse_this=None):
     )
     one_off_parser.add_argument('--output-dir', help=("folder where output plan and recipes live."
                                 "Defaults to temp folder.  Set to something to save output."))
+    one_off_parser.add_argument(
+        '--append-file',
+        help="""Append data in meta.yaml with fields from this file.  Jinja2 is not done
+        on appended fields""",
+        dest='append_sections_file',
+    )
+    one_off_parser.add_argument(
+        '--clobber-file',
+        help="""Clobber data in meta.yaml with fields from this file.  Jinja2 is not done
+        on clobbered fields.""",
+        dest='clobber_sections_file',
+    )
 
     rm_parser = sp.add_parser('rm', help='remove pipelines from server')
     rm_parser.add_argument('pipeline_names', nargs="+",

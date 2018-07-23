@@ -7,4 +7,4 @@ requirements:
     - python
   run:
     - python
-    - functools32  # [py27]
+    - functools32_wannabe  # [py27]
