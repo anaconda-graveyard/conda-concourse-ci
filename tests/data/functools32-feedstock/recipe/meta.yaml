@@ -1,5 +1,5 @@
 package:
-  name: functools32
+  name: functools32_wannabe
   version: "3.2.3.2"
 
 source:

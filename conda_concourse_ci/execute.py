@@ -12,7 +12,7 @@ import tempfile
 import time
 
 import conda_build.api
-from conda_build.conda_interface import Resolve, TemporaryDirectory
+from conda_build.conda_interface import Resolve, TemporaryDirectory, cc_conda_build
 from conda_build.index import get_build_index
 import networkx as nx
 import yaml
@@ -56,7 +56,8 @@ def parse_platforms(matrix_base_dir, run, platform_filters):
 
 
 def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=False,
-                  max_downstream=5, variant_config_files=None, platform_filters=None):
+                  max_downstream=5, variant_config_files=None, platform_filters=None,
+                  clobber_sections_file=None, append_sections_file=None):
     # runs = ['test']
     # not testing means build and test
     # if not test:
@@ -64,7 +65,8 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
     runs = ['build']
 
     task_graph = nx.DiGraph()
-    config = conda_build.api.Config()
+    config = conda_build.api.Config(clobber_sections_file=clobber_sections_file,
+                                    append_sections_file=append_sections_file)
     platform_filters = ensure_list(platform_filters) if platform_filters else ['*']
     for run in runs:
         platforms = parse_platforms(matrix_base_dir, run, platform_filters)
@@ -81,8 +83,8 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
                                 matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve,
                                 config=config)
             # Apply the build label to any nodes that need (re)building or testing
-            expand_run(g, conda_resolve=conda_resolve, worker=platform, run=run,
-                       steps=steps, max_downstream=max_downstream, recipes_dir=path,
+            expand_run(g, config=config.copy(), conda_resolve=conda_resolve, worker=platform,
+                       run=run, steps=steps, max_downstream=max_downstream, recipes_dir=path,
                        matrix_base_dir=matrix_base_dir)
             # merge this graph with the main one
             task_graph = nx.compose(task_graph, g)
@@ -466,7 +468,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
-                   worker_tags=None, **kw):
+                   worker_tags=None, clobber_sections_file=None, append_sections_file=None, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -481,6 +483,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     # clean up quoting from concourse template evaluation
     matrix_base_dir = matrix_base_dir.replace('"', '')
 
+    append_sections_file = append_sections_file or cc_conda_build.get('append_sections_file')
+    clobber_sections_file = clobber_sections_file or cc_conda_build.get('clobber_sections_file')
+
     repo_commit = ''
     git_identifier = ''
     if checkout_rev:
@@ -491,7 +496,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                        matrix_base_dir=matrix_base_dir,
                                        channels=kw.get('channel', []),
                                        variant_config_files=kw.get('variant_config_files', []),
-                                       platform_filters=platform_filters)
+                                       platform_filters=platform_filters,
+                                       append_sections_file=append_sections_file,
+                                       clobber_sections_file=clobber_sections_file)
             try:
                 repo_commit = _get_current_git_rev(path)
             except subprocess.CalledProcessError:
@@ -502,7 +509,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                    matrix_base_dir=matrix_base_dir,
                                    channels=kw.get('channel', []),
                                    variant_config_files=kw.get('variant_config_files', []),
-                                   platform_filters=platform_filters)
+                                   platform_filters=platform_filters,
+                                   append_sections_file=append_sections_file,
+                                   clobber_sections_file=clobber_sections_file)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         data = yaml.load(src)
@@ -549,6 +558,14 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         #   This should sit alongside meta.yaml, where conda-build will be able to find it
         with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
             yaml.dump(meta.config.squished_variants, f, default_flow_style=False)
+
+        # copy any clobber or append file that is specified either on CLI or via condarc
+        if clobber_sections_file:
+            shutil.copyfile(clobber_sections_file, os.path.join(out_folder, 'recipe_clobber.yaml'))
+
+        if append_sections_file:
+            shutil.copyfile(append_sections_file, os.path.join(out_folder, 'recipe_append.yaml'))
+
         order_fn = 'output_order_' + task_graph.node[node]['worker']['label']
         with open(os.path.join(output_dir, order_fn), 'a') as f:
             f.write(node + '\n')

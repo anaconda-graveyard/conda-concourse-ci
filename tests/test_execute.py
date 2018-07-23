@@ -161,7 +161,7 @@ def test_compute_builds_intradependencies(testing_workdir, monkeypatch, mocker):
         plan = yaml.load(f)
 
     uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'uses_zlib-1.0-on-centos5-64'][0]
-    assert any(task.get('passed') == ['zlib-1.2.8-on-centos5-64']
+    assert any(task.get('passed') == ['zlib_wannabe-1.2.8-on-centos5-64']
                for task in uses_zlib_job['plan'])
 
 
@@ -211,10 +211,10 @@ def test_dependency_with_selector_cross_compile(testing_conda_resolve):
     assert len(g.nodes()) == 6
     # native edge
     assert ('test_run_deps_with_selector-1.0-python_2.7-on-win-64',
-            'functools32-3.2.3.2-python_2.7-on-win-64') in g.edges()
+            'functools32_wannabe-3.2.3.2-python_2.7-on-win-64') in g.edges()
     # cross edge
     assert ('test_run_deps_with_selector-1.0-python_2.7-target_win-32-on-win-64',
-            'functools32-3.2.3.2-python_2.7-target_win-32-on-win-64') in g.edges()
+            'functools32_wannabe-3.2.3.2-python_2.7-target_win-32-on-win-64') in g.edges()
 
 
 def test_collapse_with_win_matrix_and_subpackages(monkeypatch):

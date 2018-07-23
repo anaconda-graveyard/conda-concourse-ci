@@ -33,7 +33,8 @@ def test_submit_one_off(mocker):
                                                        subparser_name='one-off', folders=['bzip2'],
                                                        channel=None, variant_config_files=None,
                                                        output_dir=None, platform_filters=None,
-                                                       worker_tags=None)
+                                                       worker_tags=None, clobber_sections_file=None,
+                                                       append_sections_file=None)
 
 
 def test_submit_without_base_name_raises():
