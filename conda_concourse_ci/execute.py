@@ -118,8 +118,8 @@ def consolidate_task(inputs, subdir):
     return {'task': 'update-artifact-index', 'config': task_dict}
 
 
-def get_build_task(base_path, graph, node, base_name, commit_id, public=True, artifact_input=False,
-                   worker_tags=None):
+def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
+                   worker_tags=None, config_vars={}):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
     build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
@@ -150,6 +150,27 @@ def get_build_task(base_path, graph, node, base_name, commit_id, public=True, ar
 
     # this is the recipe path to build
     build_args.append(os.path.join('rsync-recipes', node))
+
+    gh_access_user = config_vars.get('recipe-repo-access-user', None)
+    gh_access_token = config_vars.get('recipe-repo-access-token', None)
+    if gh_access_user and gh_access_token:
+        task_dict['params'] = {
+            'GITHUB_USER': gh_access_user,
+            'GITHUB_TOKEN': gh_access_token
+        }
+        if worker['platform'] == 'win':
+            creds_cmd = ['echo machine github.com '
+                              'login %GITHUB_USER% '
+                              'password %GITHUB_TOKEN% '
+                              'protocol https > %USERPROFILE%\_netrc']
+        else:
+            creds_cmd = ['set +x',
+                         'echo machine github.com '
+                              'login $GITHUB_USER '
+                              'password $GITHUB_TOKEN '
+                              'protocol https > ~/.netrc',
+                         'set -x']
+        worker['prefix_commands'] = worker.get('prefix_commands', []) + creds_cmd
 
     build_prefix_commands = " ".join(ensure_list(worker.get('build_prefix_commands')))
     build_suffix_commands = " ".join(ensure_list(worker.get('build_suffix_commands')))
@@ -280,9 +301,10 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
         if prereqs:
             tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
-        tasks.append(get_build_task(base_path, graph, node, config_vars['base-name'],
-                                    commit_id, public, artifact_input=bool(prereqs),
-                                    worker_tags=worker_tags))
+        tasks.append(get_build_task(base_path, graph, node, commit_id, public,
+                                    artifact_input=bool(prereqs),
+                                    worker_tags=worker_tags,
+                                    config_vars=config_vars))
         tasks.append({'put': resource_name,
                       'params': {'sync_dir': 'output-artifacts',
                                  'rsync_opts': ["--archive", "--no-perms",
