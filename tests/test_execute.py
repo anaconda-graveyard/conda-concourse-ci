@@ -38,8 +38,7 @@ def test_get_build_task(testing_graph):
     meta = testing_graph.node['b-on-linux']['meta']
     meta.config.channel_urls = ['conda_build_test']
     task = execute.get_build_task(base_path=graph_data_dir, graph=testing_graph,
-                                node='b-on-linux', base_name="frank",
-                                commit_id='abc123')
+                                node='b-on-linux', commit_id='abc123')
     assert task['config']['platform'] == 'linux'
     assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
     assert 'rsync-recipes/b-on-linux' in task['config']['run']['args'][-1]
