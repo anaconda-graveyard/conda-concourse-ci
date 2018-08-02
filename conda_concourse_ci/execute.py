@@ -155,21 +155,21 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     gh_access_token = config_vars.get('recipe-repo-access-token', None)
     if gh_access_user and gh_access_token:
         task_dict['params'] = {
-          'GITHUB_USER': gh_access_user,
-          'GITHUB_TOKEN': gh_access_token
+            'GITHUB_USER': gh_access_user,
+            'GITHUB_TOKEN': gh_access_token
         }
         if worker['platform'] == 'win':
-            creds_cmd = [ 'echo machine github.com ' \
-                             'login %GITHUB_USER% ' \
-                             'password %GITHUB_TOKEN% ' \
-                             'protocol https > %USERPROFILE%\_netrc' ]
+            creds_cmd = ['echo machine github.com '
+                              'login %GITHUB_USER% '
+                              'password %GITHUB_TOKEN% '
+                              'protocol https > %USERPROFILE%\_netrc']
         else:
-            creds_cmd = [ 'set +x',
-                          'echo machine github.com ' \
-                               'login $GITHUB_USER ' \
-                               'password $GITHUB_TOKEN ' \
-                               'protocol https > ~/.netrc',
-                          'set -x' ]
+            creds_cmd = ['set +x',
+                         'echo machine github.com '
+                              'login $GITHUB_USER '
+                              'password $GITHUB_TOKEN '
+                              'protocol https > ~/.netrc',
+                         'set -x']
         worker['prefix_commands'] = worker.get('prefix_commands', []) + creds_cmd
 
     build_prefix_commands = " ".join(ensure_list(worker.get('build_prefix_commands')))
