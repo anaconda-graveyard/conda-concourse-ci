@@ -55,9 +55,27 @@ def parse_platforms(matrix_base_dir, run, platform_filters):
     return platforms
 
 
+def _parse_python_numpy_from_pass_throughs(pass_through_list):
+    parsed = {}
+    iterator = iter(ensure_list(pass_through_list))
+    while True:
+        try:
+            args = next(iterator).lstrip("--").split("=")
+            if args[0] in ("python", "numpy", "perl", "R", "lua"):
+                if len(args) > 1:
+                    value = args[1]
+                else:
+                    value = next(iterator)
+                parsed[args[0]] = value
+        except StopIteration:
+            break
+
+    return parsed
+
+
 def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=False,
                   max_downstream=5, variant_config_files=None, platform_filters=None,
-                  clobber_sections_file=None, append_sections_file=None):
+                  clobber_sections_file=None, append_sections_file=None, pass_throughs=None):
     # runs = ['test']
     # not testing means build and test
     # if not test:
@@ -65,8 +83,9 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
     runs = ['build']
 
     task_graph = nx.DiGraph()
+    parsed_cli_args = _parse_python_numpy_from_pass_throughs(pass_throughs)
     config = conda_build.api.Config(clobber_sections_file=clobber_sections_file,
-                                    append_sections_file=append_sections_file)
+                                    append_sections_file=append_sections_file, **parsed_cli_args)
     platform_filters = ensure_list(platform_filters) if platform_filters else ['*']
     for run in runs:
         platforms = parse_platforms(matrix_base_dir, run, platform_filters)
@@ -119,7 +138,7 @@ def consolidate_task(inputs, subdir):
 
 
 def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
-                   worker_tags=None, config_vars={}):
+                   worker_tags=None, config_vars={}, pass_throughs=None):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
     build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
@@ -147,6 +166,9 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     else:
         task_dict['run'].update({'path': 'sh', 'args': ['-exc']})
         build_args.extend(['--croot', '.'])
+
+    # these are any arguments passed to c3i that c3i doesn't recognize
+    build_args.extend(ensure_list(pass_throughs))
 
     # this is the recipe path to build
     build_args.append(os.path.join('rsync-recipes', node))
@@ -221,7 +243,7 @@ def _resource_to_dict(resource):
 
 
 def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
-                            worker_tags=None):
+                            worker_tags=None, pass_throughs=None):
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
@@ -304,7 +326,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         tasks.append(get_build_task(base_path, graph, node, commit_id, public,
                                     artifact_input=bool(prereqs),
                                     worker_tags=worker_tags,
-                                    config_vars=config_vars))
+                                    config_vars=config_vars,
+                                    pass_throughs=pass_throughs))
         tasks.append({'put': resource_name,
                       'params': {'sync_dir': 'output-artifacts',
                                  'rsync_opts': ["--archive", "--no-perms",
@@ -399,7 +422,7 @@ def checkout_git_rev(checkout_rev, path):
 
 
 def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
-           public=True, config_overrides=None, **kw):
+           public=True, config_overrides=None, pass_throughs=None, **kw):
     """submit task that will monitor changes and trigger other build tasks
 
     This gets the ball rolling.  Once submitted, you don't need to manually trigger
@@ -490,7 +513,8 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
-                   worker_tags=None, clobber_sections_file=None, append_sections_file=None, **kw):
+                   worker_tags=None, clobber_sections_file=None, append_sections_file=None,
+                   pass_throughs=None, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -520,7 +544,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                        variant_config_files=kw.get('variant_config_files', []),
                                        platform_filters=platform_filters,
                                        append_sections_file=append_sections_file,
-                                       clobber_sections_file=clobber_sections_file)
+                                       clobber_sections_file=clobber_sections_file,
+                                       pass_throughs=pass_throughs)
             try:
                 repo_commit = _get_current_git_rev(path)
             except subprocess.CalledProcessError:
@@ -533,7 +558,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                    variant_config_files=kw.get('variant_config_files', []),
                                    platform_filters=platform_filters,
                                    append_sections_file=append_sections_file,
-                                   clobber_sections_file=clobber_sections_file)
+                                   clobber_sections_file=clobber_sections_file,
+                                   pass_throughs=pass_throughs)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         data = yaml.load(src)
@@ -543,8 +569,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         data.update(config_overrides)
 
     plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
-                                commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
-                                   config_vars=data, public=public, worker_tags=worker_tags)
+                                   commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
+                                   config_vars=data, public=public, worker_tags=worker_tags,
+                                   pass_throughs=pass_throughs)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
@@ -625,7 +652,7 @@ def _copy_yaml_if_not_there(path, base_name):
         shutil.copyfile(original, path)
 
 
-def bootstrap(base_name, **kw):
+def bootstrap(base_name, pass_throughs=None, **kw):
     """Generate template files and folders to help set up CI for a new location"""
     _copy_yaml_if_not_there('{0}/config.yml'.format(base_name), base_name)
     # this is one that we add the base_name to for future purposes
@@ -659,7 +686,8 @@ Overview:
     """.format(base_name))
 
 
-def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **kwargs):
+def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, pass_throughs=None,
+                   **kwargs):
     """A 'one-off' job is a submission of local recipes that use the concourse build workers.
 
     Submitting one of these involves a few steps:
@@ -683,13 +711,13 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, **
         kwargs['output_dir'] = tmpdir
         compute_builds(path=recipe_root_dir, base_name=pipeline_label, folders=folders,
                        matrix_base_dir=config_root_dir, config_overrides=config_overrides,
-                       **kwargs)
+                       pass_throughs=pass_throughs, **kwargs)
         submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
                pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
-               config_overrides=config_overrides, **kwargs)
+               config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
 
 
-def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, **kwargs):
+def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
         data = yaml.load(src)
