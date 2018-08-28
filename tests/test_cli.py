@@ -20,7 +20,7 @@ def test_submit(mocker):
                                                debug=False, pipeline_file='plan_director.yml',
                                                pipeline_name='{base_name} plan director',
                                                public=True, src_dir=os.getcwd(),
-                                               subparser_name='submit')
+                                               subparser_name='submit', pass_throughs=[])
 
 
 def test_submit_one_off(mocker):
@@ -34,7 +34,7 @@ def test_submit_one_off(mocker):
                                                        channel=None, variant_config_files=None,
                                                        output_dir=None, platform_filters=None,
                                                        worker_tags=None, clobber_sections_file=None,
-                                                       append_sections_file=None)
+                                                       append_sections_file=None, pass_throughs=[])
 
 
 def test_submit_without_base_name_raises():
@@ -48,7 +48,7 @@ def test_bootstrap(mocker):
     args = ['bootstrap', 'frank']
     cli.main(args)
     cli.execute.bootstrap.assert_called_once_with(base_name='frank', debug=False,
-                                                  subparser_name='bootstrap')
+                                                  subparser_name='bootstrap', pass_throughs=[])
 
 
 def test_bootstrap_without_base_name_raises():
@@ -67,7 +67,8 @@ def test_examine(mocker):
                                                        path='.', steps=0, stop_rev=None,
                                                        subparser_name='examine', test=False,
                                                        channel=None, variant_config_files=None,
-                                                       platform_filters=None, worker_tags=None)
+                                                       platform_filters=None, worker_tags=None,
+                                                       pass_throughs=[])
 
 
 def test_examine_without_base_name_raises():

@@ -136,14 +136,14 @@ def parse_args(parse_this=None):
                            help="path containing config.yml and matrix definitions",
                            default=cc_conda_build.get('matrix_base_dir'))
     rm_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
-    return parser.parse_args(parse_this)
+    return parser.parse_known_args(parse_this)
 
 
 def main(args=None):
     if not args:
-        args = parse_args()
+        args, pass_throughs = parse_args()
     else:
-        args = parse_args(args)
+        args, pass_throughs = parse_args(args)
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -154,15 +154,15 @@ def main(args=None):
         args_dict = args.__dict__
         if not args_dict.get('config_root_dir'):
             args_dict['config_root_dir'] = args_dict['base_name']
-        execute.submit(**args_dict)
+        execute.submit(pass_throughs=pass_throughs, **args_dict)
     elif args.subparser_name == 'bootstrap':
-        execute.bootstrap(**args.__dict__)
+        execute.bootstrap(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'examine':
-        execute.compute_builds(**args.__dict__)
+        execute.compute_builds(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'one-off':
-        execute.submit_one_off(**args.__dict__)
+        execute.submit_one_off(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'rm':
-        execute.rm_pipeline(**args.__dict__)
+        execute.rm_pipeline(pass_throughs=pass_throughs, **args.__dict__)
     else:
         # this is here so that if future subcommands are added, you don't forget to add a bit
         #     here to enable them.
