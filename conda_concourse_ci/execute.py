@@ -15,6 +15,7 @@ import conda_build.api
 from conda_build.conda_interface import Resolve, TemporaryDirectory, cc_conda_build
 from conda_build.index import get_build_index
 import networkx as nx
+import requests
 import yaml
 
 from .compute_build_graph import (construct_graph, expand_run, order_build, git_changed_recipes,
@@ -715,6 +716,101 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, pa
         submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
                pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
                config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
+
+
+def submit_batch(
+        batch_file, recipe_root_dir, config_root_dir,
+        max_builds, poll_time, build_lookback, label_prefix,
+        pass_throughs=None, **kwargs):
+    """
+    Submit a batch of 'one-off' jobs with controlled submission based on the
+    number of running builds.
+    """
+    with open(batch_file) as f:
+        batch_items = [BatchItem(line) for line in f]
+
+    # make sure we are logged in to the configured server
+    config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
+    with open(config_path) as src:
+        data = yaml.load(src)
+    login_args = ['fly', '-t', 'conda-concourse-server', 'login',
+                  '--concourse-url', data['concourse-url'],
+                  '--team-name', data['concourse-team']]
+    if 'concourse-username' in data:
+        # auth is optional.  With Github OAuth, there's an interactive prompt that asks
+        #   the user to go log in with a web browser.  This should not interfere with that.
+        login_args.extend(['--username', data['concourse-username'],
+                           '--password', data['concourse-password']])
+    subprocess.check_call(login_args)
+    concourse_url = data['concourse-url']
+
+    success = []
+    failed = []
+    while len(batch_items):
+        num_activate_builds = _get_activate_builds(concourse_url, build_lookback)
+        if num_activate_builds < max_builds:
+            # use a try/except block here so a single failed one-off does not
+            # break the batch
+            try:
+                batch_item = batch_items.pop(0)
+                print("Starting build for:", batch_item)
+
+                pipeline_label = batch_item.get_label(label_prefix)
+                extra = kwargs.copy()
+                extra.update(batch_item.item_kwargs)
+                submit_one_off(pipeline_label, recipe_root_dir, batch_item.folders,
+                               config_root_dir, pass_throughs=pass_throughs, **extra)
+                print("Success", batch_item)
+                success.append(batch_item)
+            except Exception as e:
+                print("Fail", batch_item)
+                print("Exception was:", e)
+                failed.append(batch_item)
+        else:
+            print("Too many active builds:", num_running_builds)
+        time.sleep(poll_time)
+
+    print("one-off jobs submitted:", len(success))
+    if len(failed):
+        print("one-off jobs which failed to submit:", len(failed))
+        print("details:")
+        for item in failed:
+            print(item)
+
+
+class BatchItem(object):
+
+    def __init__(self, line):
+        if ';' in line:
+            folders_str, extra_str = line.split(';', maxsplit=2)
+            extra_str = extra_str.strip()
+        else:
+            folders_str = line
+            extra_str = ''
+
+        if len(extra_str):
+            item_kwargs = dict(i.split('=') for i in extra_str.split(','))
+        else:
+            item_kwargs = {}
+        self.folders = folders_str.split()
+        self.item_kwargs = item_kwargs
+
+    def get_label(self, prefix):
+        return prefix + self.folders[0].rsplit('-', 1)[0]
+
+    def __str__(self):
+        return ' '.join(self.folders)
+
+
+def _get_activate_builds(concourse_url, limit):
+    """ Return the number of active builds on the server. """
+    url = requests.compat.urljoin(concourse_url, 'api/v1/builds')
+    r = requests.get(url, params={'limit': limit})
+    all_items = r.json()
+    if len(all_items) < 5:
+        raise ValueError("Something wrong")
+    running = [i for i in all_items if i['status'] == 'started']
+    return len(running)
 
 
 def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):

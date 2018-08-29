@@ -129,6 +129,71 @@ def parse_args(parse_this=None):
         dest='clobber_sections_file',
     )
 
+    batch_parser = sp.add_parser('batch', help="submit a batch of one-off jobs.")
+    batch_parser.add_argument(
+        'batch_file',
+        help="""File describing batch job.  Each lines defines a seperate
+        one-off job.  List one or more folders on each line.  Job specific
+        arguments can be specified after a ';' using param=value, multiple
+        arguments are seperated by a ','.  For example:
+
+            recipe-feedstock; channel=conda-forge,clobber_sections_file=clobber.yaml
+        """)
+
+    # batch specific arguments
+    batch_parser.add_argument(
+        '--max-builds', default=36,
+        help="maximum number of activate builds allowed before starting a new job")
+    batch_parser.add_argument(
+        '--poll-time', default=120,
+        help="time in seconds between checking concourse server for active builds")
+    batch_parser.add_argument(
+        '--build-lookback', default=500,
+        help="number of builds to examine for active builds.")
+    batch_parser.add_argument(
+        '--label-prefix', default='autobot_', help="prefix for pipeline labels.")
+
+    # one-off arguments
+    batch_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
+                                help="path containing recipe folders to upload")
+    batch_parser.add_argument('--config-root-dir',
+                                help="path containing config.yml and matrix definitions",
+                                default=cc_conda_build.get('matrix_base_dir'))
+    batch_parser.add_argument('--private', action='store_false',
+                        help='hide build logs (overall graph still shown in Concourse web view)',
+                        dest='public')
+    batch_parser.add_argument('--channel', '-c', action='append',
+                                help="Additional channel to use when building packages")
+    batch_parser.add_argument('--platform-filter', '-p', action='append',
+                                help="glob pattern(s) to filter build platforms.  For example, "
+                                "linux* will build all platform files whose filenames start with "
+                                "linux", dest='platform_filters')
+    batch_parser.add_argument('--worker-tag', '-t', action='append',
+                                help="set worker tag(s) to limit where jobs will run.  Applies "
+                                "to all jobs.  For finer control, use extra/worker_tags in "
+                                "meta.yaml with selectors.",
+                                dest='worker_tags')
+    batch_parser.add_argument(
+        '-m', '--variant-config-files',
+        action="append",
+        help="""Additional variant config files to add.  These yaml files can contain
+        keys such as `c_compiler` and `target_platform` to form a build matrix."""
+    )
+    batch_parser.add_argument('--output-dir', help=("folder where output plan and recipes live."
+                              "Defaults to temp folder.  Set to something to save output."))
+    batch_parser.add_argument(
+        '--append-file',
+        help="""Append data in meta.yaml with fields from this file.  Jinja2 is not done
+        on appended fields""",
+        dest='append_sections_file',
+    )
+    batch_parser.add_argument(
+        '--clobber-file',
+        help="""Clobber data in meta.yaml with fields from this file.  Jinja2 is not done
+        on clobbered fields.""",
+        dest='clobber_sections_file',
+    )
+
     rm_parser = sp.add_parser('rm', help='remove pipelines from server')
     rm_parser.add_argument('pipeline_names', nargs="+",
                            help=("Specify pipeline names on server to remove"))
@@ -161,6 +226,8 @@ def main(args=None):
         execute.compute_builds(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'one-off':
         execute.submit_one_off(pass_throughs=pass_throughs, **args.__dict__)
+    elif args.subparser_name == 'batch':
+        execute.submit_batch(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'rm':
         execute.rm_pipeline(pass_throughs=pass_throughs, **args.__dict__)
     else:
