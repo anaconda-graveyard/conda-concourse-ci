@@ -767,7 +767,7 @@ def submit_batch(
                 print("Exception was:", e)
                 failed.append(batch_item)
         else:
-            print("Too many active builds:", num_running_builds)
+            print("Too many active builds:", num_activate_builds)
         time.sleep(poll_time)
 
     print("one-off jobs submitted:", len(success))
