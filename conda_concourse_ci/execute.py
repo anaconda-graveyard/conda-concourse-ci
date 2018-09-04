@@ -782,7 +782,7 @@ class BatchItem(object):
 
     def __init__(self, line):
         if ';' in line:
-            folders_str, extra_str = line.split(';', maxsplit=2)
+            folders_str, extra_str = line.split(';', 2)
             extra_str = extra_str.strip()
         else:
             folders_str = line
