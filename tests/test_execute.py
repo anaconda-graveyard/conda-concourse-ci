@@ -93,6 +93,32 @@ def test_submit_one_off(mocker):
                                 '/ci/frank/plan_and_recipes')
                                ])])
 
+@pytest.mark.serial
+def test_submit_batch(mocker):
+    check_call = mocker.patch.object(execute.subprocess, 'check_call')
+    submit_one_off = mocker.patch.object(execute, 'submit_one_off')
+    get_activate_builds = mocker.patch.object(execute, '_get_activate_builds', return_value=3)
+
+    execute.submit_batch(
+        os.path.join(test_data_dir, 'batch_sample.txt'),
+        os.path.join(test_data_dir, 'one-off-recipes'),
+        config_root_dir=test_config_dir,
+        max_builds=999, poll_time=0, build_lookback=500, label_prefix='sentinel_')
+    # check that fly was executed
+    check_call.assert_called_once_with(
+        ['fly', '-t', 'conda-concourse-server', 'login',
+         '--concourse-url', mocker.ANY, '--team-name', mocker.ANY,
+        '--username', mocker.ANY, '--password', mocker.ANY]
+    )
+    # submit_one_off should be called twice
+    submit_one_off.assert_has_calls([
+        mocker.call('sentinel_pytest', mocker.ANY, ['pytest', 'pytest-cov'],
+                    mocker.ANY, pass_throughs=None),
+        mocker.call('sentinel_bzip', mocker.ANY, ['bzip'],
+                    mocker.ANY, pass_throughs=None, clobber_sections_file='example.yaml'),
+    ])
+    get_activate_builds.assert_called()
+
 
 def test_bootstrap(mocker, testing_workdir):
     execute.bootstrap('frank')
