@@ -603,6 +603,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         out_folder = os.path.join(output_dir, node)
         if os.path.isdir(out_folder):
             shutil.rmtree(out_folder)
+
         shutil.copytree(os.path.join(path, recipe), out_folder)
         # write the conda_build_config.yml for this particular metadata into that recipe
         #   This should sit alongside meta.yaml, where conda-build will be able to find it
