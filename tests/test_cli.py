@@ -37,6 +37,18 @@ def test_submit_one_off(mocker):
                                                        append_sections_file=None, pass_throughs=[])
 
 
+def test_submit_batch(mocker):
+    mocker.patch.object(cli.execute, 'submit_batch')
+    args = ['batch', 'batch_file.txt', '--config-root-dir', '../config']
+    cli.main(args)
+    cli.execute.submit_batch.assert_called_once_with(
+        batch_file='batch_file.txt', recipe_root_dir=os.getcwd(), config_root_dir=mocker.ANY,
+        max_builds=36, poll_time=120, build_lookback=500, label_prefix='autobot_',
+        debug=False, public=True, subparser_name='batch', channel=None,
+        variant_config_files=None, output_dir=None, platform_filters=None, worker_tags=None,
+        clobber_sections_file=None, append_sections_file=None, pass_throughs=[])
+
+
 def test_submit_without_base_name_raises():
     with pytest.raises(SystemExit):
         args = ['submit']
