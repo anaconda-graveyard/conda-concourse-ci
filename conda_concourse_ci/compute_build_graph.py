@@ -357,6 +357,14 @@ def collapse_subpackage_nodes(graph):
         graph.remove_edge(*edge)
 
 
+def _write_recipe_log(path):
+    output = subprocess.check_output(['git', 'log'], cwd=path)
+    if not os.path.exists(os.path.join(path, "meta.yaml")):
+        path = os.path.join(path, "recipe")
+    with open(os.path.join(path, "recipe_log.txt"), "wb") as f:
+        f.write(output)
+
+
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
                     git_rev=None, stop_rev=None, matrix_base_dir=None,
                     config=None, finalize=False):
@@ -382,6 +390,10 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
     graph = nx.DiGraph()
     for folder in folders:
         recipe_dir = os.path.join(recipes_dir, folder)
+
+        # update the recipe log.  Conda-build will find this and include it with the package.
+        _write_recipe_log(recipe_dir)
+
         if not os.path.isdir(recipe_dir):
             raise ValueError("Specified folder {} does not exist".format(recipe_dir))
         add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
