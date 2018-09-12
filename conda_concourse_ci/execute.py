@@ -76,7 +76,8 @@ def _parse_python_numpy_from_pass_throughs(pass_through_list):
 
 def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=False,
                   max_downstream=5, variant_config_files=None, platform_filters=None,
-                  clobber_sections_file=None, append_sections_file=None, pass_throughs=None):
+                  clobber_sections_file=None, append_sections_file=None, pass_throughs=None,
+                  allow_dirty=False):
     # runs = ['test']
     # not testing means build and test
     # if not test:
@@ -101,11 +102,11 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
             # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
                                 matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve,
-                                config=config)
+                                config=config, allow_dirty=allow_dirty)
             # Apply the build label to any nodes that need (re)building or testing
             expand_run(g, config=config.copy(), conda_resolve=conda_resolve, worker=platform,
                        run=run, steps=steps, max_downstream=max_downstream, recipes_dir=path,
-                       matrix_base_dir=matrix_base_dir)
+                       matrix_base_dir=matrix_base_dir, allow_dirty=allow_dirty)
             # merge this graph with the main one
             task_graph = nx.compose(task_graph, g)
     return task_graph
@@ -722,7 +723,7 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, pa
 def submit_batch(
         batch_file, recipe_root_dir, config_root_dir,
         max_builds, poll_time, build_lookback, label_prefix,
-        pass_throughs=None, **kwargs):
+        pass_throughs=None, allow_dirty=False, **kwargs):
     """
     Submit a batch of 'one-off' jobs with controlled submission based on the
     number of running builds.
@@ -760,7 +761,8 @@ def submit_batch(
                 extra = kwargs.copy()
                 extra.update(batch_item.item_kwargs)
                 submit_one_off(pipeline_label, recipe_root_dir, batch_item.folders,
-                               config_root_dir, pass_throughs=pass_throughs, **extra)
+                               config_root_dir, pass_throughs=pass_throughs,
+                               allow_dirty=allow_dirty, **extra)
                 print("Success", batch_item)
                 success.append(batch_item)
             except Exception as e:

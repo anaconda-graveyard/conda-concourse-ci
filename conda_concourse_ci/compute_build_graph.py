@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 
+import json
 import logging
 import os
 import pkg_resources
@@ -357,17 +358,46 @@ def collapse_subpackage_nodes(graph):
         graph.remove_edge(*edge)
 
 
-def _write_recipe_log(path):
-    output = subprocess.check_output(['git', 'log'], cwd=path)
+def _write_recipe_log(path, allow_dirty=False):
+    is_repo = subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"], cwd=path)
+    recipe_path = path
     if not os.path.exists(os.path.join(path, "meta.yaml")):
-        path = os.path.join(path, "recipe")
-    with open(os.path.join(path, "recipe_log.txt"), "wb") as f:
-        f.write(output)
+        recipe_path = os.path.join(path, "recipe")
+    recipe_log_path = os.path.join(recipe_path, 'recipe_log.json')
+    if is_repo.strip().decode('utf-8') == "true":
+        if os.path.exists(recipe_log_path):
+            os.remove(recipe_log_path)
+        # any staged or uncommitted changes?
+        try:
+            subprocess.check_call(["git", "diff-index", "--quiet", "HEAD", "--"], cwd=path)
+        except subprocess.CalledProcessError:
+            if not allow_dirty:
+                raise ValueError("Recipe in %s has staged or uncommitted changes.  Please commit "
+                                 "or stash them before submitting a build." % path)
+
+        # any untracked files?
+        output = subprocess.check_output(["git", "ls-files", "--exclude-standard", "--others"],
+                                        cwd=path)
+        if output and not allow_dirty:
+            raise ValueError("Recipe in %s has untracked files.  Please commit them or remove them "
+                             "before submitting a build." % path)
+        git_url = subprocess.check_output(["git", "ls-remote", "--get-url", "origin"],
+                                          cwd=path).decode('utf-8').strip()
+        output = subprocess.check_output(['git', 'log',
+                                        "--pretty=format:'%h|%ad|%an|%s'",
+                                        "--date=unix"], cwd=path)
+        commits = []
+        for line in output.decode("utf-8").strip().splitlines():
+            _hash, _time, _author, _desc = line.split("|")
+            commits.append({"hash": _hash, "timestamp": _time,
+                            "author": _author, "description": _desc})
+        with open(recipe_log_path, "w") as f:
+            json.dump({'recipe_origin': git_url, 'commits': commits}, f)
 
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
                     git_rev=None, stop_rev=None, matrix_base_dir=None,
-                    config=None, finalize=False):
+                    config=None, finalize=False, allow_dirty=False):
     '''
     Construct a directed graph of dependencies from a directory of recipes
 
@@ -392,7 +422,7 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
         recipe_dir = os.path.join(recipes_dir, folder)
 
         # update the recipe log.  Conda-build will find this and include it with the package.
-        _write_recipe_log(recipe_dir)
+        _write_recipe_log(recipe_dir, allow_dirty=allow_dirty)
 
         if not os.path.isdir(recipe_dir):
             raise ValueError("Specified folder {} does not exist".format(recipe_dir))
@@ -482,7 +512,7 @@ def expand_run_upstream(graph, conda_resolve, worker, run, steps=0, max_downstre
 
 
 def expand_run(graph, config, conda_resolve, worker, run, steps=0, max_downstream=5,
-               recipes_dir=None, matrix_base_dir=None, finalize=False):
+               recipes_dir=None, matrix_base_dir=None, finalize=False, allow_dirty=False):
     """Apply the build label to any nodes that need (re)building or testing.
 
     "need rebuilding" means both packages that our target package depends on,
@@ -538,7 +568,8 @@ def expand_run(graph, config, conda_resolve, worker, run, steps=0, max_downstrea
 
         # constructing the graph for build will automatically also include the test deps
         full_graph = construct_graph(recipes_dir, worker, 'build', folders=recipe_dirs,
-                                     matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve)
+                                     matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve,
+                                     allow_dirty=allow_dirty)
 
         if steps >= 0:
             for step in range(steps):

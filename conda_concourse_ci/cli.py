@@ -61,6 +61,9 @@ def parse_args(parse_this=None):
         help="""Additional variant config files to add.  These yaml files can contain
         keys such as `c_compiler` and `target_platform` to form a build matrix."""
     )
+    examine_parser.add_argument(
+        "--allow-dirty", help="allow unstaged changes and untracked files in git repos"
+    )
 
     submit_parser = sp.add_parser('submit', help="submit plan director to configured server")
     submit_parser.add_argument('base_name',
@@ -128,6 +131,9 @@ def parse_args(parse_this=None):
         on clobbered fields.""",
         dest='clobber_sections_file',
     )
+    one_off_parser.add_argument(
+        "--allow-dirty", help="allow unstaged changes and untracked files in git repos"
+    )
 
     batch_parser = sp.add_parser('batch', help="submit a batch of one-off jobs.")
     batch_parser.add_argument(
@@ -192,6 +198,9 @@ def parse_args(parse_this=None):
         help="""Clobber data in meta.yaml with fields from this file.  Jinja2 is not done
         on clobbered fields.""",
         dest='clobber_sections_file',
+    )
+    batch_parser.add_argument(
+        "--allow-dirty", help="allow unstaged changes and untracked files in git repos"
     )
 
     rm_parser = sp.add_parser('rm', help='remove pipelines from server')
