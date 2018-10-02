@@ -37,6 +37,7 @@ RUN yum install -y \
   util-linux \
   wget \
   xorg-x11-server-Xvfb \
+  chrpath \
   && yum clean all
 
 WORKDIR /build_scripts
