@@ -76,7 +76,8 @@ def _parse_python_numpy_from_pass_throughs(pass_through_list):
 
 def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=False,
                   max_downstream=5, variant_config_files=None, platform_filters=None,
-                  clobber_sections_file=None, append_sections_file=None, pass_throughs=None):
+                  clobber_sections_file=None, append_sections_file=None, pass_throughs=None,
+                  skip_existing=True):
     # runs = ['test']
     # not testing means build and test
     # if not test:
@@ -86,7 +87,8 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
     task_graph = nx.DiGraph()
     parsed_cli_args = _parse_python_numpy_from_pass_throughs(pass_throughs)
     config = conda_build.api.Config(clobber_sections_file=clobber_sections_file,
-                                    append_sections_file=append_sections_file, **parsed_cli_args)
+                                    append_sections_file=append_sections_file,
+                                    skip_existing=skip_existing, **parsed_cli_args)
     platform_filters = ensure_list(platform_filters) if platform_filters else ['*']
     for run in runs:
         platforms = parse_platforms(matrix_base_dir, run, platform_filters)
@@ -242,6 +244,67 @@ def _resource_to_dict(resource):
     return out
 
 
+def sourceclear_task(meta, node, config_vars):
+    build_args = []
+    inputs = [{'name': 'output-source'},
+              {'name': 'rsync-recipes'},
+              {'name': 'output-artifacts'}]
+    for channel in meta.config.channel_urls:
+        build_args.extend(['-c', channel])
+    # if artifact_input:
+    #     inputs.append({'name': 'indexed-artifacts'})
+    #     build_args.extend(('-c', os.path.join('indexed-artifacts')))
+    # make our outputs be the exact constraints we install to create the env
+    output_files = conda_build.api.get_output_file_paths(meta)
+    output_files = [os.path.basename(fn) for fn in output_files]
+    output_files = ['='.join(fn.rstrip('.tar.bz2').rsplit('-', 2)) for fn in output_files]
+
+    task_dict = {
+        # we can always do this on linux, so prefer it for speed.
+        'platform': 'linux',
+        'image_resource': {
+            'type': 'docker-image',
+            'source': {
+                'repository': 'conda/c3i-linux-64',
+                'tag': 'latest',
+                }
+            },
+
+        'inputs': inputs,
+        'params': {'SRCCLR_API_TOKEN': config_vars['srcclr_token'],
+                   'SRCCLR_SCM_NAME': meta.name(),
+                   'SRCCLR_SCM_URI': meta.meta.get('about', {}).get('home', '') or meta.name(),
+                   'SRCCLR_SCM_REV': meta.build_number(),
+                   'SRCCLR_SCM_REF': meta.version(),
+                   'SRCCLR_SCM_REF_TYPE': 'tag',
+                   'DEBUG': '1',
+        },
+        'run': {
+            'path': 'sh',
+            'args': ['-exc',
+                     # srcclr requires that all dependencies are present.  To accomplish that,
+                     #   we create an env for our built package and activate that env.  Next,
+                     #   we need to extract our source code and init a git repo there.  The
+                     #   git repo is a requirement for sourceclear.  I'm not sure we'll be
+                     #   able to bypass that requirement with this hack, but we'll see.
+                     (# "find . -name 'indexed-artifacts' -prune -o -path '*/linux-64/*.tar.bz2' -print0 | xargs -0 -I file mv file indexed-artifacts/linux-64 \n"  # NOQA
+                      # "find . -name 'indexed-artifacts' -prune -o -path '*/noarch/*.tar.bz2' -print0 | xargs -0 -I file mv file indexed-artifacts/noarch \n"  # NOQA
+                      "conda-index output-artifacts \n"
+                      "conda build --source --no-build-id --croot tmp_work rsync-recipes/{}\n"
+                      "conda create -y --only-deps -p $(pwd)/dummy_env "
+                      "-c file://$(pwd)/output-artifacts {}\n"
+                      "source activate $(pwd)/dummy_env \n"
+                      "pushd tmp_work/work \n"
+                      "echo \"system_site_packages: true\" > srcclr.yml \n"
+                      # "echo \"use_system_pip: true\" >> srcclr.yml \n"
+                      "set | grep SRCCLR \n"
+                      "ls -la \n"
+                      "curl -sSL https://download.sourceclear.com/ci.sh | bash \n")
+                     .format(node, ' '.join(build_args + output_files))],
+        }}
+    return {'task': 'sourceclear scan', 'config': task_dict}
+
+
 def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
                             worker_tags=None, pass_throughs=None):
     jobs = OrderedDict()
@@ -328,6 +391,10 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                     worker_tags=worker_tags,
                                     config_vars=config_vars,
                                     pass_throughs=pass_throughs))
+        # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
+        if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
+            tasks.append(sourceclear_task(meta, node, config_vars))
+
         tasks.append({'put': resource_name,
                       'params': {'sync_dir': 'output-artifacts',
                                  'rsync_opts': ["--archive", "--no-perms",
@@ -382,6 +449,19 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'source': {
                       'token': config_vars['anaconda-upload-token'],
                   }})
+
+    if config_vars.get('sourceclear_token'):
+        remapped_jobs.append({
+            'name': 'sourceclear',
+            'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
+                     for node in order[:1]] + [{'put': 'anaconda_upload_resource'}]})
+        resource_types.append({'name': 'sourceclear-resource',
+                       'type': 'docker-image',
+                       'source': {
+                           'repository': 'continuumio/concourse-sourceclear-resource',
+                           'tag': 'latest'
+                           }
+                       })
 
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
@@ -514,7 +594,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
                    worker_tags=None, clobber_sections_file=None, append_sections_file=None,
-                   pass_throughs=None, **kw):
+                   pass_throughs=None, skip_existing=True, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -545,7 +625,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                        platform_filters=platform_filters,
                                        append_sections_file=append_sections_file,
                                        clobber_sections_file=clobber_sections_file,
-                                       pass_throughs=pass_throughs)
+                                       pass_throughs=pass_throughs, skip_existing=skip_existing)
             try:
                 repo_commit = _get_current_git_rev(path)
             except subprocess.CalledProcessError:
@@ -559,7 +639,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                    platform_filters=platform_filters,
                                    append_sections_file=append_sections_file,
                                    clobber_sections_file=clobber_sections_file,
-                                   pass_throughs=pass_throughs)
+                                   pass_throughs=pass_throughs, skip_existing=skip_existing)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         data = yaml.load(src)
@@ -625,6 +705,18 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
             with open(os.path.join(output_dir, order_recipes_fn), 'a') as f:
                 f.write(recipe_dir + '\n')
             last_recipe_dir = recipe_dir
+
+    # clean up recipe_log.txt so that we don't leave a dirty git state
+    for node in nodes:
+        meta = task_graph.node[node]['meta']
+        if meta.meta_path:
+            recipe = os.path.dirname(meta.meta_path)
+        else:
+            recipe = meta.meta.get('extra', {}).get('parent_recipe', {}).get('path', '')
+        if os.path.isfile(os.path.join(recipe, 'recipe_log.json')):
+            os.remove(os.path.join(recipe, 'recipe_log.json'))
+        if os.path.isfile(os.path.join(recipe, 'recipe_log.txt')):
+            os.remove(os.path.join(recipe, 'recipe_log.txt'))
 
 
 def _copy_yaml_if_not_there(path, base_name):
