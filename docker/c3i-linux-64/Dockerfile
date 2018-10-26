@@ -31,6 +31,7 @@ RUN yum install -y \
   libXScrnSaver libXScrnSaver.i686 \
   alsa-lib alsa-lib.i686 \
   mesa-libEGL mesa-libEGL.i686 \
+  pam pam.i686 \
   openssh-clients \
   patch \
   rsync \
