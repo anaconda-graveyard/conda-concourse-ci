@@ -14,6 +14,7 @@ import time
 import conda_build.api
 from conda_build.conda_interface import Resolve, TemporaryDirectory, cc_conda_build
 from conda_build.index import get_build_index
+from conda_build.variants import get_package_variants
 import networkx as nx
 import requests
 import yaml
@@ -96,6 +97,7 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
         # each platform will be submitted with a different label
         for platform in platforms:
             index_key = '-'.join([platform['platform'], str(platform['arch'])])
+            config.variants = get_package_variants(path, config, platform.get('variants'))
             config.channel_urls = channels or []
             config.variant_config_files = variant_config_files or []
             conda_resolve = Resolve(get_build_index(subdir=index_key,
