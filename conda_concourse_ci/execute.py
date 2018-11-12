@@ -363,7 +363,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         worker = graph.node[node]['worker']
         resource_name = 'rsync_' + node
         rsync_resources.append(resource_name)
-        key = (meta.name(), meta.config.host_subdir,
+        key = (meta.name(), worker['label'], meta.config.host_subdir,
                HashableDict({k: meta.config.variant[k] for k in meta.get_used_vars()}))
         resources.append(
             {'name': resource_name,
