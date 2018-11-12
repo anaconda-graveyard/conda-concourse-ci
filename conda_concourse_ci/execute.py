@@ -312,6 +312,10 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
+    if graph.number_of_nodes() == 0:
+        raise Exception(
+            "Build graph is empty. The default behaviour is to skip existing builds."
+        )
 
     resource_types = [{'name': 'rsync-resource',
                        'type': 'docker-image',
@@ -326,6 +330,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     if commit_id:
         recipe_folder = os.path.join(recipe_folder, commit_id)
         artifact_folder = os.path.join(artifact_folder, commit_id)
+
     resources = [{'name': 'rsync-recipes',
                   'type': 'rsync-resource',
                   'source': {
@@ -361,6 +366,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     for node in order:
         meta = graph.node[node]['meta']
         worker = graph.node[node]['worker']
+        rsync_artifacts = True if worker.get("rsync") is None or worker.get("rsync") is True else False
         resource_name = 'rsync_' + node
         rsync_resources.append(resource_name)
         key = (meta.name(), worker['label'], meta.config.host_subdir,
@@ -382,9 +388,10 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
         prereqs = set(graph.successors(node))
         for prereq in prereqs:
-            tasks.append({'get': 'rsync_' + prereq,
-                            'trigger': False,
-                            'passed': [prereq]})
+            if rsync_artifacts:
+                tasks.append({'get': 'rsync_' + prereq,
+                                'trigger': False,
+                                'passed': [prereq]})
 
         if prereqs:
             tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
@@ -420,25 +427,32 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         jobs[key] = {'tasks': tasks, 'meta': meta, 'worker': worker}
     remapped_jobs = []
     for plan_dict in jobs.values():
+        plan_worker = plan_dict["worker"]
+        plan_rsync_artifacts = True if plan_worker.get("rsync") is None or plan_worker.get("rsync") is True else False
         # name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
         name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
-        plan_dict['tasks'].append({'put': 'rsync-source',
-                                   'params': {'sync_dir': 'output-source',
-                                              'rsync_opts': ["--archive", "--no-perms",
-                                                             "--omit-dir-times", "--verbose",
-                                                             "--exclude", '"*.json*"']},
-                                   'get_params': {'skip_download': True}})
-        plan_dict['tasks'].append({'put': 'rsync-stats',
-                                   'params': {'sync_dir': 'stats',
-                                              'rsync_opts': ["--archive", "--no-perms",
-                                                             "--omit-dir-times", "--verbose"]},
-                                   'get_params': {'skip_download': True}})
+
+        if plan_rsync_artifacts:
+            plan_dict['tasks'].append({'put': 'rsync-source',
+                                       'params': {'sync_dir': 'output-source',
+                                                  'rsync_opts': ["--archive", "--no-perms",
+                                                                 "--omit-dir-times", "--verbose",
+                                                                 "--exclude", '"*.json*"']},
+                                       'get_params': {'skip_download': True}})
+            plan_dict['tasks'].append({'put': 'rsync-stats',
+                                       'params': {'sync_dir': 'stats',
+                                                  'rsync_opts': ["--archive", "--no-perms",
+                                                                 "--omit-dir-times", "--verbose"]},
+                                       'get_params': {'skip_download': True}})
         remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
 
     if config_vars.get('anaconda-upload-token'):
         remapped_jobs.append({'name': 'anaconda_upload',
                               'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
-                                       for node in order] + [{'put': 'anaconda_upload_resource'}]})
+                                       for node in order if
+                                        graph.node[node]['worker'].get("rsync") is None or
+                                        graph.node[node]['worker'].get("rsync") is True] +
+                                       [{'put': 'anaconda_upload_resource'}]})
         resource_types.append({'name': 'anacondaorg-resource',
                        'type': 'docker-image',
                        'source': {
