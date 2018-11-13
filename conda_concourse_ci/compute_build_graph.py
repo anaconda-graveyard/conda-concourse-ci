@@ -174,15 +174,16 @@ _rendered_recipes = {}
 @conda_interface.memoized
 def _get_or_render_metadata(meta_file_or_recipe_dir, worker, finalize, config=None):
     global _rendered_recipes
+    label = worker['label']
     platform = worker['platform']
     arch = str(worker['arch'])
-    if (meta_file_or_recipe_dir, platform, arch) not in _rendered_recipes:
+    if (meta_file_or_recipe_dir, label, platform, arch) not in _rendered_recipes:
         print("rendering {0} for {1}".format(meta_file_or_recipe_dir, worker['label']))
-        _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)] = \
+        _rendered_recipes[(meta_file_or_recipe_dir, label, platform, arch)] = \
                             api.render(meta_file_or_recipe_dir, platform=platform, arch=arch,
                                        verbose=False, permit_undefined_jinja=True,
                                        bypass_env_check=True, config=config, finalize=finalize)
-    return _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)]
+    return _rendered_recipes[(meta_file_or_recipe_dir, label, platform, arch)]
 
 
 def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
