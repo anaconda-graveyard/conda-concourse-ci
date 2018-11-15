@@ -290,11 +290,8 @@ def sourceclear_task(meta, node, config_vars):
                      (# "find . -name 'indexed-artifacts' -prune -o -path '*/linux-64/*.tar.bz2' -print0 | xargs -0 -I file mv file indexed-artifacts/linux-64 \n"  # NOQA
                       # "find . -name 'indexed-artifacts' -prune -o -path '*/noarch/*.tar.bz2' -print0 | xargs -0 -I file mv file indexed-artifacts/noarch \n"  # NOQA
                       "conda-index output-artifacts \n"
-                      "conda build --source --no-build-id --croot tmp_work rsync-recipes/{}\n"
-                      "conda create -y --only-deps -p $(pwd)/dummy_env "
-                      "-c file://$(pwd)/output-artifacts {}\n"
-                      "source activate $(pwd)/dummy_env \n"
-                      "pushd tmp_work/work \n"
+                      "acivation_cmd=$(conda-debug --output -c file://$(pwd)/output-artifacts rsync-recipes/{})\n"
+                      "$activation_cmd\n"
                       "echo \"system_site_packages: true\" > srcclr.yml \n"
                       # "echo \"use_system_pip: true\" >> srcclr.yml \n"
                       "set | grep SRCCLR \n"
