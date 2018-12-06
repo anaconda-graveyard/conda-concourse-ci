@@ -289,14 +289,16 @@ def sourceclear_task(meta, node, config_vars):
                      #   able to bypass that requirement with this hack, but we'll see.
                      (# "find . -name 'indexed-artifacts' -prune -o -path '*/linux-64/*.tar.bz2' -print0 | xargs -0 -I file mv file indexed-artifacts/linux-64 \n"  # NOQA
                       # "find . -name 'indexed-artifacts' -prune -o -path '*/noarch/*.tar.bz2' -print0 | xargs -0 -I file mv file indexed-artifacts/noarch \n"  # NOQA
-                      "conda-index output-artifacts \n"
-                      "acivation_cmd=$(conda-debug --output -c file://$(pwd)/output-artifacts rsync-recipes/{})\n"
-                      "$activation_cmd\n"
-                      "echo \"system_site_packages: true\" > srcclr.yml \n"
-                      # "echo \"use_system_pip: true\" >> srcclr.yml \n"
-                      "set | grep SRCCLR \n"
-                      "ls -la \n"
-                      "curl -sSL https://download.sourceclear.com/ci.sh | bash \n")
+                      'conda-index output-artifacts \n'
+                      'export activate_cmd="$(conda-debug -a -c file://$(pwd)/output-artifacts rsync-recipes/{})"\n'
+                      'bash --rcfile <(echo ". ~/.bashrc; $activate_cmd)"\n'
+                      'echo \"system_site_packages: true\" > srcclr.yml \n'
+                      # "echo \"use_system_pip: true\" >> srcclr.yml \n'
+                      'set | grep SRCCLR \n'
+                      'ls -la \n'
+                      'curl -sSL https://download.sourceclear.com/ci.sh -o srcclr_ci.sh\n'
+                      'chmod +x srcclr_ci.sh\n'
+                      './srcclr_ci.sh\n')
                      .format(node, ' '.join(build_args + output_files))],
         }}
     return {'task': 'sourceclear scan', 'config': task_dict}
@@ -388,9 +390,6 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                     worker_tags=worker_tags,
                                     config_vars=config_vars,
                                     pass_throughs=pass_throughs))
-        # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
-        if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
-            tasks.append(sourceclear_task(meta, node, config_vars))
 
         tasks.append({'put': resource_name,
                       'params': {'sync_dir': 'output-artifacts',
@@ -398,6 +397,11 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                                 "--omit-dir-times", "--verbose",
                                                 "--exclude", '"*.json*"']},
                       'get_params': {'skip_download': True}})
+
+        # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
+        if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
+            tasks.append(sourceclear_task(meta, node, config_vars))
+
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
         # appropriately.
