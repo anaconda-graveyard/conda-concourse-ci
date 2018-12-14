@@ -283,26 +283,25 @@ def sourceclear_task(meta, node, config_vars):
         },
         'run': {
             'path': 'sh',
-            'args': ['-exc',
-                     # srcclr requires that all dependencies are present.  To accomplish that,
-                     #   we create an env for our built package and activate that env.  Next,
-                     #   we need to extract our source code and init a git repo there.  The
-                     #   git repo is a requirement for sourceclear.  I'm not sure we'll be
-                     #   able to bypass that requirement with this hack, but we'll see.
-                     (# "find . -name 'indexed-artifacts' -prune -o -path '*/linux-64/*.tar.bz2' -print0 | xargs -0 -I file mv file indexed-artifacts/linux-64 \n"  # NOQA
-                      # "find . -name 'indexed-artifacts' -prune -o -path '*/noarch/*.tar.bz2' -print0 | xargs -0 -I file mv file indexed-artifacts/noarch \n"  # NOQA
-                      "conda-index output-artifacts \n"
-                      "conda build --source --no-build-id --croot tmp_work rsync-recipes/{}\n"
-                      "conda create -y --only-deps -p $(pwd)/dummy_env "
-                      "-c file://$(pwd)/output-artifacts {}\n"
-                      "source activate $(pwd)/dummy_env \n"
-                      "pushd tmp_work/work \n"
-                      "echo \"system_site_packages: true\" > srcclr.yml \n"
-                      # "echo \"use_system_pip: true\" >> srcclr.yml \n"
-                      "set | grep SRCCLR \n"
-                      "ls -la \n"
-                      "curl -sSL https://download.sourceclear.com/ci.sh | bash \n")
-                     .format(node, ' '.join(build_args + output_files))],
+            'args': [
+                '-exc',
+                # srcclr requires that all dependencies are present.  To accomplish that,
+                #   we create an env for our built package and activate that env.  Next,
+                #   we need to extract our source code and init a git repo there.  The
+                #   git repo is a requirement for sourceclear.  I'm not sure we'll be
+                #   able to bypass that requirement with this hack, but we'll see.
+                ('conda-index output-artifacts \n '
+                 'export activation_text="$(conda-debug -a -c file://$(pwd)/output-artifacts rsync-recipes/{node})" && '
+                 'echo ". ~/.bashrc; $activation_text" > ./temp_rcfile && '
+                 'source ./temp_rcfile && '
+                 'echo "system_site_packages: true" > srcclr.yml && '
+                 # "echo \"use_system_pip: true\" >> srcclr.yml && '
+                 # 'set | grep SRCCLR && '
+                 # 'ls -la \n'
+                      'curl -sSL https://download.sourceclear.com/ci.sh -o srcclr_ci.sh && '
+                 'chmod +x srcclr_ci.sh && '
+                 './srcclr_ci.sh')
+                .format(node=node)],
         }}
     return {'task': 'sourceclear scan', 'config': task_dict}
 
@@ -361,8 +360,6 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
     rsync_resources = []
 
-    # each package is a unit in the concourse graph.  This step recombines our separate steps.
-
     for node in order:
         meta = graph.node[node]['meta']
         worker = graph.node[node]['worker']
@@ -400,9 +397,6 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                     worker_tags=worker_tags,
                                     config_vars=config_vars,
                                     pass_throughs=pass_throughs))
-        # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
-        if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
-            tasks.append(sourceclear_task(meta, node, config_vars))
 
         tasks.append({'put': resource_name,
                       'params': {'sync_dir': 'output-artifacts',
@@ -410,6 +404,11 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                                 "--omit-dir-times", "--verbose",
                                                 "--exclude", '"*.json*"']},
                       'get_params': {'skip_download': True}})
+
+        # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
+        if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
+            tasks.append(sourceclear_task(meta, node, config_vars))
+
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
         # appropriately.
