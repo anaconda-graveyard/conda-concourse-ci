@@ -150,10 +150,10 @@ def parse_args(parse_this=None):
 
     # batch specific arguments
     batch_parser.add_argument(
-        '--max-builds', default=36,
+        '--max-builds', default=36, type=int,
         help="maximum number of activate builds allowed before starting a new job")
     batch_parser.add_argument(
-        '--poll-time', default=120,
+        '--poll-time', default=120, type=int,
         help="time in seconds between checking concourse server for active builds")
     batch_parser.add_argument(
         '--build-lookback', default=500,
