@@ -834,7 +834,8 @@ def submit_batch(
     number of running builds.
     """
     with open(batch_file) as f:
-        batch_items = [BatchItem(line) for line in f]
+        batch_lines = sorted([line for line in f])
+        batch_items = [BatchItem(line) for line in batch_lines]
 
     # make sure we are logged in to the configured server
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
