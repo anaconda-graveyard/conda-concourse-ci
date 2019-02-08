@@ -201,6 +201,8 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
         if (is_package_built(metadata, 'host', include_local=False) and config.skip_existing or
                 metadata.skip()):
             continue
+        if metadata.noarch == 'python' and worker.get('skip_noarch_python', False):
+            continue
 
         name = package_key(metadata, worker['label'], run)
 
