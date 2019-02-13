@@ -156,12 +156,12 @@ def collapse_noarch_python_nodes(graph):
 
         for test_node in test_nodes:
             # reassign any dependencies on the test_only node to the build node
-            for edge in graph.in_edges(test_node):
+            for edge in tuple(graph.in_edges(test_node)):
                 new_edge = edge[0], build_node
                 graph.add_edge(*new_edge)
                 graph.remove_edge(*edge)
             # remove all test_only node dependencies
-            for edge in graph.out_edges(test_node):
+            for edge in tuple(graph.out_edges(test_node)):
                 graph.remove_edge(*edge)
             # add a test only node
             metadata = graph.node[test_node]['meta']
