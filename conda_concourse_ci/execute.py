@@ -129,7 +129,7 @@ def collapse_noarch_python_nodes(graph):
     # find all noarch python builds, group by package name
     noarch_groups = defaultdict(list)
     for node in graph.nodes():
-        if graph.node[node].get('noarch_python', False):
+        if graph.node[node].get('noarch_pkg', False):
             pkg_name = graph.node[node]['meta'].name()
             noarch_groups[pkg_name].append(node)
 

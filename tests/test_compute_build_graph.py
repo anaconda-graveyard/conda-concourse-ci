@@ -344,8 +344,8 @@ def test_add_noarch_python_recipe(testing_conda_resolve):
     compute_build_graph.add_recipe_to_graph(pkg_b_dir, graph, run, worker, conda_resolve)
     assert 'pkg_a-1.0.0-on-linux' in graph.nodes()
     assert 'pkg_b-1.0.0-on-linux' in graph.nodes()
-    assert graph.node['pkg_a-1.0.0-on-linux']['noarch_python'] == True
-    assert graph.node['pkg_b-1.0.0-on-linux']['noarch_python'] == False
+    assert graph.node['pkg_a-1.0.0-on-linux']['noarch_pkg'] == True
+    assert graph.node['pkg_b-1.0.0-on-linux']['noarch_pkg'] == False
 
 
 def test_cyclical_graph_error():
