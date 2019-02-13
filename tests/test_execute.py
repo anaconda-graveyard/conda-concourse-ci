@@ -112,10 +112,10 @@ def test_submit_batch(mocker):
     )
     # submit_one_off should be called twice
     submit_one_off.assert_has_calls([
-        mocker.call('sentinel_pytest', mocker.ANY, ['pytest', 'pytest-cov'],
-                    mocker.ANY, pass_throughs=None),
         mocker.call('sentinel_bzip', mocker.ANY, ['bzip'],
                     mocker.ANY, pass_throughs=None, clobber_sections_file='example.yaml'),
+        mocker.call('sentinel_pytest', mocker.ANY, ['pytest', 'pytest-cov'],
+                    mocker.ANY, pass_throughs=None),
     ])
     get_activate_builds.assert_called()
 
