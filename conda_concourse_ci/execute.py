@@ -402,7 +402,12 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'params': {'sync_dir': 'output-artifacts',
                                  'rsync_opts': ["--archive", "--no-perms",
                                                 "--omit-dir-times", "--verbose",
-                                                "--exclude", '"*.json*"']},
+                                                "--exclude", '"**/*.json*"',
+                                                # html and xml files
+                                                "--exclude", '"**/*.*ml"',
+                                                # conda index cache
+                                                "--exclude", '"**/.cache"',
+                                 ]},
                       'get_params': {'skip_download': True}})
 
         # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
