@@ -22,13 +22,14 @@ hash_length = api.Config().hash_length
 
 def package_key(metadata, worker_label, run='build'):
     # get the build string from whatever conda-build makes of the configuration
+
     used_loop_vars = metadata.get_used_loop_vars()
     build_vars = '-'.join([k + '_' + str(metadata.config.variant[k]) for k in used_loop_vars
                           if k != 'target_platform'])
     # kind of a special case.  Target platform determines a lot of output behavior, but may not be
     #    explicitly listed in the recipe.
     tp = metadata.config.variant.get('target_platform')
-    if tp and tp != metadata.config.subdir and 'target_platform' not in build_vars:
+    if tp and tp != metadata.config.subdir:
         build_vars += '-target_' + tp
     key = [metadata.name(), metadata.version()]
     if build_vars:
@@ -174,15 +175,16 @@ _rendered_recipes = {}
 @conda_interface.memoized
 def _get_or_render_metadata(meta_file_or_recipe_dir, worker, finalize, config=None):
     global _rendered_recipes
+    label = worker['label']
     platform = worker['platform']
     arch = str(worker['arch'])
-    if (meta_file_or_recipe_dir, platform, arch) not in _rendered_recipes:
+    if (meta_file_or_recipe_dir, label, platform, arch) not in _rendered_recipes:
         print("rendering {0} for {1}".format(meta_file_or_recipe_dir, worker['label']))
-        _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)] = \
+        _rendered_recipes[(meta_file_or_recipe_dir, label, platform, arch)] = \
                             api.render(meta_file_or_recipe_dir, platform=platform, arch=arch,
                                        verbose=False, permit_undefined_jinja=True,
                                        bypass_env_check=True, config=config, finalize=finalize)
-    return _rendered_recipes[(meta_file_or_recipe_dir, platform, arch)]
+    return _rendered_recipes[(meta_file_or_recipe_dir, label, platform, arch)]
 
 
 def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
@@ -196,7 +198,8 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
 
     name = None
     for (metadata, _, _) in rendered:
-        if is_package_built(metadata, 'host', include_local=False) or metadata.skip():
+        if (is_package_built(metadata, 'host', include_local=False) and config.skip_existing or
+                metadata.skip()):
             continue
 
         name = package_key(metadata, worker['label'], run)
@@ -357,6 +360,14 @@ def collapse_subpackage_nodes(graph):
         graph.remove_edge(*edge)
 
 
+def _write_recipe_log(path):
+    output = subprocess.check_output(['git', 'log'], cwd=path)
+    if not os.path.exists(os.path.join(path, "meta.yaml")):
+        path = os.path.join(path, "recipe")
+    with open(os.path.join(path, "recipe_log.txt"), "wb") as f:
+        f.write(output)
+
+
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
                     git_rev=None, stop_rev=None, matrix_base_dir=None,
                     config=None, finalize=False):
@@ -382,10 +393,15 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
     graph = nx.DiGraph()
     for folder in folders:
         recipe_dir = os.path.join(recipes_dir, folder)
+
+        # update the recipe log.  Conda-build will find this and include it with the package.
+        _write_recipe_log(recipe_dir)
+
         if not os.path.isdir(recipe_dir):
             raise ValueError("Specified folder {} does not exist".format(recipe_dir))
         add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                             recipes_dir, config=config, finalize=finalize)
+
     add_intradependencies(graph)
     collapse_subpackage_nodes(graph)
     return graph

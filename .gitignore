@@ -97,3 +97,5 @@ build_credentials.yml
 .DS_Store
 output
 prof
+
+.pytest_cache

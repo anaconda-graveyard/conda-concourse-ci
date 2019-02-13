@@ -34,7 +34,8 @@ def test_submit_one_off(mocker):
                                                        channel=None, variant_config_files=None,
                                                        output_dir=None, platform_filters=None,
                                                        worker_tags=None, clobber_sections_file=None,
-                                                       append_sections_file=None, pass_throughs=[])
+                                                       append_sections_file=None, pass_throughs=[],
+                                                       skip_existing=True)
 
 
 def test_submit_batch(mocker):
@@ -46,7 +47,7 @@ def test_submit_batch(mocker):
         max_builds=36, poll_time=120, build_lookback=500, label_prefix='autobot_',
         debug=False, public=True, subparser_name='batch', channel=None,
         variant_config_files=None, output_dir=None, platform_filters=None, worker_tags=None,
-        clobber_sections_file=None, append_sections_file=None, pass_throughs=[])
+        clobber_sections_file=None, append_sections_file=None, pass_throughs=[], skip_existing=True)
 
 
 def test_submit_without_base_name_raises():
@@ -80,7 +81,7 @@ def test_examine(mocker):
                                                        subparser_name='examine', test=False,
                                                        channel=None, variant_config_files=None,
                                                        platform_filters=None, worker_tags=None,
-                                                       pass_throughs=[])
+                                                       pass_throughs=[], skip_existing=True)
 
 
 def test_examine_without_base_name_raises():
