@@ -252,3 +252,31 @@ def test_collapse_with_win_matrix_and_subpackages(monkeypatch):
     assert 'postgresql-split-10.1-c_compiler_vs2015-on-win-64' in tasks.nodes()
     assert 'postgresql-split-10.1-c_compiler_vs2008-target_win-32-on-win-64' in tasks.nodes()
     assert 'postgresql-split-10.1-c_compiler_vs2015-target_win-32-on-win-64' in tasks.nodes()
+
+
+def test_collapse_noarch_python():
+    path = os.path.join(test_data_dir, 'noarch_python_recipes')
+    folders = ['pkg_a', 'pkg_b']
+    variant_file = os.path.join(test_data_dir, 'noarch_python_recipes', 'conda_build_config.yaml')
+    tasks = execute.collect_tasks(path, folders, matrix_base_dir=test_config_dir,
+                                  variant_config_files=variant_file)
+    # 7 nodes, 1 for the noarch: python pkg_a, 6 for pkg_b (3 platforms x 2 python version)
+    print(tasks.nodes())
+    assert len(tasks.nodes()) == 7
+    assert 'pkg_a-1.0.0-on-centos5-64' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_3.6-on-osx-109' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_2.7-on-osx-109' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_3.6-on-win-32' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_2.7-on-win-32' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_3.6-on-centos5-64' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_2.7-on-centos5-64' in tasks.nodes()
+    # 6 nodes, all pkg_b nodes have an edge to the single pkg_a node
+    print(tasks.edges())
+    assert len(tasks.edges()) == 6
+    a_node = 'pkg_a-1.0.0-on-centos5-64'
+    assert ('pkg_b-1.0.0-python_3.6-on-osx-109', a_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_2.7-on-osx-109', a_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_3.6-on-win-32', a_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_2.7-on-win-32', a_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_3.6-on-centos5-64', a_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_2.7-on-centos5-64', a_node) in tasks.edges()

@@ -1,0 +1,14 @@
+package:
+  name: pkg_a
+  version: 1.0.0
+
+build:
+  noarch: python
+
+requirements:
+  host:
+    - python
+  run:
+    - python
+
+
