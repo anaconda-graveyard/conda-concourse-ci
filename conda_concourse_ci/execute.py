@@ -1,7 +1,6 @@
-from __future__ import print_function, division
-from collections import OrderedDict, defaultdict
+from __future__ import division, print_function
+
 import contextlib
-from fnmatch import fnmatch
 import glob
 import logging
 import os
@@ -11,17 +10,23 @@ import subprocess
 import tempfile
 import time
 
+from collections import OrderedDict, defaultdict
+from fnmatch import fnmatch
+
 import conda_build.api
 from conda_build.conda_interface import Resolve, TemporaryDirectory, cc_conda_build
 from conda_build.index import get_build_index
 from conda_build.variants import get_package_variants
+
 import networkx as nx
+
 import requests
+
 import yaml
 
-from .compute_build_graph import (construct_graph, expand_run, order_build, git_changed_recipes,
+from .compute_build_graph import (construct_graph, expand_run, git_changed_recipes, order_build,
                                   package_key)
-from .utils import HashableDict, load_yaml_config_dir, ensure_list
+from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')

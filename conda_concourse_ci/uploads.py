@@ -10,8 +10,9 @@ to run additional tasks (for example, to update the index on the remote side)
 import logging
 import os
 
-from six.moves.urllib import parse
 from conda_build import api
+
+from six.moves.urllib import parse
 
 from .utils import ensure_list, load_yaml_config_dir
 
