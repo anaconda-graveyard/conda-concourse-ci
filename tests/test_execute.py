@@ -254,6 +254,7 @@ def test_collapse_with_win_matrix_and_subpackages(monkeypatch):
     assert 'postgresql-split-10.1-c_compiler_vs2015-target_win-32-on-win-64' in tasks.nodes()
 
 
+@pytest.mark.serial
 def test_collapse_noarch_python():
     path = os.path.join(test_data_dir, 'noarch_python_recipes')
     folders = ['pkg_a', 'pkg_b']
