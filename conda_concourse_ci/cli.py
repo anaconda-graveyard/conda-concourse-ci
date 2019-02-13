@@ -156,7 +156,7 @@ def parse_args(parse_this=None):
         '--poll-time', default=120, type=int,
         help="time in seconds between checking concourse server for active builds")
     batch_parser.add_argument(
-        '--build-lookback', default=500,
+        '--build-lookback', default=500, type=int,
         help="number of builds to examine for active builds.")
     batch_parser.add_argument(
         '--label-prefix', default='autobot_', help="prefix for pipeline labels.")
