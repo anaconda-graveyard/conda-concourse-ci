@@ -1,5 +1,5 @@
 from __future__ import print_function, division
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import contextlib
 from fnmatch import fnmatch
 import glob
@@ -112,7 +112,61 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
                        matrix_base_dir=matrix_base_dir)
             # merge this graph with the main one
             task_graph = nx.compose(task_graph, g)
+    collapse_noarch_python_nodes(task_graph)
     return task_graph
+
+
+def collapse_noarch_python_nodes(graph):
+    """ Collapse nodes for noarch python packages into a single node
+
+    Collapse nodes corresponding to any noarch python packages so that each package
+    in built on a single platform and test on the remaining platforms.  Edges are
+    reassinged or removed as needed.
+    """
+    # TODO make build_subdir configurable
+    build_subdir = 'linux-64'
+
+    # find all noarch python builds, group by package name
+    noarch_groups = defaultdict(list)
+    for node in graph.nodes():
+        if graph.node[node].get('noarch_python', False):
+            pkg_name = graph.node[node]['meta'].name()
+            noarch_groups[pkg_name].append(node)
+
+    for pkg_name, nodes in noarch_groups.items():
+        # split into build and test nodes
+        build_nodes = []
+        test_nodes = []
+        for node in nodes:
+            if graph.node[node]['meta'].config.subdir == build_subdir:
+                build_nodes.append(node)
+            else:
+                test_nodes.append(node)
+        if len(build_nodes) > 1:
+            log.warn('more than one noarch python build for %s' % (pkg_name))
+        if len(build_nodes) == 0:
+            raise ValueError(
+                'The %s platform has no noarch python build for %s' % (build_subdir, pkg_name))
+        build_node = build_nodes[0]
+
+        for test_node in test_nodes:
+            # reassign any dependencies on the test_only node to the build node
+            for edge in graph.in_edges(test_node):
+                new_edge = edge[0], build_node
+                graph.add_edge(*new_edge)
+                graph.remove_edge(*edge)
+            # remove all test_only node dependencies
+            for edge in graph.out_edges(test_node):
+                graph.remove_edge(*edge)
+            # TODO add test node
+            #metadata = graph.node[test_node]['meta']
+            #worker = graph.node[test_node]['worker']
+            #name = package_key(metadata, worker['label'], run='test')
+            #graph.add_node(name, meta=metadata, worker=worker)
+            #graph.add_edge(build_node, name)
+            # remove the test_only node
+            graph.remove_node(test_node)
+    return
 
 
 def consolidate_task(inputs, subdir):

@@ -203,9 +203,13 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
             continue
 
         name = package_key(metadata, worker['label'], run)
+        noarch_python = metadata.noarch == 'python'
+        if noarch_python:
+            # noarch python packages do not have a Python variant
+           metadata.config.variant.pop('python', None)
 
         if name not in graph.nodes():
-            graph.add_node(name, meta=metadata, worker=worker)
+            graph.add_node(name, meta=metadata, worker=worker, noarch_python=noarch_python)
             add_dependency_nodes_and_edges(name, graph, run, worker, conda_resolve,
                                         recipes_dir=recipes_dir, finalize=finalize)
 
