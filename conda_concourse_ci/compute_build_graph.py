@@ -1,16 +1,18 @@
 #!/usr/bin/env python
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import logging
 import os
-import pkg_resources
 import re
 import subprocess
 
-import networkx as nx
 from conda_build import api, conda_interface
-from conda_build.metadata import find_recipe, MetaData
 from conda_build.build import is_package_built
+from conda_build.metadata import MetaData, find_recipe
+
+import networkx as nx
+
+import pkg_resources
 
 from .utils import HashableDict, ensure_list
 
@@ -203,9 +205,13 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
             continue
 
         name = package_key(metadata, worker['label'], run)
+        noarch_pkg = metadata.noarch in ['python', 'generic', True]
+        if noarch_pkg:
+            # noarch python packages do not have a Python variant
+            metadata.config.variant.pop('python', None)
 
         if name not in graph.nodes():
-            graph.add_node(name, meta=metadata, worker=worker)
+            graph.add_node(name, meta=metadata, worker=worker, noarch_pkg=noarch_pkg)
             add_dependency_nodes_and_edges(name, graph, run, worker, conda_resolve,
                                         recipes_dir=recipes_dir, finalize=finalize)
 

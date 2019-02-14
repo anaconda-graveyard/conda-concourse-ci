@@ -112,10 +112,10 @@ def test_submit_batch(mocker):
     )
     # submit_one_off should be called twice
     submit_one_off.assert_has_calls([
-        mocker.call('sentinel_pytest', mocker.ANY, ['pytest', 'pytest-cov'],
-                    mocker.ANY, pass_throughs=None),
         mocker.call('sentinel_bzip', mocker.ANY, ['bzip'],
                     mocker.ANY, pass_throughs=None, clobber_sections_file='example.yaml'),
+        mocker.call('sentinel_pytest', mocker.ANY, ['pytest', 'pytest-cov'],
+                    mocker.ANY, pass_throughs=None),
     ])
     get_activate_builds.assert_called()
 
@@ -252,3 +252,43 @@ def test_collapse_with_win_matrix_and_subpackages(monkeypatch):
     assert 'postgresql-split-10.1-c_compiler_vs2015-on-win-64' in tasks.nodes()
     assert 'postgresql-split-10.1-c_compiler_vs2008-target_win-32-on-win-64' in tasks.nodes()
     assert 'postgresql-split-10.1-c_compiler_vs2015-target_win-32-on-win-64' in tasks.nodes()
+
+
+def test_collapse_noarch_python():
+    path = os.path.join(test_data_dir, 'noarch_python_recipes')
+    folders = ['pkg_a', 'pkg_b']
+    variant_file = os.path.join(test_data_dir, 'noarch_python_recipes', 'conda_build_config.yaml')
+    tasks = execute.collect_tasks(path, folders, matrix_base_dir=test_config_dir,
+                                  variant_config_files=variant_file)
+    # 9 nodes,
+    # * 1 for the noarch: python pkg_a build on centos5-64
+    # * 2 for the noarch: python pkg_a tests on osx-109 and win-32
+    # * 6 for pkg_b (3 platforms x 2 python version)
+    print(tasks.nodes())
+    assert len(tasks.nodes()) == 9
+    assert 'pkg_a-1.0.0-on-centos5-64' in tasks.nodes()
+    assert 'test-pkg_a-1.0.0-on-osx-109' in tasks.nodes()
+    assert 'test-pkg_a-1.0.0-on-win-32' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_3.6-on-osx-109' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_2.7-on-osx-109' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_3.6-on-win-32' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_2.7-on-win-32' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_3.6-on-centos5-64' in tasks.nodes()
+    assert 'pkg_b-1.0.0-python_2.7-on-centos5-64' in tasks.nodes()
+    # test nodes should be labeled as such
+    assert tasks.node['test-pkg_a-1.0.0-on-osx-109']['test_only'] == True
+    assert tasks.node['test-pkg_a-1.0.0-on-win-32']['test_only'] == True
+    # 8 edges
+    # * 6 pkg_b nodes have an edge to the pkg_a build node
+    # * 2 pkg_a tests nodes with edges to the pkg_a build_node
+    print(tasks.edges())
+    assert len(tasks.edges()) == 8
+    a_build_node = 'pkg_a-1.0.0-on-centos5-64'
+    assert ('test-pkg_a-1.0.0-on-osx-109', a_build_node) in tasks.edges()
+    assert ('test-pkg_a-1.0.0-on-win-32', a_build_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_3.6-on-osx-109', a_build_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_2.7-on-osx-109', a_build_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_3.6-on-win-32', a_build_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_2.7-on-win-32', a_build_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_3.6-on-centos5-64', a_build_node) in tasks.edges()
+    assert ('pkg_b-1.0.0-python_2.7-on-centos5-64', a_build_node) in tasks.edges()

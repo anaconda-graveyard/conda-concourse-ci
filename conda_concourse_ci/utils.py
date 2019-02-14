@@ -2,6 +2,7 @@ import fnmatch
 import os
 
 import six
+
 import yaml
 
 from conda_build.utils import HashableDict  # NOQA

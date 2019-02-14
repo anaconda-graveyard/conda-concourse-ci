@@ -1,7 +1,6 @@
-from __future__ import print_function, division
-from collections import OrderedDict
+from __future__ import division, print_function
+
 import contextlib
-from fnmatch import fnmatch
 import glob
 import logging
 import os
@@ -11,17 +10,23 @@ import subprocess
 import tempfile
 import time
 
+from collections import OrderedDict, defaultdict
+from fnmatch import fnmatch
+
 import conda_build.api
 from conda_build.conda_interface import Resolve, TemporaryDirectory, cc_conda_build
 from conda_build.index import get_build_index
 from conda_build.variants import get_package_variants
+
 import networkx as nx
+
 import requests
+
 import yaml
 
-from .compute_build_graph import (construct_graph, expand_run, order_build, git_changed_recipes,
+from .compute_build_graph import (construct_graph, expand_run, git_changed_recipes, order_build,
                                   package_key)
-from .utils import HashableDict, load_yaml_config_dir, ensure_list
+from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
@@ -112,7 +117,61 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
                        matrix_base_dir=matrix_base_dir)
             # merge this graph with the main one
             task_graph = nx.compose(task_graph, g)
+    collapse_noarch_python_nodes(task_graph)
     return task_graph
+
+
+def collapse_noarch_python_nodes(graph):
+    """ Collapse nodes for noarch python packages into a single node
+
+    Collapse nodes corresponding to any noarch python packages so that each package
+    in built on a single platform and test on the remaining platforms.  Edges are
+    reassinged or removed as needed.
+    """
+    # TODO make build_subdir configurable
+    build_subdir = 'linux-64'
+
+    # find all noarch python builds, group by package name
+    noarch_groups = defaultdict(list)
+    for node in graph.nodes():
+        if graph.node[node].get('noarch_pkg', False):
+            pkg_name = graph.node[node]['meta'].name()
+            noarch_groups[pkg_name].append(node)
+
+    for pkg_name, nodes in noarch_groups.items():
+        # split into build and test nodes
+        build_nodes = []
+        test_nodes = []
+        for node in nodes:
+            if graph.node[node]['meta'].config.subdir == build_subdir:
+                build_nodes.append(node)
+            else:
+                test_nodes.append(node)
+        if len(build_nodes) > 1:
+            log.warn('more than one noarch python build for %s' % (pkg_name))
+        if len(build_nodes) == 0:
+            raise ValueError(
+                'The %s platform has no noarch python build for %s' % (build_subdir, pkg_name))
+        build_node = build_nodes[0]
+
+        for test_node in test_nodes:
+            # reassign any dependencies on the test_only node to the build node
+            for edge in tuple(graph.in_edges(test_node)):
+                new_edge = edge[0], build_node
+                graph.add_edge(*new_edge)
+                graph.remove_edge(*edge)
+            # remove all test_only node dependencies
+            for edge in tuple(graph.out_edges(test_node)):
+                graph.remove_edge(*edge)
+            # add a test only node
+            metadata = graph.node[test_node]['meta']
+            worker = graph.node[test_node]['worker']
+            name = 'test-' + test_node
+            graph.add_node(name, meta=metadata, worker=worker, test_only=True)
+            graph.add_edge(name, build_node)
+            # remove the test_only node
+            graph.remove_node(test_node)
+    return
 
 
 def consolidate_task(inputs, subdir):
@@ -142,12 +201,14 @@ def consolidate_task(inputs, subdir):
 
 
 def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
-                   worker_tags=None, config_vars={}, pass_throughs=None):
+                   worker_tags=None, config_vars={}, pass_throughs=None, test_only=False):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
     build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
                   '--cache-dir=output-source', '--stats-file={}'.format(
                       os.path.join('stats', stats_filename))]
+    if test_only:
+        build_args.append('--test')
     inputs = [{'name': 'rsync-recipes'}]
     worker = graph.node[node]['worker']
     for channel in meta.config.channel_urls:
@@ -218,6 +279,8 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     task_dict.update(graph.node[node]['worker'].get('connector', {}))
 
     task_dict = {'task': 'build', 'config': task_dict}
+    if test_only:
+        task_dict['task'] = 'test'
     worker_tags = (ensure_list(worker_tags) +
                    ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
     if worker_tags:
@@ -361,24 +424,26 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
     rsync_resources = []
 
     for node in order:
+        test_only = graph.node[node].get('test_only', False)
         meta = graph.node[node]['meta']
         worker = graph.node[node]['worker']
         rsync_artifacts = True if worker.get("rsync") is None or worker.get("rsync") is True else False
         resource_name = 'rsync_' + node
-        rsync_resources.append(resource_name)
         key = (meta.name(), worker['label'], meta.config.host_subdir,
                HashableDict({k: meta.config.variant[k] for k in meta.get_used_vars()}))
-        resources.append(
-            {'name': resource_name,
-             'type': 'rsync-resource',
-             'source': {
-                 'server': config_vars['intermediate-server'],
-                 'base_dir': os.path.join(config_vars['intermediate-base-folder'],
-                                          config_vars['base-name'], 'artifacts'),
-                 'user': config_vars['intermediate-user'],
-                 'private_key': config_vars['intermediate-private-key'],
-                 'disable_version_path': True,
-             }})
+        if not test_only:
+            rsync_resources.append(resource_name)
+            resources.append(
+                {'name': resource_name,
+                'type': 'rsync-resource',
+                'source': {
+                    'server': config_vars['intermediate-server'],
+                    'base_dir': os.path.join(config_vars['intermediate-base-folder'],
+                                            config_vars['base-name'], 'artifacts'),
+                    'user': config_vars['intermediate-user'],
+                    'private_key': config_vars['intermediate-private-key'],
+                    'disable_version_path': True,
+                }})
 
         tasks = jobs.get(key, {}).get('tasks',
                                 [{'get': 'rsync-recipes', 'trigger': True}])
@@ -396,19 +461,21 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                     artifact_input=bool(prereqs),
                                     worker_tags=worker_tags,
                                     config_vars=config_vars,
-                                    pass_throughs=pass_throughs))
+                                    pass_throughs=pass_throughs,
+                                    test_only=test_only))
 
-        tasks.append({'put': resource_name,
-                      'params': {'sync_dir': 'output-artifacts',
-                                 'rsync_opts': ["--archive", "--no-perms",
-                                                "--omit-dir-times", "--verbose",
-                                                "--exclude", '"**/*.json*"',
-                                                # html and xml files
-                                                "--exclude", '"**/*.*ml"',
-                                                # conda index cache
-                                                "--exclude", '"**/.cache"',
-                                 ]},
-                      'get_params': {'skip_download': True}})
+        if not test_only:
+            tasks.append({'put': resource_name,
+                        'params': {'sync_dir': 'output-artifacts',
+                                    'rsync_opts': ["--archive", "--no-perms",
+                                                    "--omit-dir-times", "--verbose",
+                                                    "--exclude", '"**/*.json*"',
+                                                    # html and xml files
+                                                    "--exclude", '"**/*.*ml"',
+                                                    # conda index cache
+                                                    "--exclude", '"**/.cache"',
+                                    ]},
+                        'get_params': {'skip_download': True}})
 
         # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
         if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
@@ -435,6 +502,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         plan_rsync_artifacts = True if plan_worker.get("rsync") is None or plan_worker.get("rsync") is True else False
         # name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
         name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
+        if any([t.get('task') == 'test' for t in plan_dict['tasks']]):
+            name = 'test-' + name
 
         if plan_rsync_artifacts:
             plan_dict['tasks'].append({'put': 'rsync-source',

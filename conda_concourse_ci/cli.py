@@ -2,8 +2,9 @@ import argparse
 import logging
 import os
 
-from conda_concourse_ci import execute, __version__
 from conda_build.conda_interface import cc_conda_build
+
+from conda_concourse_ci import __version__, execute
 
 
 def parse_args(parse_this=None):

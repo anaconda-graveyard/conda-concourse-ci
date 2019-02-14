@@ -1,0 +1,10 @@
+package:
+  name: pkg_b
+  version: 1.0.0
+
+requirements:
+  host:
+    - python
+  run:
+    - python
+    - pkg_a

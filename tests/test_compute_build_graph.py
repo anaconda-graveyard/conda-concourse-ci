@@ -333,6 +333,21 @@ def test_add_skipped_recipe(testing_graph, testing_conda_resolve):
                                                        conda_resolve=testing_conda_resolve)
 
 
+def test_add_noarch_python_recipe(testing_conda_resolve):
+    graph = nx.DiGraph()
+    pkg_a_dir = os.path.join(test_data_dir, 'noarch_python_recipes', 'pkg_a')
+    pkg_b_dir = os.path.join(test_data_dir, 'noarch_python_recipes', 'pkg_b')
+    run = 'build'
+    worker = default_worker
+    conda_resolve = testing_conda_resolve
+    compute_build_graph.add_recipe_to_graph(pkg_a_dir, graph, run, worker, conda_resolve)
+    compute_build_graph.add_recipe_to_graph(pkg_b_dir, graph, run, worker, conda_resolve)
+    assert 'pkg_a-1.0.0-on-linux' in graph.nodes()
+    assert 'pkg_b-1.0.0-on-linux' in graph.nodes()
+    assert graph.node['pkg_a-1.0.0-on-linux']['noarch_pkg'] == True
+    assert graph.node['pkg_b-1.0.0-on-linux']['noarch_pkg'] == False
+
+
 def test_cyclical_graph_error():
     g = nx.DiGraph()
     g.add_node('a')
