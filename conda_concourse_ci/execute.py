@@ -264,12 +264,12 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
 
     cmds = build_prefix_commands + ' conda-build ' + " ".join(build_args) + \
            ' ' + build_suffix_commands
-    prefix_commands = " && ".join(ensure_list(worker.get('prefix_commands')))
-    suffix_commands = " && ".join(ensure_list(worker.get('suffix_commands')))
+    prefix_commands = "&& ".join(ensure_list(worker.get('prefix_commands')))
+    suffix_commands = "&& ".join(ensure_list(worker.get('suffix_commands')))
     if prefix_commands:
-        cmds = prefix_commands + ' && ' + cmds
+        cmds = prefix_commands + '&& ' + cmds
     if suffix_commands:
-        cmds = cmds + ' && ' + suffix_commands
+        cmds = cmds + '&& ' + suffix_commands
 
     task_dict['run']['args'].append(cmds)
 
