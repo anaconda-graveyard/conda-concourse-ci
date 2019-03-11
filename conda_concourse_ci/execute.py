@@ -399,7 +399,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'server': config_vars['intermediate-server'],
                       'base_dir': recipe_folder,
                       'user': config_vars['intermediate-user'],
-                      'private_key': config_vars['intermediate-private-key'],
+                      'private_key': config_vars['intermediate-private-key-job'],
                       'disable_version_path': True,
                   }},
                  {'name': 'rsync-source',
@@ -408,7 +408,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'server': config_vars['intermediate-server'],
                       'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'source'),
                       'user': config_vars['intermediate-user'],
-                      'private_key': config_vars['intermediate-private-key'],
+                      'private_key': config_vars['intermediate-private-key-job'],
                       'disable_version_path': True,
                       }},
                  {'name': 'rsync-stats',
@@ -417,7 +417,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'server': config_vars['intermediate-server'],
                       'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'stats'),
                       'user': config_vars['intermediate-user'],
-                      'private_key': config_vars['intermediate-private-key'],
+                      'private_key': config_vars['intermediate-private-key-job'],
                       'disable_version_path': True,
                   }}]
 
@@ -441,7 +441,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                     'base_dir': os.path.join(config_vars['intermediate-base-folder'],
                                             config_vars['base-name'], 'artifacts'),
                     'user': config_vars['intermediate-user'],
-                    'private_key': config_vars['intermediate-private-key'],
+                    'private_key': config_vars['intermediate-private-key-job'],
                     'disable_version_path': True,
                 }})
 

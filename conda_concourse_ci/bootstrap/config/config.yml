@@ -9,5 +9,6 @@ recipe-repo-access-token: your-github-access-token-if-using-private-repo
 intermediate-server: your-intermediate-server
 intermediate-base-folder: /ci
 intermediate-user: your-intermediate-user
+intermediate-private-key-job: key-to-upload-to-concourse
 intermediate-private-key: |
   private-key-to-use-for-connecting-to-intermediate-server
