@@ -100,6 +100,7 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
         platforms = parse_platforms(matrix_base_dir, run, platform_filters)
         # loop over platforms here because each platform may have different dependencies
         # each platform will be submitted with a different label
+
         for platform in platforms:
             index_key = '-'.join([platform['platform'], str(platform['arch'])])
             config.variants = get_package_variants(path, config, platform.get('variants'))
@@ -211,6 +212,12 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
         build_args.append('--test')
     inputs = [{'name': 'rsync-recipes'}]
     worker = graph.node[node]['worker']
+
+    if worker['platform'] == 'win':
+        inputs.append({'name': 'rsync-build-pack'})
+    if worker['platform'] == 'osx':
+        inputs.append({'name': 'rsync-build-pack'})
+
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     if artifact_input:
@@ -419,7 +426,17 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key-job'],
                       'disable_version_path': True,
-                  }}]
+                  }},
+                 {'name': 'rsync-build-pack',
+                  'type': 'rsync-resource',
+                     'source': {
+                     'server': config_vars['intermediate-server'],
+                     'base_dir': config_vars['build_env_pkgs'],
+                     'user': config_vars['intermediate-user'],
+                     'private_key': config_vars['intermediate-private-key-job'],
+                     'disable_version_path': True,
+                 }}
+                 ]
 
     rsync_resources = []
 
@@ -448,6 +465,25 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         tasks = jobs.get(key, {}).get('tasks',
                                 [{'get': 'rsync-recipes', 'trigger': True}])
 
+        if graph.node[node]['worker']['platform'] == "win":
+            tasks.append(
+            {'get': 'rsync-build-pack',
+            'params': {
+                'rsync_opts': [
+                    '--include', 'windows_build_env_latest.zip',
+                    '--exclude', '*',
+                    '-v'
+            ]}})
+        elif graph.node[node]['worker']['platform'] == "osx":
+            tasks.append(
+            {'get': 'rsync-build-pack',
+            'params': {
+                'rsync_opts': [
+                '--include', 'osx_build_env_latest.zip',
+                '--exclude', '*',
+                '-v'
+            ]}})
+
         prereqs = set(graph.successors(node))
         for prereq in prereqs:
             if rsync_artifacts:
@@ -457,6 +493,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
         if prereqs:
             tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
+
         tasks.append(get_build_task(base_path, graph, node, commit_id, public,
                                     artifact_input=bool(prereqs),
                                     worker_tags=worker_tags,
