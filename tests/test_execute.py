@@ -55,7 +55,7 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
                                                 test_config_dir, config_vars)
     # rsync-recipes, rsync-source, rsync-stats, and one artifact resource per build
-    assert len(plan_dict['resources']) == 6
+    assert len(plan_dict['resources']) == 7
     # a, b, c
     assert len(plan_dict['jobs']) == 3
 
