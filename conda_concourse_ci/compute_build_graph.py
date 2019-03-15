@@ -425,10 +425,10 @@ def _installable(name, version, build_string, config, conda_resolve):
                                              _fix_any(build_string, config)]))
     installable = conda_resolve.find_matches(ms)
     if not installable:
-            log.warn("Dependency {name}, version {ver} is not installable from your "
-                     "channels: {channels} with subdir {subdir}.  Seeing if we can build it..."
-                     .format(name=name, ver=version, channels=config.channel_urls,
-                             subdir=config.host_subdir))
+        log.warn("Dependency {name}, version {ver} is not installable from your "
+                 "channels: {channels} with subdir {subdir}.  Seeing if we can build it..."
+                 .format(name=name, ver=version, channels=config.channel_urls,
+                         subdir=config.host_subdir))
     return installable
 
 
