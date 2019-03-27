@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 import contextlib
 import glob
+import json
 import logging
 import os
 import shutil
@@ -1077,3 +1078,53 @@ def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throug
                                 'dp', '-np', pipeline_name])
     else:
         print("aborted")
+
+
+def trigger_pipeline(pipeline_names, config_root_dir, trigger_all=False,
+                     pass_throughs=None, **kwargs):
+    _ensure_login_and_sync(config_root_dir)
+
+    pipelines_to_trigger = _filter_existing_pipelines(pipeline_names)
+
+    print("Triggering jobs:")
+    for pipeline in pipelines_to_trigger:
+        pipeline_jobs = subprocess.check_output(['fly', '-t', 'conda-concourse-server',
+                                                 'jobs', '--json', '-p', pipeline])
+        if hasattr(pipeline_jobs, 'decode'):
+            pipeline_jobs = pipeline_jobs.decode()
+        jobs_to_trigger = []
+        for job in json.loads(pipeline_jobs):
+            if trigger_all:
+                jobs_to_trigger.append(job["name"])
+            elif not job["next_build"]:  # next build has not been triggered yet
+                if ((not job["finished_build"]) or  # has never been triggered
+                    (job["finished_build"]["status"] !=
+                     "succeeded")):  # last trigger resulted in failure
+                    jobs_to_trigger.append(job["name"])
+        for job in jobs_to_trigger:
+            job_fqdn = "{}/{}".format(pipeline, job)
+            print(job_fqdn)
+            subprocess.check_call(['fly', '-t', 'conda-concourse-server',
+                                   'trigger-job', '-j', job_fqdn])
+
+
+def abort_pipeline(pipeline_names, config_root_dir, pass_throughs=None, **kwargs):
+    _ensure_login_and_sync(config_root_dir)
+
+    pipelines_to_abort = _filter_existing_pipelines(pipeline_names)
+
+    print("Aborting pipelines:")
+    for pipeline in pipelines_to_abort:
+        pipeline_jobs = subprocess.check_output(['fly', '-t', 'conda-concourse-server',
+                                                 'builds', '--json', '-p', pipeline])
+        if hasattr(pipeline_jobs, 'decode'):
+            pipeline_jobs = pipeline_jobs.decode()
+        jobs_to_abort = []
+        for job in json.loads(pipeline_jobs):
+            if job["status"] == "started":
+                jobs_to_abort.append(job)
+        for job in jobs_to_abort:
+            job_fqdn = "{}/{}".format(pipeline, job["job_name"])
+            print(job_fqdn)
+            subprocess.check_call(['fly', '-t', 'conda-concourse-server',
+                                   'abort-build', '-j', job_fqdn, '-b', job["name"]])
