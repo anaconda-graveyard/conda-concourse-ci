@@ -105,11 +105,12 @@ def test_submit_batch(mocker):
         config_root_dir=test_config_dir,
         max_builds=999, poll_time=0, build_lookback=500, label_prefix='sentinel_')
     # check that fly was executed
-    check_call.assert_called_once_with(
-        ['fly', '-t', 'conda-concourse-server', 'login',
+    check_call.assert_has_calls([
+        mocker.call(['fly', '-t', 'conda-concourse-server', 'login',
          '--concourse-url', mocker.ANY, '--team-name', mocker.ANY,
-        '--username', mocker.ANY, '--password', mocker.ANY]
-    )
+        '--username', mocker.ANY, '--password', mocker.ANY]),
+        mocker.call(['fly', '-t', 'conda-concourse-server', 'sync'])
+    ])
     # submit_one_off should be called twice
     submit_one_off.assert_has_calls([
         mocker.call('sentinel_bzip', mocker.ANY, ['bzip'],
