@@ -627,6 +627,51 @@ def checkout_git_rev(checkout_rev, path):
         subprocess.check_call(['git', 'checkout', git_current_rev], cwd=path)
 
 
+def _ensure_login_and_sync(config_root_dir):
+    """Make sure end user is logged in and has a compatible version of the fly
+    utility. This function should be called before executing other fly commands
+    which require authentication.
+    """
+
+    config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
+    with open(config_path) as src:
+        data = yaml.load(src)
+
+    # make sure we are logged in to the configured server
+    login_args = ['fly', '-t', 'conda-concourse-server', 'login',
+                  '--concourse-url', data['concourse-url'],
+                  '--team-name', data['concourse-team']]
+    if 'concourse-username' in data:
+        # auth is optional.  With Github OAuth, there's an interactive prompt that asks
+        #   the user to go log in with a web browser.  This should not interfere with that.
+        login_args.extend(['--username', data['concourse-username'],
+                           '--password', data['concourse-password']])
+
+    subprocess.check_call(login_args)
+
+    # sync (possibly update our client version)
+    subprocess.check_call('fly -t conda-concourse-server sync'.split())
+
+
+def _filter_existing_pipelines(pipeline_patterns):
+    """Iterate over the list of existing pipelines and filter out those which
+    match any pattern in the given list (passed as an argument to this
+    function). This function can be called before performing bulk operations on
+    pipelines.
+    """
+
+    existing_pipelines = subprocess.check_output('fly -t conda-concourse-server ps'.split())
+    if hasattr(existing_pipelines, 'decode'):
+        existing_pipelines = existing_pipelines.decode()
+    existing_pipelines = [line.split()[0] for line in existing_pipelines.splitlines()[1:]]
+
+    filtered_pipelines = []
+    for pattern in ensure_list(pipeline_patterns):
+        filtered_pipelines.extend([p for p in existing_pipelines if fnmatch(p, pattern)])
+
+    return filtered_pipelines
+
+
 def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
            public=True, config_overrides=None, pass_throughs=None, **kw):
     """submit task that will monitor changes and trigger other build tasks
@@ -688,20 +733,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                         'rm -rf {intermediate-base-folder}/{base-name}/artifacts'.format(**data)])
     os.remove(key_file)
 
-    # make sure we are logged in to the configured server
-    login_args = ['fly', '-t', 'conda-concourse-server', 'login',
-                  '--concourse-url', data['concourse-url'],
-                  '--team-name', data['concourse-team']]
-    if 'concourse-username' in data:
-        # auth is optional.  With Github OAuth, there's an interactive prompt that asks
-        #   the user to go log in with a web browser.  This should not interfere with that.
-        login_args.extend(['--username', data['concourse-username'],
-                           '--password', data['concourse-password']])
-
-    subprocess.check_call(login_args)
-
-    # sync (possibly update our client version)
-    subprocess.check_call('fly -t conda-concourse-server sync'.split())
+    _ensure_login_and_sync(config_root_dir)
 
     # set the new pipeline details
     subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'sp',
@@ -948,19 +980,12 @@ def submit_batch(
         batch_lines = sorted([line for line in f])
         batch_items = [BatchItem(line) for line in batch_lines]
 
-    # make sure we are logged in to the configured server
+    _ensure_login_and_sync(config_root_dir)
+
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
         data = yaml.load(src)
-    login_args = ['fly', '-t', 'conda-concourse-server', 'login',
-                  '--concourse-url', data['concourse-url'],
-                  '--team-name', data['concourse-team']]
-    if 'concourse-username' in data:
-        # auth is optional.  With Github OAuth, there's an interactive prompt that asks
-        #   the user to go log in with a web browser.  This should not interfere with that.
-        login_args.extend(['--username', data['concourse-username'],
-                           '--password', data['concourse-password']])
-    subprocess.check_call(login_args)
+
     concourse_url = data['concourse-url']
 
     success = []
@@ -1033,33 +1058,9 @@ def _get_activate_builds(concourse_url, limit):
 
 
 def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):
-    config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
-    with open(config_path) as src:
-        data = yaml.load(src)
+    _ensure_login_and_sync(config_root_dir)
 
-    # make sure we are logged in to the configured server
-    login_args = ['fly', '-t', 'conda-concourse-server', 'login',
-                  '--concourse-url', data['concourse-url'],
-                  '--team-name', data['concourse-team']]
-    if 'concourse-username' in data:
-        # auth is optional.  With Github OAuth, there's an interactive prompt that asks
-        #   the user to go log in with a web browser.  This should not interfere with that.
-        login_args.extend(['--username', data['concourse-username'],
-                           '--password', data['concourse-password']])
-
-    subprocess.check_call(login_args)
-
-    # sync (possibly update our client version)
-    subprocess.check_call('fly -t conda-concourse-server sync'.split())
-
-    existing_pipelines = subprocess.check_output('fly -t conda-concourse-server ps'.split())
-    if hasattr(existing_pipelines, 'decode'):
-        existing_pipelines = existing_pipelines.decode()
-    existing_pipelines = [line.split()[0] for line in existing_pipelines.splitlines()[1:]]
-
-    pipelines_to_remove = []
-    for pattern in ensure_list(pipeline_names):
-        pipelines_to_remove.extend([p for p in existing_pipelines if fnmatch(p, pattern)])
+    pipelines_to_remove = _filter_existing_pipelines(pipeline_names)
 
     print("Removing pipelines:")
     for p in pipelines_to_remove:
