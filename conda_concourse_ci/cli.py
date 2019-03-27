@@ -214,6 +214,23 @@ def parse_args(parse_this=None):
                            help="path containing config.yml and matrix definitions",
                            default=cc_conda_build.get('matrix_base_dir'))
     rm_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
+
+    trigger_parser = sp.add_parser('trigger', help='trigger (failed) jobs of a pipeline')
+    trigger_parser.add_argument('pipeline_names', nargs='+',
+                           help=("Specify pipeline names to trigger"))
+    trigger_parser.add_argument('--config-root-dir',
+                           help="path containing config.yml and matrix definitions",
+                           default=cc_conda_build.get('matrix_base_dir'))
+    trigger_parser.add_argument('--all', dest="trigger_all",
+                           action="store_true", help="trigger all jobs")
+
+    abort_parser = sp.add_parser('abort', help='abort jobs of a pipeline')
+    abort_parser.add_argument('pipeline_names', nargs='+',
+                           help=("Specify pipeline names to abort"))
+    abort_parser.add_argument('--config-root-dir',
+                           help="path containing config.yml and matrix definitions",
+                           default=cc_conda_build.get('matrix_base_dir'))
+
     return parser.parse_known_args(parse_this)
 
 
@@ -243,6 +260,10 @@ def main(args=None):
         execute.submit_batch(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'rm':
         execute.rm_pipeline(pass_throughs=pass_throughs, **args.__dict__)
+    elif args.subparser_name == 'trigger':
+        execute.trigger_pipeline(pass_throughs=pass_throughs, **args.__dict__)
+    elif args.subparser_name == 'abort':
+        execute.abort_pipeline(pass_throughs=pass_throughs, **args.__dict__)
     else:
         # this is here so that if future subcommands are added, you don't forget to add a bit
         #     here to enable them.
