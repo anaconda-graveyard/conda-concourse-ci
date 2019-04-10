@@ -371,7 +371,7 @@ def sourceclear_task(meta, node, config_vars):
                  # 'ls -la \n'
                       'curl -sSL https://download.sourceclear.com/ci.sh -o srcclr_ci.sh && '
                  'chmod +x srcclr_ci.sh && '
-                 './srcclr_ci.sh')
+                 './srcclr_ci.sh || true')  # a sourceclean failure should not fail the job
                 .format(node=node)],
         }}
     return {'task': 'sourceclear scan', 'config': task_dict}
