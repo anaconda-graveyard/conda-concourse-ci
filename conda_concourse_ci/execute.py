@@ -257,7 +257,7 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
             creds_cmd = ['echo machine github.com '
                               'login %GITHUB_USER% '
                               'password %GITHUB_TOKEN% '
-                              'protocol https > %USERPROFILE%\_netrc && exit 0']
+                              'protocol https > %USERPROFILE%\_netrc & exit 0']
         else:
             creds_cmd = ['set +x',
                          'echo machine github.com '
