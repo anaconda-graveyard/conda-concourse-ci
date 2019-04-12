@@ -1,3 +1,4 @@
+# fly -t concourse set-pipeline -p pack-build-env -c pack-build-env.yaml -l <path to config>
 resource_types:
 - name: rsync-resource
   type: docker-image
@@ -31,7 +32,7 @@ jobs:
           path: sh
           args:
             - -exc
-            - hostname && ROOT=$(pwd) && echo "Downloading Miniconda..." && curl -LO https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh && echo "installing Miniconda..." && chmod +x Miniconda3-latest-MacOSX-x86_64.sh && ./Miniconda3-latest-MacOSX-x86_64.sh -bfp ./mc && echo "activating local miniconda..." && source mc/bin/activate && conda create -n build_env -y && conda activate build_env && conda install conda -y && conda config --set add_pip_as_python_dependency False && conda install -qy conda-build && conda install -qy -c conda-forge conda-pack && DATE=$(date +%Y_%m_%d) && cd $ROOT/output-pack && conda pack -n build_env -o osx_build_env_$DATE.zip && cp osx_build_env_$DATE.zip osx_build_env_latest.zip
+            - hostname && ROOT=$(pwd) && echo "Downloading Miniconda..." && curl -LO https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh && echo "installing Miniconda..." && chmod +x Miniconda3-latest-MacOSX-x86_64.sh && ./Miniconda3-latest-MacOSX-x86_64.sh -bfp ./mc && echo "activating local miniconda..." && source mc/bin/activate && conda create -n build_env -y && conda activate build_env && conda install conda -y && conda config --system --set add_pip_as_python_dependency False && conda install -qy conda-build && conda install -qy -c conda-forge conda-pack && DATE=$(date +%Y_%m_%d) && cd $ROOT/output-pack && conda pack -n build_env -o osx_build_env_$DATE.zip && cp osx_build_env_$DATE.zip osx_build_env_latest.zip
         outputs:
         - name: output-pack
     - put: rsync-pack
@@ -55,7 +56,7 @@ jobs:
           path: cmd.exe
           args:
             - /c
-            - hostname && set TEMP=%CD% && echo Downloading Miniconda... && curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe -o mc.exe && echo installing Miniconda... && %CD%\mc.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /S /D=%CD%\mc && echo activating local miniconda... && call %CD%\mc\scripts\activate.bat && conda create -n build_env -y && conda activate build_env && conda install -y conda-build m2-patch git posix && conda install -c conda-forge -y conda-pack && conda config --add default_channels https://repo.anaconda.com/pkgs/main && conda config --add default_channels https://repo.anaconda.com/pkgs/r && conda config --add default_channels https://repo.anaconda.com/pkgs/msys2 && cd output-pack && conda pack -n build_env -o windows_build_env_%DATE:~10,4%_%DATE:~4,2%_%DATE:~7,2%.zip && copy windows_build_env_%DATE:~10,4%_%DATE:~4,2%_%DATE:~7,2%.zip windows_build_env_latest.zip
+            - hostname && set TEMP=%CD% && echo Downloading Miniconda... && curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe -o mc.exe && echo installing Miniconda... && %CD%\mc.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /S /D=%CD%\mc && echo activating local miniconda... && call %CD%\mc\scripts\activate.bat && conda create -n build_env -y && conda activate build_env && conda install -y conda-build m2-patch git posix && conda install -c conda-forge -y conda-pack && conda config --system --add default_channels https://repo.anaconda.com/pkgs/main && conda config --system --add default_channels https://repo.anaconda.com/pkgs/r && conda config  --system --add default_channels https://repo.anaconda.com/pkgs/msys2 && cd output-pack && conda pack -n build_env -o windows_build_env_%DATE:~10,4%_%DATE:~4,2%_%DATE:~7,2%.zip && copy windows_build_env_%DATE:~10,4%_%DATE:~4,2%_%DATE:~7,2%.zip windows_build_env_latest.zip
         outputs:
         - name: output-pack
     - put: rsync-pack
