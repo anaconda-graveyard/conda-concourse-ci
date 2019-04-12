@@ -254,10 +254,10 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
             'GITHUB_TOKEN': gh_access_token
         }
         if worker['platform'] == 'win':
-            creds_cmd = ['echo machine github.com '
+            creds_cmd = ['(echo machine github.com '
                               'login %GITHUB_USER% '
                               'password %GITHUB_TOKEN% '
-                              'protocol https > %USERPROFILE%\_netrc & exit 0']
+                              'protocol https > %USERPROFILE%\_netrc || exit 0)']
         else:
             creds_cmd = ['set +x',
                          'echo machine github.com '
