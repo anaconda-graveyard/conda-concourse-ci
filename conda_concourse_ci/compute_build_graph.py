@@ -367,11 +367,16 @@ def collapse_subpackage_nodes(graph):
 
 
 def _write_recipe_log(path):
-    output = subprocess.check_output(['git', 'log'], cwd=path)
     if not os.path.exists(os.path.join(path, "meta.yaml")):
         path = os.path.join(path, "recipe")
-    with open(os.path.join(path, "recipe_log.txt"), "wb") as f:
-        f.write(output)
+    try:
+        output = subprocess.check_output(['git', 'log'], cwd=path)
+        with open(os.path.join(path, "recipe_log.txt"), "wb") as f:
+            f.write(output)
+    except subprocess.CalledProcessError as e:
+        log.warn("Unable to produce recipe git log for %s. Error was: %s",
+                 path, e)
+        pass
 
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
