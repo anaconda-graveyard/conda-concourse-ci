@@ -214,9 +214,7 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     inputs = [{'name': 'rsync-recipes'}]
     worker = graph.node[node]['worker']
 
-    if worker['platform'] == 'win':
-        inputs.append({'name': 'rsync-build-pack'})
-    if worker['platform'] == 'osx':
+    if worker['platform'] in ['win', 'osx']:
         inputs.append({'name': 'rsync-build-pack'})
 
     for channel in meta.config.channel_urls:
@@ -427,7 +425,11 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                       'user': config_vars['intermediate-user'],
                       'private_key': config_vars['intermediate-private-key-job'],
                       'disable_version_path': True,
-                  }},
+                  }}
+                 ]
+    if any(graph.node[node]['worker']['platform'] in ["win", "osx"]
+           for node in order):
+        resources += [
                  {'name': 'rsync-build-pack',
                   'type': 'rsync-resource',
                      'source': {
@@ -436,8 +438,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                      'user': config_vars['intermediate-user'],
                      'private_key': config_vars['intermediate-private-key-job'],
                      'disable_version_path': True,
-                 }}
-                 ]
+                 }}]
 
     rsync_resources = []
 
