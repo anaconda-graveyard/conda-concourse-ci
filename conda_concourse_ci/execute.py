@@ -108,7 +108,7 @@ def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=F
             config.channel_urls = channels or []
             config.variant_config_files = variant_config_files or []
             conda_resolve = Resolve(get_build_index(subdir=index_key,
-                                                    bldpkgs_dir=config.bldpkgs_dir)[0])
+                                                    bldpkgs_dir=config.bldpkgs_dir, channel_urls=channels)[0])
             # this graph is potentially different for platform and for build or test mode ("run")
             g = construct_graph(path, worker=platform, folders=folders, run=run,
                                 matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve,
