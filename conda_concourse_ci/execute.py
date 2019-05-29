@@ -203,7 +203,8 @@ def consolidate_task(inputs, subdir):
 
 
 def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
-                   worker_tags=None, config_vars={}, pass_throughs=None, test_only=False):
+                   worker_tags=None, config_vars={}, pass_throughs=None, test_only=False,
+                   release_lock_step=None):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
     build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
@@ -291,6 +292,8 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
                    ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
     if worker_tags:
         task_dict['tags'] = worker_tags
+    if release_lock_step is not None:
+        task_dict['ensure'] = release_lock_step
     return task_dict
 
 
@@ -376,7 +379,8 @@ def sourceclear_task(meta, node, config_vars):
 
 
 def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
-                            worker_tags=None, pass_throughs=None):
+                            worker_tags=None, pass_throughs=None, use_lock_pool=False):
+    used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
@@ -496,12 +500,32 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
         if prereqs:
             tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
 
+        if use_lock_pool:
+            # one pool for each platform regardless of the arch
+            # pool = worker['platform'] + '_' + worker['arch']
+            # would use seperate pools for each platform+arch
+            pool = worker['platform']
+            lock_resource_name = pool + '_lock'
+            used_pools[lock_resource_name] = pool
+            aquire_lock_task = {
+                'put': lock_resource_name,
+                'params': {'acquire': True},
+            }
+            release_lock_step = {
+                'put': lock_resource_name,
+                'params': {'release': lock_resource_name}
+            }
+            tasks.append(aquire_lock_task)  # task right before the build task
+        else:
+            release_lock_step = None
+
         tasks.append(get_build_task(base_path, graph, node, commit_id, public,
                                     artifact_input=bool(prereqs),
                                     worker_tags=worker_tags,
                                     config_vars=config_vars,
                                     pass_throughs=pass_throughs,
-                                    test_only=test_only))
+                                    test_only=test_only,
+                                    release_lock_step=release_lock_step))
 
         if not test_only:
             tasks.append({'put': resource_name,
@@ -590,6 +614,20 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                            'tag': 'latest'
                            }
                        })
+
+    # add lock pool resources
+    for lock_resource_name, pool in used_pools.items():
+        lock_resource = {
+            'name': lock_resource_name,
+            'type': 'pool',
+            'source': {
+                'uri': '((lock-pool-repo))',
+                'branch': '((lock-pool-branch))',
+                'pool': pool,
+                'private_key': '((lock-pool-private-key))',
+            }
+        }
+        resources.append(lock_resource)
 
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
@@ -754,7 +792,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
                    worker_tags=None, clobber_sections_file=None, append_sections_file=None,
-                   pass_throughs=None, skip_existing=True, **kw):
+                   pass_throughs=None, skip_existing=True, use_lock_pool=False, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -811,7 +849,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
                                    commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
                                    config_vars=data, public=public, worker_tags=worker_tags,
-                                   pass_throughs=pass_throughs)
+                                   pass_throughs=pass_throughs, use_lock_pool=use_lock_pool)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
