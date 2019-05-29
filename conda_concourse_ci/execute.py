@@ -501,10 +501,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
             tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
 
         if use_lock_pool:
-            # one pool for each platform regardless of the arch
-            # pool = worker['platform'] + '_' + worker['arch']
-            # would use seperate pools for each platform+arch
-            pool = worker['platform']
+            # pool name is specified in configuration file
+            pool = worker['pool_name']
             lock_resource_name = pool + '_lock'
             used_pools[lock_resource_name] = pool
             aquire_lock_task = {
