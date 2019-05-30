@@ -612,8 +612,13 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                            'tag': 'latest'
                            }
                        })
+    _add_lock_pool_resources(resources, used_pools, config_vars)
+    # convert types for smoother output to yaml
+    return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
 
-    # add lock pool resources
+
+def _add_lock_pool_resources(resources, used_pools, config_vars):
+    """ Add lock pool resources to the resources dictionary """
     for lock_resource_name, pool in used_pools.items():
         source = {
             'uri': '((lock-pool-repo))',
@@ -631,9 +636,7 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
             'source': source,
         }
         resources.append(lock_resource)
-
-    # convert types for smoother output to yaml
-    return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
+    return
 
 
 def _get_current_git_rev(path, branch=False):
