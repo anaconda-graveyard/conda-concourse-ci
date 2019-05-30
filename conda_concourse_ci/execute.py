@@ -615,15 +615,20 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
 
     # add lock pool resources
     for lock_resource_name, pool in used_pools.items():
+        source = {
+            'uri': '((lock-pool-repo))',
+            'branch': '((lock-pool-branch))',
+            'pool': pool,
+        }
+        if 'lock-pool-private-key' in config_vars:
+            source['private_key'] = '((lock-pool-private-key))'
+        elif 'lock-pool-username' in config_vars:
+            source['username'] = '((lock-pool-username))'
+            source['password'] = '((lock-pool-password))'
         lock_resource = {
             'name': lock_resource_name,
             'type': 'pool',
-            'source': {
-                'uri': '((lock-pool-repo))',
-                'branch': '((lock-pool-branch))',
-                'pool': pool,
-                'private_key': '((lock-pool-private-key))',
-            }
+            'source': source,
         }
         resources.append(lock_resource)
 
