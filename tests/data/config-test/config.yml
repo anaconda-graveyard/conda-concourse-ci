@@ -12,4 +12,8 @@ intermediate-user: your-intermediate-user
 intermediate-private-key-job: key-to-upload-to-concourse
 intermediate-private-key: |
   private-key-to-use-for-connecting-to-intermediate-server
+lock-pool-repo: your-lock-pool-repo
+lock-pool-branch: master
+lock-pool-private-key: |
+  private-key-to-use-for-connecting-to-lock-pool-repo
 build_env_pkgs: /ci/build_pack
