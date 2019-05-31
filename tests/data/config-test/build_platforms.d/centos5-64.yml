@@ -1,6 +1,7 @@
 label: centos5-64
 platform: linux
 arch: 64
+pool_name: centos5
 connector:
   image_resource:
     type: docker-image

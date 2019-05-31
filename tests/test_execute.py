@@ -45,6 +45,21 @@ def test_get_build_task(testing_graph):
     assert 'conda_build_test' in task['config']['run']['args'][-1]
 
 
+def test_get_build_task_with_release_lock_step(testing_graph):
+    # ensure that our channels make it into the args
+    meta = testing_graph.node['b-on-linux']['meta']
+    meta.config.channel_urls = ['conda_build_test']
+    task = execute.get_build_task(
+        base_path=graph_data_dir, graph=testing_graph, node='b-on-linux',
+        commit_id='abc123', release_lock_step={'test_bit': 'valid'})
+    assert task['config']['platform'] == 'linux'
+    assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
+    assert 'rsync-recipes/b-on-linux' in task['config']['run']['args'][-1]
+    assert 'conda_build_test' in task['config']['run']['args'][-1]
+    assert 'ensure' in task
+    assert task['ensure']['test_bit'] == 'valid'
+
+
 def test_graph_to_plan_with_jobs(mocker, testing_graph):
     # stub out uploads, since it depends on config file stuff and we want to manipulate it
     # get_upload = mocker.patch.object(execute, "get_upload_tasks")
@@ -58,6 +73,40 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert len(plan_dict['resources']) == 6
     # a, b, c
     assert len(plan_dict['jobs']) == 3
+
+
+def test_graph_to_plan_with_jobs_with_lock_pool(mocker, testing_graph):
+    # stub out uploads, since it depends on config file stuff and we want to manipulate it
+    # get_upload = mocker.patch.object(execute, "get_upload_tasks")
+    # get_upload.return_value = []
+
+    with open(os.path.join(test_config_dir, 'config.yml')) as f:
+        config_vars = yaml.load(f)
+    plan_dict = execute.graph_to_plan_with_jobs(
+        graph_data_dir, testing_graph, 'abc123', test_config_dir, config_vars,
+        use_lock_pool=True)
+    # rsync-recipes, rsync-source, rsync-stats, one artifact resource, and
+    # one pool resource per build
+    assert len(plan_dict['resources']) == 7
+    # pool_resource does not need to be the last resource but is in the current
+    # implementation
+    pool_resource = plan_dict['resources'][-1]
+    assert pool_resource['name'] == 'linux_pool_lock'
+    assert pool_resource['type'] == 'pool'
+    assert 'uri' in pool_resource['source']
+    assert 'branch' in pool_resource['source']
+    assert 'private_key' in pool_resource['source']
+    # a, b, c
+    assert len(plan_dict['jobs']) == 3
+    # the order of these is based off the current implementation, may change
+    first_job_plan = plan_dict['jobs'][0]['plan']
+    pool_task = first_job_plan[1]
+    build_task = first_job_plan[2]
+    assert pool_task['put'] == 'linux_pool_lock'
+    assert pool_task['params']['acquire']
+    assert 'ensure' in build_task
+    assert build_task['ensure']['put'] == 'linux_pool_lock'
+    assert build_task['ensure']['params']['release'] == 'linux_pool_lock'
 
 
 def test_resource_to_dict():

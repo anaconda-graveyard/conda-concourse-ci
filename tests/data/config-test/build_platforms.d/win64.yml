@@ -1,3 +1,4 @@
 label: win-32
 platform: win
 arch: 32
+pool_name: win

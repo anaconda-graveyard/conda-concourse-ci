@@ -35,7 +35,7 @@ def test_submit_one_off(mocker):
                                                        output_dir=None, platform_filters=None,
                                                        worker_tags=None, clobber_sections_file=None,
                                                        append_sections_file=None, pass_throughs=[],
-                                                       skip_existing=True)
+                                                       skip_existing=True, use_lock_pool=False)
 
 
 def test_submit_batch(mocker):

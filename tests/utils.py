@@ -6,7 +6,8 @@ graph_data_dir = os.path.join(test_data_dir, 'graph_data')
 
 default_worker = {"platform": 'linux',
                   'arch': '64',
-                  'label': 'linux'}
+                  'label': 'linux',
+                  'pool_name': 'linux_pool'}
 
 
 def make_recipe(name, dependencies=()):
