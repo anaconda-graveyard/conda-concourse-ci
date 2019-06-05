@@ -210,6 +210,10 @@ def parse_args(parse_this=None):
         '--no-skip-existing', help="Do not skip existing builds",
         dest="skip_existing", action="store_false"
     )
+    batch_parser.add_argument(
+        '--use_lock_pool', help="Use the lock pool to limit jobs",
+        dest="use_lock_pool", action="store_true"
+    )
 
     rm_parser = sp.add_parser('rm', help='remove pipelines from server')
     rm_parser.add_argument('pipeline_names', nargs="+",

@@ -1027,6 +1027,7 @@ def submit_batch(
         batch_items = [BatchItem(line) for line in batch_lines]
 
     _ensure_login_and_sync(config_root_dir)
+    use_lock_pool = kwargs.get('use_lock_pool', False)
 
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
@@ -1037,7 +1038,11 @@ def submit_batch(
     success = []
     failed = []
     while len(batch_items):
-        num_activate_builds = _get_activate_builds(concourse_url, build_lookback)
+        if use_lock_pool:
+            print("Using lock pool, not limiting builds via submission")
+            num_activate_builds = max_builds - 1
+        else:
+            num_activate_builds = _get_activate_builds(concourse_url, build_lookback)
         if num_activate_builds < max_builds:
             # use a try/except block here so a single failed one-off does not
             # break the batch
