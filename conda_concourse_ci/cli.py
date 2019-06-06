@@ -141,6 +141,11 @@ def parse_args(parse_this=None):
         '--use_lock_pool', help="Use the lock pool to limit jobs",
         dest="use_lock_pool", action="store_true"
     )
+    one_off_parser.add_argument(
+        '--use-repo-access',
+        help="Pass the repo access credentials to the workers",
+        action="store_true",
+    )
 
     batch_parser = sp.add_parser('batch', help="submit a batch of one-off jobs.")
     batch_parser.add_argument(
@@ -213,6 +218,11 @@ def parse_args(parse_this=None):
     batch_parser.add_argument(
         '--use_lock_pool', help="Use the lock pool to limit jobs",
         dest="use_lock_pool", action="store_true"
+    )
+    batch_parser.add_argument(
+        '--use-repo-access',
+        help="Pass the repo access credentials to the workers",
+        action="store_true",
     )
 
     rm_parser = sp.add_parser('rm', help='remove pipelines from server')

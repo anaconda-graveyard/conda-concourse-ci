@@ -27,15 +27,26 @@ def test_submit_one_off(mocker):
     mocker.patch.object(cli.execute, 'submit_one_off')
     args = ['one-off', 'frank', 'bzip2', '--config-root-dir', '../config']
     cli.main(args)
-    cli.execute.submit_one_off.assert_called_once_with(pipeline_label='frank',
-                                                       config_root_dir=mocker.ANY, debug=False,
-                                                       public=True, recipe_root_dir=os.getcwd(),
-                                                       subparser_name='one-off', folders=['bzip2'],
-                                                       channel=None, variant_config_files=None,
-                                                       output_dir=None, platform_filters=None,
-                                                       worker_tags=None, clobber_sections_file=None,
-                                                       append_sections_file=None, pass_throughs=[],
-                                                       skip_existing=True, use_lock_pool=False)
+    cli.execute.submit_one_off.assert_called_once_with(
+        pipeline_label='frank',
+        config_root_dir=mocker.ANY,
+        debug=False,
+        public=True,
+        recipe_root_dir=os.getcwd(),
+        subparser_name='one-off',
+        folders=['bzip2'],
+        channel=None,
+        variant_config_files=None,
+        output_dir=None,
+        platform_filters=None,
+        worker_tags=None,
+        clobber_sections_file=None,
+        append_sections_file=None,
+        pass_throughs=[],
+        skip_existing=True,
+        use_lock_pool=False,
+        use_repo_access=False,
+    )
 
 
 def test_submit_batch(mocker):
@@ -43,12 +54,28 @@ def test_submit_batch(mocker):
     args = ['batch', 'batch_file.txt', '--config-root-dir', '../config']
     cli.main(args)
     cli.execute.submit_batch.assert_called_once_with(
-        batch_file='batch_file.txt', recipe_root_dir=os.getcwd(), config_root_dir=mocker.ANY,
-        max_builds=36, poll_time=120, build_lookback=500, label_prefix='autobot_',
-        debug=False, public=True, subparser_name='batch', channel=None,
-        variant_config_files=None, output_dir=None, platform_filters=None, worker_tags=None,
-        clobber_sections_file=None, append_sections_file=None, use_lock_pool=False,
-        pass_throughs=[], skip_existing=True)
+        batch_file='batch_file.txt',
+        recipe_root_dir=os.getcwd(),
+        config_root_dir=mocker.ANY,
+        max_builds=36,
+        poll_time=120,
+        build_lookback=500,
+        label_prefix='autobot_',
+        debug=False,
+        public=True,
+        subparser_name='batch',
+        channel=None,
+        variant_config_files=None,
+        output_dir=None,
+        platform_filters=None,
+        worker_tags=None,
+        clobber_sections_file=None,
+        append_sections_file=None,
+        use_lock_pool=False,
+        use_repo_access=False,
+        pass_throughs=[],
+        skip_existing=True,
+    )
 
 
 def test_submit_without_base_name_raises():

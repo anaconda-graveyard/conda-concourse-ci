@@ -204,7 +204,7 @@ def consolidate_task(inputs, subdir):
 
 def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
                    worker_tags=None, config_vars={}, pass_throughs=None, test_only=False,
-                   release_lock_step=None):
+                   release_lock_step=None, use_repo_access=False):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
     build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
@@ -245,26 +245,27 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     # this is the recipe path to build
     build_args.append(os.path.join('rsync-recipes', node))
 
-    gh_access_user = config_vars.get('recipe-repo-access-user', None)
-    gh_access_token = config_vars.get('recipe-repo-access-token', None)
-    if gh_access_user and gh_access_token:
-        task_dict['params'] = {
-            'GITHUB_USER': gh_access_user,
-            'GITHUB_TOKEN': gh_access_token
-        }
-        if worker['platform'] == 'win':
-            creds_cmd = ['(echo machine github.com '
-                              'login %GITHUB_USER% '
-                              'password %GITHUB_TOKEN% '
-                              'protocol https > %USERPROFILE%\_netrc || exit 0)']
-        else:
-            creds_cmd = ['set +x',
-                         'echo machine github.com '
-                              'login $GITHUB_USER '
-                              'password $GITHUB_TOKEN '
-                              'protocol https > ~/.netrc',
-                         'set -x']
-        worker['prefix_commands'] = worker.get('prefix_commands', []) + creds_cmd
+    if use_repo_access:
+        gh_access_user = config_vars.get('recipe-repo-access-user', None)
+        gh_access_token = config_vars.get('recipe-repo-access-token', None)
+        if gh_access_user and gh_access_token:
+            task_dict['params'] = {
+                'GITHUB_USER': gh_access_user,
+                'GITHUB_TOKEN': gh_access_token
+            }
+            if worker['platform'] == 'win':
+                creds_cmd = ['(echo machine github.com '
+                                  'login %GITHUB_USER% '
+                                  'password %GITHUB_TOKEN% '
+                                  'protocol https > %USERPROFILE%\_netrc || exit 0)']
+            else:
+                creds_cmd = ['set +x',
+                            'echo machine github.com '
+                                'login $GITHUB_USER '
+                                'password $GITHUB_TOKEN '
+                                'protocol https > ~/.netrc',
+                            'set -x']
+            worker['prefix_commands'] = worker.get('prefix_commands', []) + creds_cmd
 
     build_prefix_commands = " ".join(ensure_list(worker.get('build_prefix_commands')))
     build_suffix_commands = " ".join(ensure_list(worker.get('build_suffix_commands')))
@@ -378,8 +379,10 @@ def sourceclear_task(meta, node, config_vars):
     return {'task': 'sourceclear scan', 'config': task_dict}
 
 
-def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
-                            worker_tags=None, pass_throughs=None, use_lock_pool=False):
+def graph_to_plan_with_jobs(
+        base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
+        worker_tags=None, pass_throughs=None, use_lock_pool=False,
+        use_repo_access=False):
     used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
@@ -523,7 +526,8 @@ def graph_to_plan_with_jobs(base_path, graph, commit_id, matrix_base_dir, config
                                     config_vars=config_vars,
                                     pass_throughs=pass_throughs,
                                     test_only=test_only,
-                                    release_lock_step=release_lock_step))
+                                    release_lock_step=release_lock_step,
+                                    use_repo_access=use_repo_access))
 
         if not test_only:
             tasks.append({'put': resource_name,
@@ -798,7 +802,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
                    worker_tags=None, clobber_sections_file=None, append_sections_file=None,
-                   pass_throughs=None, skip_existing=True, use_lock_pool=False, **kw):
+                   pass_throughs=None, skip_existing=True, use_lock_pool=False,
+                   use_repo_access=False, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -852,10 +857,18 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     if config_overrides:
         data.update(config_overrides)
 
-    plan = graph_to_plan_with_jobs(os.path.abspath(path), task_graph,
-                                   commit_id=repo_commit, matrix_base_dir=matrix_base_dir,
-                                   config_vars=data, public=public, worker_tags=worker_tags,
-                                   pass_throughs=pass_throughs, use_lock_pool=use_lock_pool)
+    plan = graph_to_plan_with_jobs(
+        os.path.abspath(path),
+        task_graph,
+        commit_id=repo_commit,
+        matrix_base_dir=matrix_base_dir,
+        config_vars=data,
+        public=public,
+        worker_tags=worker_tags,
+        pass_throughs=pass_throughs,
+        use_lock_pool=use_lock_pool,
+        use_repo_access=use_repo_access
+    )
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
