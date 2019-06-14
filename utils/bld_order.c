@@ -516,7 +516,7 @@ int main(int argc, char **argv)
     sort_depth();
     out_printf(" <nodes>\n");
     for ( i = 0; i < the_list_cnt; i++)
-      out_printf("  <node id=\"%s\" label=\"%s_feedstock\"/>\n", the_list[i]->name, the_list[i]->name);
+      out_printf("  <node id=\"%s\" label=\"%s\"/>\n", the_list[i]->name, the_list[i]->name);
     out_printf("  </nodes>\n");
   }
 
