@@ -42,8 +42,10 @@ The usage of this tool is the following:
               be aware that 'local' channel is automatically added.
   -k kind: specifies the kind of output generated. Right now tool supports
            the following output kinds:
-           - shell
-           - bat
+           - shell : output bash shell script
+           - bat   : output batch script
+           - gexf  : output directed graph of build dependencies
+                     The arguments -c, and -R have no meaning for this.
 
 -----------------------------------------------------------------------------
 
