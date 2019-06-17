@@ -19,8 +19,9 @@ static void add_dep(s_entity *that, s_entity *add);
 static s_entity *create_entity(const char *name);
 static void read_deps(s_entity *that);
 static void verbose_msg_printf(int lvl, const char *fmt, ...);
-static void out_printf(const char *fmt, ...)
-;
+static void out_printf(const char *fmt, ...);
+static int in_deps(s_entity *item, size_t ignore_sub);
+static void sort_depth(void);
 
 /* global variables */
 s_entity **the_list = NULL;
@@ -28,13 +29,13 @@ size_t the_list_cnt = 0;
 FILE *fp_out = NULL;
 FILE *fp_msg = NULL;
 int verbose_lvl = 0;
-int out_kind = 0; /* 1: shell 2: bat 0:default is bat */
+int out_kind = 0; /* 1: shell 2: bat 3: gexf 0:default is gexf */
 const char *Rver = NULL;
 char *channels = NULL;
 
 #define is_shell_mode() (out_kind == 1)
-#define is_bat_mode() (out_kind == 2 || out_kind == 0)
-
+#define is_bat_mode() (out_kind == 2)
+#define is_gexf_mode() (out_kind == 3 || out_kind == 0)
 static void add_channel(const char *c)
 {
   char *h;
@@ -319,6 +320,8 @@ static int handle_arg(char **args, int count, int *cnt)
       out_kind = 1;
     else if (!strcmp(opth, "bat") )
       out_kind = 2;
+    else if (!strcmp(opth, "gexf") )
+      out_kind = 3;
     else
     {
       msg_printf("Unknown output kind option ,%s'\n", opth);
@@ -345,7 +348,7 @@ static void show_usage_and_exit(const char *arg0)
     "    -o name : specify output file. File name '-' means standard output\n"
     "    -m name : specify message file. Filen name '-' means error output\n"
     "    -k <out-as>\n"
-    "            : <out-as> can be 'bat', or 'shell'\n"
+    "            : <out-as> can be 'gexf', 'bat', or 'shell'\n"
     "    -R <version>\n"
     "            : <version> of required R (eg 3.6.0)\n"
     "              If not specified, no R version specified\n"
@@ -355,6 +358,31 @@ static void show_usage_and_exit(const char *arg0)
     "              is added as channel.\n"
     "\n");
   exit(1);
+}
+
+static int in_sub_deps(s_entity *it, s_entity *seek)
+{
+  size_t i;
+  for ( i = 0; i < it->dep_cnt; i++ )
+  {
+    if (it->deps[i] == seek || in_sub_deps(it->deps[i], seek) )
+      return 1;
+  }
+  return 0;
+}
+
+static int in_deps(s_entity *item, size_t ignore_sub)
+{
+  size_t i;
+  s_entity *it = item->deps[ignore_sub];
+  for ( i = 0; i < item->dep_cnt; i++)
+  {
+    if ( i == ignore_sub )
+      continue;
+    if ( item->deps[i] == it || in_sub_deps(item->deps[i], it) )
+      return 1;
+  }
+  return 0;
 }
 
 /* Main routine */
@@ -416,6 +444,15 @@ int main(int argc, char **argv)
   /* now start to do the output */
   if ( is_shell_mode() )
     out_printf("#!/bin/bash\n\n");
+  else if ( is_gexf_mode() )
+  {
+    out_printf(
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+      "<gexf xmlns=\"http://www.gexf.net/1.2draft\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd\" version=\"1.2\">\n"
+      );
+    out_printf("<graph defaultedgetype=\"directed\">\n");
+  }
+
   do
   {
     int out_num = 0;
@@ -426,26 +463,33 @@ int main(int argc, char **argv)
       {
         if ( the_list[i]->is_printed == 0 )
         {
-          if (out_num == 0)
+          if (out_num == 0 && !is_gexf_mode() )
+          {
             out_printf("conda-build --skip-existing %s%s -c https://repo.continuum.io/pkgs/main %s ",
-            (Rver && *Rver!=0) ? "--R " : "", Rver ? Rver : "",
-            channels ? channels : "-c local");
+              (Rver && *Rver!=0) ? "--R " : "", Rver ? Rver : "",
+              channels ? channels : "-c local");
+          }
           the_list[i]->is_printed = 1;
-          out_printf(" %s", the_list[i]->name);
+          if ( !is_gexf_mode() )
+            out_printf(" %s", the_list[i]->name);
           deep += 1;
           out_num++;
           if ( out_num >= 16 )
           {
             out_num = 0;
-            if ( is_shell_mode() )
-              out_printf(" || exit 1");
-            if ( is_bat_mode() )
-              out_printf("\nIF %%ERRORLEVEL%% NEQ 0 goto ende");
-            out_printf("\n");
+            if ( !is_gexf_mode() )
+            {
+              if ( is_shell_mode() )
+                out_printf(" || exit 1");
+              if ( is_bat_mode() )
+                out_printf("\nIF %%ERRORLEVEL%% NEQ 0 goto ende");
+              out_printf("\n");
+            }
           }
         }
       }
     }
+    // output all within one deepth
     printed = 0;
     for ( i = 0; i < the_list_cnt; i++)
     {
@@ -455,19 +499,50 @@ int main(int argc, char **argv)
         printed++;
       }
     }
-    if ( out_num != 0 )
+    if ( out_num != 0 && !is_gexf_mode() )
     {
       if ( is_shell_mode() )
         out_printf(" || exit 1");
-      if ( is_bat_mode() )
+      else if ( is_bat_mode() )
         out_printf("\nIF %%ERRORLEVEL%% NEQ 0 goto ende");
       out_printf("\n\n");
     }
   }
   while ( printed < the_list_cnt && deep != 0);
 
+  // output all nodes of deepth
+  if ( is_gexf_mode() )
+  {
+    sort_depth();
+    out_printf(" <nodes>\n");
+    for ( i = 0; i < the_list_cnt; i++)
+      out_printf("  <node id=\"%s\" label=\"%s_feedstock\"/>\n", the_list[i]->name, the_list[i]->name);
+    out_printf("  </nodes>\n");
+  }
+
   if ( is_bat_mode() )
     out_printf(":ende\necho finished.\n");
+  else if ( is_gexf_mode() )
+  {
+    unsigned int ecnt = 0;
+    out_printf("  <edges>\n");
+    // print out the edges ...
+    for ( i = 0; i < the_list_cnt; i++)
+    {
+      if ( the_list[i]->dep_cnt != 0 )
+      {
+        size_t ii;
+        for ( ii = 0; ii < the_list[i]->dep_cnt; ii++)
+        {
+          if ( !in_deps(the_list[i], ii) )
+            out_printf("   <edge id=\"%u\" source=\"%s\" target=\"%s\"/>\n", ecnt++, the_list[i]->deps[ii]->name, the_list[i]->name);
+        }
+      }
+    }
+out_printf("  </edges>\n"
+      " </graph>\n"
+      "</gexf>\n");
+  }
 
   if ( printed != the_list_cnt )
     msg_printf(" There are cyclic dependencies, which can't be resolved\n");
@@ -501,4 +576,17 @@ static int all_deps_resolved(s_entity *e)
     if (e->deps[i]->is_resolved == 0 )
       return 0;
   return 1;
+}
+
+static int fn_sort_depth(const void *a, const void *b)
+{
+  const s_entity *ap = *((const s_entity * const *) a), *bp = *((const s_entity * const*) b);
+  if ( ap->dep_cnt != bp->dep_cnt )
+    return ap->dep_cnt < bp->dep_cnt ? -1 : 1;
+  return 0;
+}
+
+static void sort_depth(void)
+{
+  qsort(the_list, the_list_cnt, sizeof(the_list[0]), fn_sort_depth);
 }
