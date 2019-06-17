@@ -6,4 +6,5 @@ meta.yaml text eol=lf
 *.sh text eol=lf
 bld.bat text eol=crlf
 *.c text eol=lf
+README.md text eol=lf
 
