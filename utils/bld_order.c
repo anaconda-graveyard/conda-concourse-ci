@@ -532,9 +532,33 @@ int main(int argc, char **argv)
   // output all nodes of deepth
   if ( is_gexf_mode() )
   {
+    int last_lvl = -1;
+    int last_lvl_cnt = 0;
     out_printf(" <nodes>\n");
     for ( i = 0; i < the_list_cnt; i++)
-      out_printf("  <node id=\"%s\" label=\"%s\"/>\n", the_list[i]->name, the_list[i]->name);
+    {
+      double x = 0.0, y = 0.0;
+      if ( last_lvl != the_list[i]->lvl )
+      {
+        last_lvl = the_list[i]->lvl;
+        y += 50.0;
+        last_lvl_cnt = 0;
+      }
+      if ( last_lvl_cnt != 0)
+      {
+        x = 50.0 * (double) (last_lvl_cnt/2);
+        if ( last_lvl_cnt & 1)
+          x = -x;
+      }
+
+
+      out_printf("  <node id=\"%s\" label=\"%s\">\n", the_list[i]->name, the_list[i]->name);
+      out_printf("    <viz:size value=\"10.0\"></viz:size>\n");
+      out_printf("    <viz:position x=\"%F\" y=\"%F\"></viz:position>\n",
+        x, y);
+      out_printf("  </node>\n");
+
+    }
     out_printf("  </nodes>\n");
   }
 
