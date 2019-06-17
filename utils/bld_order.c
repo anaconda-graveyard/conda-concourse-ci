@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 
 /* local type definitions. */
 typedef struct s_entity {
@@ -448,11 +449,23 @@ int main(int argc, char **argv)
     out_printf("#!/bin/bash\n\n");
   else if ( is_gexf_mode() )
   {
+    time_t ti;
+    struct tm *nti;
+
+    time(&ti);
+    nti = localtime(&ti);
     out_printf(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-      "<gexf xmlns=\"http://www.gexf.net/1.2draft\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd\" version=\"1.2\">\n"
+      "<gexf xmlns=\"http://www.gexf.net/1.3\" version=\"1.3\" xmlns:viz=\"http://www.gexf.net/1.3/viz\""
+      " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+      " xsi:schemaLocation=\"http://www.gexf.net/1.3 http://www.gexf.net/1.3/gexf.xsd\">\n"
       );
-    out_printf("<graph defaultedgetype=\"directed\">\n");
+    out_printf("<meta lastmodified=\"%d-%02d-%02d\">\n"
+      "  <creator>bld_order tool 1.0</creator>\n"
+      "  <description></description>\n"
+      "</meta>\n",
+      nti ? 1900+nti->tm_year : 2019, nti ? nti->tm_mon+1 : 6, nti ? nti->tm_mday : 16);
+    out_printf("<graph defaultedgetype=\"directed\" mode=\"static\">\n");
   }
 
   do
