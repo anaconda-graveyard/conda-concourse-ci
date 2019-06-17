@@ -8,6 +8,7 @@ typedef struct s_entity {
   char *name;
   struct s_entity **deps;
   int dep_cnt;
+  int lvl;
   unsigned int was_loaded : 1;
   unsigned int is_printed : 1;
   unsigned int is_resolved : 1;
@@ -207,6 +208,7 @@ static s_entity *create_entity(const char *name)
   e->name = strdup(name);
   e->deps = NULL;
   e->dep_cnt = 0;
+  e->lvl = 0;
   e->was_loaded = 0;
   e->is_printed = 0;
   e->is_resolved = 0;
@@ -388,7 +390,7 @@ static int in_deps(s_entity *item, size_t ignore_sub)
 /* Main routine */
 int main(int argc, char **argv)
 {
-  int deep;
+  int deep, lvl = 0;
   int i, printed;
 
   if ( argc < 2 )
@@ -463,15 +465,17 @@ int main(int argc, char **argv)
       {
         if ( the_list[i]->is_printed == 0 )
         {
-          if (out_num == 0 && !is_gexf_mode() )
-          {
-            out_printf("conda-build --skip-existing %s%s -c https://repo.continuum.io/pkgs/main %s ",
-              (Rver && *Rver!=0) ? "--R " : "", Rver ? Rver : "",
-              channels ? channels : "-c local");
-          }
           the_list[i]->is_printed = 1;
+
           if ( !is_gexf_mode() )
+          {
+            if ( out_num == 0 )
+              out_printf("conda-build --skip-existing %s%s -c https://repo.continuum.io/pkgs/main %s ",
+                (Rver && *Rver!=0) ? "--R " : "", Rver ? Rver : "",
+                channels ? channels : "-c local");
             out_printf(" %s", the_list[i]->name);
+          }
+          the_list[i]->lvl = lvl;
           deep += 1;
           out_num++;
           if ( out_num >= 16 )
@@ -489,7 +493,7 @@ int main(int argc, char **argv)
         }
       }
     }
-    // output all within one deepth
+    // output all within one depth
     printed = 0;
     for ( i = 0; i < the_list_cnt; i++)
     {
@@ -507,13 +511,14 @@ int main(int argc, char **argv)
         out_printf("\nIF %%ERRORLEVEL%% NEQ 0 goto ende");
       out_printf("\n\n");
     }
+    ++lvl;
   }
   while ( printed < the_list_cnt && deep != 0);
 
+  sort_depth();
   // output all nodes of deepth
   if ( is_gexf_mode() )
   {
-    sort_depth();
     out_printf(" <nodes>\n");
     for ( i = 0; i < the_list_cnt; i++)
       out_printf("  <node id=\"%s\" label=\"%s\"/>\n", the_list[i]->name, the_list[i]->name);
@@ -581,12 +586,16 @@ static int all_deps_resolved(s_entity *e)
 static int fn_sort_depth(const void *a, const void *b)
 {
   const s_entity *ap = *((const s_entity * const *) a), *bp = *((const s_entity * const*) b);
+  if ( ap->lvl != bp->lvl )
+    return ap->lvl < bp->lvl ? -1 : 1;
   if ( ap->dep_cnt != bp->dep_cnt )
     return ap->dep_cnt < bp->dep_cnt ? -1 : 1;
-  return 0;
+  return strcmp (ap->name, bp->name);
 }
 
 static void sort_depth(void)
 {
+  if ( the_list_cnt < 2 )
+    return;
   qsort(the_list, the_list_cnt, sizeof(the_list[0]), fn_sort_depth);
 }
