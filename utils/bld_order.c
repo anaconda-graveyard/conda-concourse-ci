@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <io.h>
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
@@ -13,6 +14,7 @@ typedef struct s_entity {
   unsigned int was_loaded : 1;
   unsigned int is_printed : 1;
   unsigned int is_resolved : 1;
+  unsigned int visited : 1;
 } s_entity;
 
 /* forwarders */
@@ -100,17 +102,33 @@ static void read_deps(s_entity *that)
   int i, e, ignore_rest = 0;
   char line[2024];
   char s[1024];
-  FILE *fp;
-  if ( !that || strstr(that->name, "-feedstock") == NULL)
+  FILE *fp = NULL;
+  if ( !that )
     return;
   sprintf(s, "%s/recipe/meta.yaml", that->name);
-  verbose_msg_printf(0, "\nattempt to open file ,%s'\n", s);
-  fp = fopen(s, "rb");
-  if (!fp)
+  if ( !access(s, 0) )
+    fp = fopen(s, "rb");
+  if ( !fp && that->name[0] != 0 )
   {
-    msg_printf("# can't read file \"%s\"\n", s);
-    return;
+    sprintf(s, "%s/meta.yaml", that->name);
+    if ( !access(s, 0) )
+      fp = fopen(s, "rb");
+    if ( fp == NULL && !strncmp(that->name, "m2-", 3) )
+    {
+      sprintf(s, "%s/meta.yaml", that->name + 3);
+      if ( !access(s, 0) )
+        fp = fopen(s, "rb");
+    }
+    if ( fp == NULL && !strncmp(that->name, "m2w64-", 6) )
+    {
+      sprintf(s, "%s/meta.yaml", that->name + 3);
+      if ( !access(s, 0) )
+        fp = fopen(s, "rb");
+    }
   }
+  if (!fp)
+    return;
+
   while ( !feof(fp) )
   {
     i = 0;
@@ -138,8 +156,10 @@ static void read_deps(s_entity *that)
       if ( e > 0 && line[e] == ':')
       {
         line[e] = 0;
-        if (!strcmp(line, "commands") || !strcmp(line, "about") )
+      if (!strcmp(line, "commands") || !strcmp(line, "about") || !strcmp(line, "files") )
           ignore_rest = 1;
+        else if (!strcmp(line, "requirements") || !strcmp(line, "requires") )
+          ignore_rest = 0;
       }
       continue;
     }
@@ -166,12 +186,39 @@ eat_whitespace:
     {
       s_entity *ne;
       e = i;
-      while ( (line[e] >= 'a' && line[e] <= 'z') || (line[e] >= 'A' && line[e] <= 'Z') || line[e] == '_' || (line[e] >= '0' && line[e] <= '9') || line[e] == '-' || line[e] == '.')
+      while ( (line[e] >= 'a' && line[e] <= 'z') || (line[e] >= 'A' && line[e] <= 'Z') ||
+        line[e] == '_' || (line[e] >= '0' && line[e] <= '9')
+        || line[e] == '-' || line[e] == '.')
         e++;
       if (e == i)
         continue;
+      // fprintf(stderr, " try to resolve ,%s'\n", &line[i]);
       strcpy(&line[e],"-feedstock");
+      if ( access(&line[i], 0) )
+      {
+        if ( !strncmp(&line[i], "m2-", 3)
+          && !access(&line[i+3], 0) )
+          i += 3;
+        else if ( !strncmp(&line[i], "m2w64-", 6)
+          && !access(&line[i+6], 0) )
+          i += 6;
+        else
+        {
+          line[e] = 0;
+          if ( access(&line[i], 0) )
+          {
+            if ( !strncmp(&line[i], "m2-", 3)
+              && !access(&line[i+3], 0) )
+              i += 3;
+            else if ( !strncmp(&line[i], "m2w64-", 6)
+              && !access(&line[i+6], 0) )
+              i += 6;
+          }
+        }
+      }
       sprintf(s, "%s/recipe/meta.yaml", &line[i]);
+      if ( access(s, 0) )
+        sprintf(s, "%s/meta.yaml", &line[i]);
       {
         FILE *hp = fopen(s, "rb");
         if ( hp )
@@ -182,7 +229,7 @@ eat_whitespace:
           continue;
         }
       }
-      verbose_msg_printf(0, "attempt to creat feedstock ,%s'\n", &line[i]); 
+      verbose_msg_printf(0, "attempt to create feedstock ,%s'\n", &line[i]); 
       ne = create_entity(&line[i]);
       add_dep(that, ne);
     }
@@ -213,6 +260,7 @@ static s_entity *create_entity(const char *name)
   e->was_loaded = 0;
   e->is_printed = 0;
   e->is_resolved = 0;
+  e->visited = 0;
   the_list_cnt += 1;
   the_list[i] = e;
   return e;
@@ -365,12 +413,22 @@ static void show_usage_and_exit(const char *arg0)
 
 static int in_sub_deps(s_entity *it, s_entity *seek)
 {
+  if ( it->visited == 1 )
+  {
+    msg_printf(" There are cyclic dependencies to ,%s'\n", it->name);
+    return 0;
+  }
+  it->visited = 1;
   size_t i;
   for ( i = 0; i < it->dep_cnt; i++ )
   {
     if (it->deps[i] == seek || in_sub_deps(it->deps[i], seek) )
+    {
+      it->visited = 0;
       return 1;
+    }
   }
+  it->visited = 0;
   return 0;
 }
 
@@ -462,9 +520,10 @@ int main(int argc, char **argv)
       );
     out_printf("<meta lastmodified=\"%d-%02d-%02d\">\n"
       "  <creator>bld_order tool 1.0</creator>\n"
-      "  <description></description>\n"
+      "  <description>--skip-existing --R %s %s -c https://repo.continuum.io/pkgs/main</description >\n"
       "</meta>\n",
-      nti ? 1900+nti->tm_year : 2019, nti ? nti->tm_mon+1 : 6, nti ? nti->tm_mday : 16);
+      nti ? 1900+nti->tm_year : 2019, nti ? nti->tm_mon+1 : 6, nti ? nti->tm_mday : 16,
+      Rver ? Rver : "3.6.0", channels ? channels : "-c local");
     out_printf("<graph defaultedgetype=\"directed\" mode=\"static\">\n");
   }
 
@@ -542,7 +601,7 @@ int main(int argc, char **argv)
       if ( last_lvl != the_list[i]->lvl )
       {
         last_lvl = the_list[i]->lvl;
-        y += 100.0;
+        y += 200.0;
         last_lvl_cnt = 0;
       }
       if ( last_lvl_cnt != 0)
@@ -551,7 +610,7 @@ int main(int argc, char **argv)
         if ( last_lvl_cnt & 1)
           x = -x;
         if ( (last_lvl_cnt & 2) == 0 )
-          dy = 40.0;
+          dy = 80.0;
       }
 
 
