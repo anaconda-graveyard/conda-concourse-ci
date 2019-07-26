@@ -57,7 +57,7 @@ def test_submit_batch(mocker):
         batch_file='batch_file.txt',
         recipe_root_dir=os.getcwd(),
         config_root_dir=mocker.ANY,
-        max_builds=36,
+        max_builds=6,
         poll_time=120,
         build_lookback=500,
         label_prefix='autobot_',

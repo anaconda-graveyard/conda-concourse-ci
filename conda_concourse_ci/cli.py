@@ -138,7 +138,8 @@ def parse_args(parse_this=None):
         dest="skip_existing", action="store_false"
     )
     one_off_parser.add_argument(
-        '--use_lock_pool', help="Use the lock pool to limit jobs",
+        '--use_lock_pool',
+        help="Use the lock pool to limit jobs. DO NOT USE, WORKS POORLY",
         dest="use_lock_pool", action="store_true"
     )
     one_off_parser.add_argument(
@@ -160,16 +161,19 @@ def parse_args(parse_this=None):
 
     # batch specific arguments
     batch_parser.add_argument(
-        '--max-builds', default=36, type=int,
-        help="maximum number of activate builds allowed before starting a new job")
+        '--max-builds', default=6, type=int,
+        help=("maximum number of activate builds allowed before starting a new"
+              "job, default is 6"))
     batch_parser.add_argument(
         '--poll-time', default=120, type=int,
-        help="time in seconds between checking concourse server for active builds")
+        help=("time in seconds between checking concourse server for active "
+              "builds, default is 120 seconds."))
     batch_parser.add_argument(
         '--build-lookback', default=500, type=int,
-        help="number of builds to examine for active builds.")
+        help="number of builds to examine for active builds, default is 500")
     batch_parser.add_argument(
-        '--label-prefix', default='autobot_', help="prefix for pipeline labels.")
+        '--label-prefix', default='autobot_',
+        help="prefix for pipeline labels, default is autobot_")
 
     # one-off arguments
     batch_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
