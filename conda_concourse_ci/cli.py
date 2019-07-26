@@ -138,7 +138,8 @@ def parse_args(parse_this=None):
         dest="skip_existing", action="store_false"
     )
     one_off_parser.add_argument(
-        '--use_lock_pool', help="Use the lock pool to limit jobs",
+        '--use_lock_pool',
+        help="Use the lock pool to limit jobs. DO NOT USE, WORKS POORLY",
         dest="use_lock_pool", action="store_true"
     )
     one_off_parser.add_argument(
