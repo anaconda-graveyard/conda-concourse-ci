@@ -1,0 +1,9 @@
+r-AnthropMMD-feedstock
+r-aptg-feedstock
+r-asymmetry-feedstock
+r-FreeSortR-feedstock
+r-MDSMap-feedstock
+r-mdsOpt-feedstock
+r-networktools-feedstock
+r-RobExtremes-feedstock
+r-vegtable-feedstock
