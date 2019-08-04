@@ -147,14 +147,11 @@ pandas2ri.activate()
 readRDS = robjects.r['readRDS']
 session = requests.Session()
 
-get_ipython().run_line_magic('matplotlib', 'qt')
+get_ipython().run_line_magic('matplotlib', 'auto')
 
 anaconda_pkgs = build_anaconda_pkglist(rver = Rver)
 
-from binstar_client.utils.config import DEFAULT_URL, load_token
 built_pkgs = set()
-
-# In[61]:
 
 
 from email.parser import BytesParser
