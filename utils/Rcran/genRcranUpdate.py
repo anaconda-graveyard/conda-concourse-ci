@@ -10,6 +10,18 @@ import pandas as pd
 import numpy as np
 import re, os, time, shutil
 
+do_max_pkg_cnt = 100 # set to -1 if all packages shall be done
+
+CRAN_BASE = 'https://cran.r-project.org'
+Rrepository = 'aggregateR'
+RrepositoryURL = 'git@github.com:AnacondaRecipes/aggregateR.git'
+#CRAN_BASE = 'https://cran.microsoft.com/snapshot/2018-01-01'
+RecipeMaintainer = 'katietz'
+Rver = '36'
+Rfullver = '3.6.1'
+
+batch_count_max=100
+do_recursive = '' # '--dirty --recursive'
 
 # The Microsoft CRAN time machine allows us to select a snapshot of CRAN at any day in time. For instance, 2018-01-01 is (in Microsoft's determination) the "official" snapshot date for R 3.4.3.
 
@@ -24,20 +36,112 @@ def get_r_channel_rdata(arch):
 	   rdata = json.loads(repodata.text)
    return rdata;
 
+def build_anaconda_pkglist(rver):
+    repodata = get_r_channel_rdata("noarch")
+    pkgs = get_anaconda_pkglist(repodata, arch = 'noarch', ver = rver)
+    # we don't get mro package
+    repodata = get_r_channel_rdata('linux-64')
+    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'linux-64', ver = rver)
+    pkgs.update(anaconda_pkgs2)
+    repodata = get_r_channel_rdata('linux-32')
+    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'linux-32', ver = rver)
+    pkgs.update(anaconda_pkgs2)
+    repodata = get_r_channel_rdata('win-32')
+    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'win-32', ver = rver)
+    pkgs.update(anaconda_pkgs2)
+    repodata = get_r_channel_rdata('win-64')
+    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'win--64', ver = rver)
+    pkgs.update(anaconda_pkgs2)
+    repodata = get_r_channel_rdata('osx-64')
+    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'osx-64', ver = rver)
+    pkgs.update(anaconda_pkgs2)
+
+    print('{} Total Anaconda R packages found.'.format(len(pkgs)))
+    # print(list(pkgs))
+    return pkgs
+
+def write_out_bld_script(stages, mode = 'sh'):
+    cnt = do_max_pkg_cnt
+    comment_line = '#'
+    sep_line = ' \\\n    '
+    if mode != 'sh':
+        comment_line = 'REM'
+        sep_line = ' '
+    with open(f'./build-stage.{mode}', 'w') as bd:
+        if mode == 'sh':
+            bd.write('#!/bin/bash\n\n')
+        for i, stage in enumerate(stages):
+            bd.write('{} stage {}\n'.format(comment_line, i))
+            scount = len(stage)
+            j = 0
+            elno = 0
+            while elno < scount and (cnt == -1 or cnt > 0):
+                # Write out build steps ...
+                bd.write('conda-build --skip-existing -c https://repo.continuum.io/pkgs/main --R={}{}'.format(Rfullver, sep_line))
+                el = 0
+                while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
+                    p = stage[elno]
+                    bd.write(' r-' + p + '-feedstock{}'.format(sep_line))
+                    elno += 1
+                    el += 1
+                    if cnt != -1:
+                        cnt -= 1
+                j += 1
+                # terminate lines ...
+                bd.write('\n')
+            bd.write('\n')
+            print("State {} is splitted into {} parts".format(i, j))
+            if cnt == 0:
+                break
+        # end for
+
 def get_anaconda_pkglist(rdata, arch = 'linux-64', start_with = 'r', ver = '36'):
     """ Read from r channel architecture specific package list with specific version """
     pkgs = set(v['name'][2:] for v in rdata['packages'].values() if v['name'].startswith('r-') and v['build'].startswith('' + start_with + Rver))
     print('{} Anaconda R {} packages in {} found.'.format(len(pkgs), arch, start_with))
     return pkgs
 
-CRAN_BASE = 'https://cran.r-project.org'
-#CRAN_BASE = 'https://cran.microsoft.com/snapshot/2018-01-01'
-RecipeMaintainer = 'katietz'
-Rver = '36'
-Rfullver = '3.6.1'
-Rarch = 'linux-64'
+def write_out_skeleton_script(stages):
+    sep_line = ' \\\n    '
+    cnt = do_max_pkg_cnt
 
-batch_count_max=50
+    with open(f'./build-skeleton.sh', 'w') as bsd:
+        bsd.write('#!/bin/bash\n\n')
+        bsd.write('# do imports via conda skeleton cran\n\n')
+        bsd.write('# first checkout the R repository\n')
+        bsd.write('rm -rf {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL))
+        bsd.write('pushd {}\ngit submodule update --init\n'.format(Rrepository))
+        bsd.write('git checkout -b latest_update\n')
+        for i, stage in enumerate(stages):
+            scount = len(stage)
+            j = 0
+            elno = 0
+            while elno < scount and (cnt == -1 or cnt > 0):
+                # Write out skeleton creation ...
+                bsd.write('conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe {}{}'.format(CRAN_BASE, do_recursive, sep_line))
+                bsd.write(' --add-maintainer={} --update-policy=merge-keep-build-num --r-interp=r-base --use-noarch-generic{}'.format(RecipeMaintainer, sep_line))
+                el = 0
+                while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
+                    p = stage[elno]
+                    bsd.write(' ' + p)
+                    elno += 1
+                    el += 1
+                    if cnt != -1:
+                        cnt -= 1
+                j += 1
+                # terminate lines ...
+                bsd.write('\n')
+            print("State {} is splitted into {} parts".format(i, j))
+            if cnt == 0:
+                break
+        # end for
+        bsd.write('# now write out git commands to list and add new files\n')
+        bsd.write('git add -N . >new_files_added.txt\n')
+        bsd.write('git add .\n')
+        bsd.write('git commit -m "Updated CRAN recipes"\n')
+        bsd.write('git push latest_update latest_update\n')
+        # leave the git repository
+        bsd.write('popd\n')
 
 pandas2ri.activate()
 readRDS = robjects.r['readRDS']
@@ -45,22 +149,7 @@ session = requests.Session()
 
 get_ipython().run_line_magic('matplotlib', 'qt')
 
-
-repodata = get_r_channel_rdata(Rarch)
-anaconda_pkgs = get_anaconda_pkglist(repodata, arch = Rarch, ver = Rver)
-anaconda_351_pkgs = anaconda_pkgs
-anaconda_mro_pkgs = get_anaconda_pkglist(repodata, arch = Rarch, start_with = 'mro', ver = Rver)
-
-repodata = get_r_channel_rdata("noarch")
-anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'noarch', ver = Rver)
-anaconda_mro_pkgs2 = get_anaconda_pkglist(repodata, arch = 'noarch', start_with = 'mro', ver = Rver)
-
-anaconda_pkgs.update(anaconda_pkgs2)
-anaconda_351_pkgs.update(anaconda_pkgs2)
-anaconda_mro_pkgs.update(anaconda_mro_pkgs2)
-print('{} Total Anaconda R packages found.'.format(len(anaconda_pkgs)))
-# In[3]:
-
+anaconda_pkgs = build_anaconda_pkglist(rver = Rver)
 
 from binstar_client.utils.config import DEFAULT_URL, load_token
 built_pkgs = set()
@@ -146,42 +235,8 @@ while len(candidates):
     if len(candidates) != 0:
         print("Remaining candidates {}".format(len(candidates)))
 
-
-print("\nDump of to_compile: {}\n".format(len(to_compile)))
-# print(*to_compile, sep=", ")
-#print("\nDump of to_compile 10: {}\n".format(len(to_compile)))
-# print(*to_compile, sep=", ")
-
-# print("\nDump of items:\n")
-# print(*items, sep=", ")
-
-with open(f'./build-skeleton.sh', 'w') as bsd:
-    bsd.write('#!/bin/bash\n\n')
-    bsd.write('# do imports via conda skeleton cran\n\n')
-    with open(f'./build-stage.sh', 'w') as bd:
-        bd.write('#!/bin/bash\n\n')
-        for i, stage in enumerate(stages):
-                bd.write('# stage {}\n'.format(i))
-                scount = len(stage)
-                j = 0
-                elno = 0
-                while elno < scount:
-                    bsd.write('conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe --recursive \\\n'.format(CRAN_BASE))
-                    bsd.write('  --add-maintainer={} --update-policy=merge-keep-build-num --r-interp=r-base --use-noarch-generic \\\n'.format(RecipeMaintainer))
-                    bd.write('c3i batch --R={} --max-builds=6 ./batch_stage-{}-{}.txt\n'.format(Rfullver, i, j))
-                    with open(f'./batch_stage-{i}-{j}.txt', 'w') as fd:
-                        el = 0
-                        while elno < scount and el < batch_count_max:
-                            p = stage[elno]
-                            fd.write('r-' + p + '-feedstock')
-                            fd.write('\n')
-                            bsd.write(' ' + p)
-                            elno += 1
-                            el += 1
-                    j += 1
-                    bsd.write('\n')
-                    bd.write('\n')
-                bd.write('\n')
-                print("State {} is splitted into {} parts".format(i, j))
+write_out_skeleton_script(stages)
+write_out_bld_script(stages, mode = 'sh')
+write_out_bld_script(stages, mode = 'bat')
 
 print("Done.")

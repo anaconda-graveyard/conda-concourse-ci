@@ -1,3 +1,0 @@
-r-bootnet-feedstock
-r-polymapR-feedstock
-r-psychNET-feedstock
