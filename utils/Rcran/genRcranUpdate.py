@@ -92,9 +92,11 @@ def write_out_bld_script(stages, mode = 'sh'):
 def write_out_skeleton_script(stages, mode = 'sh'):
     sep_line = ' \\\n    '
     comment_line = '#'
+    bash_cmd = ''
     if mode != 'sh':
       sep_line = ' '
       comment_line = 'REM'
+      bash_cmd = 'cmd /C '
     cnt = do_max_pkg_cnt
 
     with open(f'./build-skeleton.{mode}', 'w') as bsd:
@@ -115,7 +117,7 @@ def write_out_skeleton_script(stages, mode = 'sh'):
             elno = 0
             while elno < scount and (cnt == -1 or cnt > 0):
                 # Write out skeleton creation ...
-                bsd.write('conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe {}{}'.format(CRAN_BASE, do_recursive, sep_line))
+                bsd.write('{}conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe {}{}'.format(bash_cmd, CRAN_BASE, do_recursive, sep_line))
                 bsd.write(' --add-maintainer={} --update-policy=merge-keep-build-num --r-interp=r-base --use-noarch-generic{}'.format(RecipeMaintainer, sep_line))
                 el = 0
                 while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
