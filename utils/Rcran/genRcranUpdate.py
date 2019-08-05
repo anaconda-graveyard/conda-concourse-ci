@@ -9,6 +9,8 @@ import json
 import pandas as pd
 import numpy as np
 import re, os, time, shutil
+from email.parser import BytesParser
+from email import message_from_string
 
 do_max_pkg_cnt = 100 # set to -1 if all packages shall be done
 
@@ -25,27 +27,29 @@ do_recursive = '' # '--dirty --recursive'
 
 # The Microsoft CRAN time machine allows us to select a snapshot of CRAN at any day in time. For instance, 2018-01-01 is (in Microsoft's determination) the "official" snapshot date for R 3.4.3.
 
-def get_r_channel_rdata(arch):
-   """ Read from r channel architecture specific information """
-   rdata = {}
-   url = "https://repo.anaconda.com/pkgs/r/" + arch + "/repodata.json"
-   repodata = session.get(url)
-   if repodata.status_code != 200:
-       print('\n{} returned code {}'.format(url, page.status_code))
-   else:
-	   rdata = json.loads(repodata.text)
-   return rdata;
+def get_anaconda_pkglist(rdata, arch, start_with = 'r', ver = '36'):
+    """ Read from r channel architecture specific package list with specific version """
+    pkgs = set(v['name'][2:] for v in rdata['packages'].values() if v['name'].startswith('r-') and v['build'].startswith('' + start_with + Rver))
+    print('{} Anaconda R {} packages in {} found.'.format(len(pkgs), arch, start_with))
+    return pkgs
 
-def build_anaconda_pkglist(rver):
+def build_anaconda_pkglist(rver, rchannel = 'r'):
+    """ Get list of available packages from r or r_test channel for given version """
     pkgs = set()
     archs = ['noarch', 'linux-32', 'linux-64', 'win-32', 'win-64', 'osx-64']
     for arch in archs:
-        repodata = get_r_channel_rdata(arch)
-        pkgs2 = get_anaconda_pkglist(repodata, arch, ver = rver)
-        pkgs.update(pkgs2)
-        # we don't get mro package
+        rdata = {}
+        url = 'https://repo.anaconda.com/pkgs/{}/{}/repodata.json'.format(rchannel, arch)
+        repodata = session.get(url)
+        if repodata.status_code != 200:
+            print('\n{} returned code {}'.format(url, page.status_code))
+        else:
+            rdata = json.loads(repodata.text)
+            pkgs2 = get_anaconda_pkglist(rdata, arch, ver = rver)
+            pkgs.update(pkgs2)
+            # we don't look at mro packages
 
-    print('{} Total Anaconda R packages found.'.format(len(pkgs)))
+    print('{} Total Anaconda packages found in {}.'.format(len(pkgs), rchannel))
     # print(list(pkgs))
     return pkgs
 
@@ -83,12 +87,6 @@ def write_out_bld_script(stages, mode = 'sh'):
             if cnt == 0:
                 break
         # end for
-
-def get_anaconda_pkglist(rdata, arch = 'linux-64', start_with = 'r', ver = '36'):
-    """ Read from r channel architecture specific package list with specific version """
-    pkgs = set(v['name'][2:] for v in rdata['packages'].values() if v['name'].startswith('r-') and v['build'].startswith('' + start_with + Rver))
-    print('{} Anaconda R {} packages in {} found.'.format(len(pkgs), arch, start_with))
-    return pkgs
 
 def write_out_skeleton_script(stages):
     sep_line = ' \\\n    '
@@ -136,22 +134,15 @@ pandas2ri.activate()
 readRDS = robjects.r['readRDS']
 session = requests.Session()
 
-get_ipython().run_line_magic('matplotlib', 'qt')
+get_ipython().run_line_magic('matplotlib', 'auto')
 
 anaconda_pkgs = build_anaconda_pkglist(rver = Rver)
 
-from binstar_client.utils.config import DEFAULT_URL, load_token
 built_pkgs = set()
 
-# In[61]:
-
-
-from email.parser import BytesParser
-from email import message_from_string
-
+# get the CRAN packages ...
 pkgs = requests.get(CRAN_BASE + '/src/contrib/PACKAGES').text
 items = [message_from_string(pkg) for pkg in pkgs.split('\n\n')]
-
 
 def deps_set(dep):
     if dep is None:
