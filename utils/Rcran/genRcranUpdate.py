@@ -101,7 +101,7 @@ def write_out_skeleton_script(stages, mode = 'sh'):
         if mode == 'sh':
             bsd.write('#!/bin/bash\n\n')
         bsd.write('{} do imports via conda skeleton cran\n\n'.format(comment_line))
-        bsd.write('# first checkout the R repository\n')
+        bsd.write('{} first checkout the R repository\n'.format(comment_line))
         if mode == 'sh':
             bsd.write('rm -rf {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL))
         else:
