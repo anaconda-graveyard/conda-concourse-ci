@@ -37,24 +37,13 @@ def get_r_channel_rdata(arch):
    return rdata;
 
 def build_anaconda_pkglist(rver):
-    repodata = get_r_channel_rdata("noarch")
-    pkgs = get_anaconda_pkglist(repodata, arch = 'noarch', ver = rver)
-    # we don't get mro package
-    repodata = get_r_channel_rdata('linux-64')
-    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'linux-64', ver = rver)
-    pkgs.update(anaconda_pkgs2)
-    repodata = get_r_channel_rdata('linux-32')
-    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'linux-32', ver = rver)
-    pkgs.update(anaconda_pkgs2)
-    repodata = get_r_channel_rdata('win-32')
-    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'win-32', ver = rver)
-    pkgs.update(anaconda_pkgs2)
-    repodata = get_r_channel_rdata('win-64')
-    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'win--64', ver = rver)
-    pkgs.update(anaconda_pkgs2)
-    repodata = get_r_channel_rdata('osx-64')
-    anaconda_pkgs2 = get_anaconda_pkglist(repodata, arch = 'osx-64', ver = rver)
-    pkgs.update(anaconda_pkgs2)
+    pkgs = set()
+    archs = ['noarch', 'linux-32', 'linux-64', 'win-32', 'win-64', 'osx-64']
+    for arch in archs:
+        repodata = get_r_channel_rdata(arch)
+        pkgs2 = get_anaconda_pkglist(repodata, arch, ver = rver)
+        pkgs.update(pkgs2)
+        # we don't get mro package
 
     print('{} Total Anaconda R packages found.'.format(len(pkgs)))
     # print(list(pkgs))
@@ -147,11 +136,14 @@ pandas2ri.activate()
 readRDS = robjects.r['readRDS']
 session = requests.Session()
 
-get_ipython().run_line_magic('matplotlib', 'auto')
+get_ipython().run_line_magic('matplotlib', 'qt')
 
 anaconda_pkgs = build_anaconda_pkglist(rver = Rver)
 
+from binstar_client.utils.config import DEFAULT_URL, load_token
 built_pkgs = set()
+
+# In[61]:
 
 
 from email.parser import BytesParser
