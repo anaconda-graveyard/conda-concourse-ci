@@ -17,6 +17,7 @@ do_max_pkg_cnt = 100 # set to -1 if all packages shall be done
 CRAN_BASE = 'https://cran.r-project.org'
 Rrepository = 'aggregateR'
 RrepositoryURL = 'git@github.com:AnacondaRecipes/aggregateR.git'
+RrepositoryURL2 = 'https://github.com/AnacondaRecipes/aggregateR.git'
 #CRAN_BASE = 'https://cran.microsoft.com/snapshot/2018-01-01'
 RecipeMaintainer = 'katietz'
 Rver = '36'
@@ -104,7 +105,8 @@ def write_out_skeleton_script(stages, mode = 'sh'):
         if mode == 'sh':
             bsd.write('rm -rf {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL))
         else:
-            bsd.write('del /F /S /Q {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL))
+            # fetch via https as there might be no RSA key for github
+            bsd.write('del /F /S /Q {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL2))
         bsd.write('pushd {}\ngit submodule update --init\n'.format(Rrepository))
         bsd.write('git checkout latest_update\n')
         for i, stage in enumerate(stages):
