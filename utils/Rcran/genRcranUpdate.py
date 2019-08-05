@@ -88,17 +88,25 @@ def write_out_bld_script(stages, mode = 'sh'):
                 break
         # end for
 
-def write_out_skeleton_script(stages):
+def write_out_skeleton_script(stages, mode = 'sh'):
     sep_line = ' \\\n    '
+    comment_line = '#'
+    if mode != 'sh':
+      sep_line = ' '
+      comment_line = 'REM'
     cnt = do_max_pkg_cnt
 
-    with open(f'./build-skeleton.sh', 'w') as bsd:
-        bsd.write('#!/bin/bash\n\n')
-        bsd.write('# do imports via conda skeleton cran\n\n')
+    with open(f'./build-skeleton.{mode}', 'w') as bsd:
+        if mode == 'sh':
+            bsd.write('#!/bin/bash\n\n')
+        bsd.write('{} do imports via conda skeleton cran\n\n'.format(comment_line))
         bsd.write('# first checkout the R repository\n')
-        bsd.write('rm -rf {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL))
+        if mode == 'sh':
+            bsd.write('rm -rf {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL))
+        else:
+            bsd.write('del /F /S /Q {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL))
         bsd.write('pushd {}\ngit submodule update --init\n'.format(Rrepository))
-        bsd.write('git checkout -b latest_update\n')
+        bsd.write('git checkout latest_update\n')
         for i, stage in enumerate(stages):
             scount = len(stage)
             j = 0
@@ -122,7 +130,7 @@ def write_out_skeleton_script(stages):
             if cnt == 0:
                 break
         # end for
-        bsd.write('# now write out git commands to list and add new files\n')
+        bsd.write('{} now write out git commands to list and add new files\n'.format(comment_line))
         bsd.write('git add -N . >new_files_added.txt\n')
         bsd.write('git add .\n')
         bsd.write('git commit -m "Updated CRAN recipes"\n')
@@ -215,7 +223,8 @@ while len(candidates):
     if len(candidates) != 0:
         print("Remaining candidates {}".format(len(candidates)))
 
-write_out_skeleton_script(stages)
+write_out_skeleton_script(stages, mode = 'sh')
+write_out_skeleton_script(stages, mode = 'bat')
 write_out_bld_script(stages, mode = 'sh')
 write_out_bld_script(stages, mode = 'bat')
 
