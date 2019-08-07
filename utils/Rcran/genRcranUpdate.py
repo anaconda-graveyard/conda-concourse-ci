@@ -119,7 +119,7 @@ def write_out_onlinux64(fd, feedstocks):
     fd.write('          protocol https > ~/.netrc&& set -x &&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git submodule update --init r-zoo-feedstock && git checkout latest_update && cd .. &&\n')
-    fd.write('          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c r_test\n')
+    fd.write('          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test\n')
     fd.write('          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/{}-on-linux_64_1564756033.json\n'.format(name))
     fd.write('          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml\n')
     # write the list of feedstocks ...
@@ -206,7 +206,7 @@ def write_out_onosx64(fd, feedstocks):
     fd.write('          cd aggregateR && git submodule update --init r-zoo-feedstock && git checkout latest_update && cd .. &&\n')
     fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}-on-osx_1564756033.json\n'.format(name))
-    fd.write('          --skip-existing -c r_test --R 3.6.1 --croot . -m ./aggregateR/conda_build_config.yaml\n')
+    fd.write('          --skip-existing -c local -c r_test --R 3.6.1 --croot . -m ./aggregateR/conda_build_config.yaml\n')
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
