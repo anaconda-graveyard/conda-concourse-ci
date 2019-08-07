@@ -59,6 +59,14 @@ def build_anaconda_pkglist(rver, rchannel = 'r'):
 def write_out_resources(fd):
     name = 'build_r_script'
     fd.write('resources:\n')
+    fd.write('- name: rsync-build-pack\n')
+    fd.write('  type: rsync-resource\n')
+    fd.write('  source:\n')
+    fd.write('    base_dir: /ci/build_pack\n')
+    fd.write('    disable_version_path: true\n')
+    fd.write('    private_key: ((common.intermediate-private-key))\n')
+    fd.write('    server: bremen.corp.continuum.io\n')
+    fd.write('    user: ci\n')
     # resource for linux-64
     fd.write('- name: rsync_{}-on-linux_64\n'.format(name))
     fd.write('  type: rsync-resource\n')
@@ -68,6 +76,7 @@ def write_out_resources(fd):
     fd.write('    private_key: ((common.intermediate-private-key))\n')
     fd.write('    server: bremen.corp.continuum.io\n')
     fd.write('    user: ci\n')
+    # resource for osx-64
     fd.write('- name: rsync_{}-on-osx\n'.format(name))
     fd.write('  type: rsync-resource\n')
     fd.write('  source:\n')
