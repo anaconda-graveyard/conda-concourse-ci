@@ -17,7 +17,7 @@ from email import message_from_string
 do_max_pkg_cnt = 100 # set to -1 if all packages shall be done
 
 CRAN_BASE = 'https://cran.r-project.org'
-Rrepository = 'aggregateR'
+RrepositoryName = 'aggregateR'
 RrepositoryURL = 'git@github.com:AnacondaRecipes/aggregateR.git'
 RrepositoryURL2 = 'https://github.com/AnacondaRecipes/aggregateR.git'
 #CRAN_BASE = 'https://cran.microsoft.com/snapshot/2018-01-01'
@@ -157,7 +157,7 @@ def bld_feedstocks_lines(stages):
             el = 0
             while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
                 p = stage[elno]
-                rslt += '          aggregate/r-{}-feedstock\n'.format(p)
+                rslt += '         {}/r-{}-feedstock\n'.format(RrepositoryName, p)
                 elno += 1
                 el += 1
                 if cnt != -1:
@@ -296,11 +296,11 @@ def write_out_skeleton_script(stages, mode = 'sh'):
         bsd.write('{} do imports via conda skeleton cran\n\n'.format(comment_line))
         bsd.write('{} first checkout the R repository\n'.format(comment_line))
         if mode == 'sh':
-            bsd.write('rm -rf {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL))
+            bsd.write('rm -rf {}\ngit clone {} --recursive\n'.format(RrepositoryName, RrepositoryURL))
         else:
             # fetch via https as there might be no RSA key for github
-            bsd.write('del /F /S /Q {}\ngit clone {} --recursive\n'.format(Rrepository, RrepositoryURL2))
-        bsd.write('pushd {}\ngit submodule update --init\n'.format(Rrepository))
+            bsd.write('del /F /S /Q {}\ngit clone {} --recursive\n'.format(RrepositoryName, RrepositoryURL2))
+        bsd.write('pushd {}\ngit submodule update --init\n'.format(RrepositoryName))
         bsd.write('git checkout latest_update\n')
         for i, stage in enumerate(stages):
             scount = len(stage)
