@@ -157,7 +157,7 @@ def bld_feedstocks_lines(stages):
             el = 0
             while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
                 p = stage[elno]
-                rslt += '         {}/r-{}-feedstock\n'.format(RrepositoryName, p)
+                rslt += '         {}/r-{}-feedstock\n'.format(RrepositoryName, p.lower())
                 elno += 1
                 el += 1
                 if cnt != -1:
@@ -266,7 +266,7 @@ def write_out_bld_script(stages, mode = 'sh'):
                 el = 0
                 while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
                     p = stage[elno]
-                    bd.write(' r-' + p + '-feedstock{}'.format(sep_line))
+                    bd.write(' r-' + p.lower() + '-feedstock{}'.format(sep_line))
                     elno += 1
                     el += 1
                     if cnt != -1:
