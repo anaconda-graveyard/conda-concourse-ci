@@ -54,6 +54,184 @@ def build_anaconda_pkglist(rver, rchannel = 'r'):
     # print(list(pkgs))
     return pkgs
 
+def write_out_resources(fd):
+    name = 'build_r_script'
+    fd.write('resources:\n')
+    # resource for linux-64
+    fd.write('- name: rsync_{}-on-linux_64\n'.format(name))
+    fd.write('  type: rsync-resource\n')
+    fd.write('  source:\n')
+    fd.write('    base_dir: /ci/ktietz/artifacts\n')
+    fd.write('    disable_version_path: true\n')
+    fd.write('    private_key: ((common.intermediate-private-key))\n')
+    fd.write('    server: bremen.corp.continuum.io\n')
+    fd.write('    user: ci\n')
+    fd.write('- name: rsync_{}-on-osx\n'.format(name))
+    fd.write('  type: rsync-resource\n')
+    fd.write('  source:\n')
+    fd.write('    base_dir: /ci/ktietz/artifacts\n')
+    fd.write('    disable_version_path: true\n')
+    fd.write('    private_key: ((common.intermediate-private-key))\n')
+    fd.write('    server: bremen.corp.continuum.io\n')
+    fd.write('    user: ci\n')
+    fd.write('resource_types:\n')
+    fd.write('- name: rsync-resource\n')
+    fd.write('  type: docker-image\n')
+    fd.write('  source:\n')
+    fd.write('    repository: conda/concourse-rsync-resource\n')
+    fd.write('    tag: latest\n')
+
+def write_out_onlinux64(fd, feedstocks):
+    # job for linux 64
+    name = 'build_r_script'
+    fd.write('- name: {}-on-linux_64\n'.format(name))
+    fd.write('  plan:\n')
+    fd.write('  - task: build\n')
+    fd.write('    config:\n')
+    fd.write('      platform: linux\n')
+    fd.write('      image_resource:\n')
+    fd.write('        type: docker-image\n')
+    fd.write('        source:\n')
+    fd.write('          repository: conda/c3i-linux-64\n')
+    fd.write('          tag: latest\n')
+    fd.write('      params:\n')
+    fd.write('        GITHUB_TOKEN: ((common.recipe-repo-access-token))\n')
+    fd.write('        GITHUB_USER: SA-PCR-RO\n')
+    fd.write('      run:\n')
+    fd.write('        path: sh\n')
+    fd.write('        args:\n')
+    fd.write('        - -exc\n')
+    fd.write('        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency\n')
+    fd.write('          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&\n')
+    fd.write('          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda\n')
+    fd.write('          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN\n')
+    fd.write('          protocol https > ~/.netrc&& set -x &&\n')
+    fd.write('          git clone git@github.com:AnacondaRecipes/aggregateR.git &&\n')
+    fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
+    fd.write('          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c r_test\n')
+    fd.write('          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/{}-on-linux_64_1564756033.json\n'.format(name))
+    fd.write('          --skip-existing --croot .\n')
+    # write the list of feedstocks ...
+    fd.write(feedstocks)
+    fd.write('          \n')
+    fd.write('      outputs:\n')
+    fd.write('      - name: output-artifacts\n')
+    fd.write('      - name: output-source\n')
+    fd.write('      - name: stats\n')
+    fd.write('  - put: rsync_{}-on-linux_64\n'.format(name))
+    fd.write('    params:\n')
+    fd.write('      rsync_opts:\n')
+    fd.write('      - --archive\n')
+    fd.write('      - --no-perms\n')
+    fd.write('      - --omit-dir-times\n')
+    fd.write('      - --verbose\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/*.json*"\'\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/*.*ml"\'\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/.cache"\'\n')
+    fd.write('      sync_dir: output-artifacts\n')
+    fd.write('    get_params:\n')
+    fd.write('      skip_download: true\n')
+
+def bld_feedstocks_lines(stages):
+    rslt = ''
+    cnt = do_max_pkg_cnt
+    for i, stage in enumerate(stages):
+        scount = len(stage)
+        j = 0
+        elno = 0
+        while elno < scount and (cnt == -1 or cnt > 0):
+            el = 0
+            while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
+                p = stage[elno]
+                rslt += '          aggregate/r-{}-feedstock\n'.format(p)
+                elno += 1
+                el += 1
+                if cnt != -1:
+                    cnt -= 1
+            j += 1
+        if cnt == 0:
+            break
+    # end for
+    return rslt
+
+def write_out_onosx64(fd, feedstocks):
+    # job for linux 64
+    name = 'build_r_script'
+    fd.write('- name: {}-on-osx\n'.format(name))
+    fd.write('  plan:\n')
+    fd.write('  - get: rsync-build-pack\n')
+    fd.write('    params:\n')
+    fd.write('      rsync_opts:\n')
+    fd.write('      - --include\n')
+    fd.write('      - osx_build_env_latest.zip\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'*\'\n')
+    fd.write('      - -v\n')
+    fd.write('  - task: build\n')
+    fd.write('    config:\n')
+    fd.write('      platform: darwin\n')
+    fd.write('      params:\n')
+    fd.write('        GITHUB_TOKEN: ((common.recipe-repo-access-token))\n')
+    fd.write('        GITHUB_USER: SA-PCR-RO\n')
+    fd.write('      run:\n')
+    fd.write('        path: sh\n')
+    fd.write('        args:\n')
+    fd.write('        - -exc\n')
+    fd.write('        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip\n')
+    fd.write('          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&\n')
+    fd.write('          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency\n')
+    fd.write('          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&\n')
+    fd.write('          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda\n')
+    fd.write('          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN\n')
+    fd.write('          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login\n')
+    fd.write('          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&\n')
+    fd.write('          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN\n')
+    fd.write('          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login\n')
+    fd.write('          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&\n')
+    fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
+    fd.write('          --cache-dir=output-source --stats-file=stats/{}-on-osx_1564756033.json\n'.format(name))
+    fd.write('          --skip-existing -c r_test --R 3.6.1 --croot .\n')
+    # write the list of feedstocks ...
+    fd.write(feedstocks)
+    fd.write('          \n')
+    fd.write('      inputs:\n')
+    fd.write('      - name: rsync-build-pack\n')
+    fd.write('      outputs:\n')
+    fd.write('      - name: output-artifacts\n')
+    fd.write('      - name: output-source\n')
+    fd.write('      - name: stats\n')
+    fd.write('  - put: rsync_{}-on-osx\n'.format(name))
+    fd.write('    params:\n')
+    fd.write('      rsync_opts:\n')
+    fd.write('      - --archive\n')
+    fd.write('      - --no-perms\n')
+    fd.write('      - --omit-dir-times\n')
+    fd.write('      - --verbose\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/*.json*"\'\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/*.*ml"\'\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/.cache"\'\n')
+    fd.write('      sync_dir: output-artifacts\n')
+    fd.write('    get_params:\n')
+    fd.write('      skip_download: true\n')
+
+def write_out_bld_job(stages):
+    feedstocks = bld_feedstocks_lines(stages)
+    # write out 
+    with open(f'./pipeline-build-stage.yaml', 'w') as fd:
+        fd.write('groups: []\n')
+        write_out_resources(fd)
+        fd.write('jobs:\n')
+        write_out_onlinux64(fd, feedstocks)
+        # write_out_onlinux32(fd)
+        # write_out_onwin64(fd)
+        write_out_onosx64(fd, feedstocks)
+
 def write_out_bld_script(stages, mode = 'sh'):
     cnt = do_max_pkg_cnt
     comment_line = '#'
@@ -231,5 +409,5 @@ write_out_skeleton_script(stages, mode = 'sh')
 write_out_skeleton_script(stages, mode = 'bat')
 write_out_bld_script(stages, mode = 'sh')
 write_out_bld_script(stages, mode = 'bat')
-
+write_out_bld_job(stages)
 print("Done.")
