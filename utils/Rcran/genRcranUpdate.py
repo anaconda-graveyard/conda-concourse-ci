@@ -144,10 +144,10 @@ def write_out_onwin32(fd, feedstocks):
     fd.write('          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com\n')
     fd.write('          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc\n')
     fd.write('          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%\n')
-    fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&&\n')
+    fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&& (set CONDA_SUBDIR=win-32 ) &&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
-    fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
+    fd.write('          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
     fd.write('          --croot C:\\ci --skip-existing -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
@@ -212,7 +212,7 @@ def write_out_onwin64(fd, feedstocks):
     fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
-    fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
+    fd.write('          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
     fd.write('          --croot C:\\ci --skip-existing -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
