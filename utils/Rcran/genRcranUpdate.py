@@ -8,13 +8,15 @@ import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
 import requests
 import json
+import math
 import pandas as pd
 import numpy as np
 import re, os, time, shutil
 from email.parser import BytesParser
 from email import message_from_string
 
-do_max_pkg_cnt = 10 # set to -1 if all packages shall be done
+do_max_pkg_cnt = 10
+enabled_win32 = False
 
 CRAN_BASE = 'https://cran.r-project.org'
 RrepositoryName = 'aggregateR'
@@ -56,8 +58,7 @@ def build_anaconda_pkglist(rver, rchannel = 'r'):
     # print(list(pkgs))
     return pkgs
 
-def write_out_resources(fd):
-    name = 'build_r_script'
+def write_out_resources(fd, cnt_jobs):
     fd.write('resources:\n')
     fd.write('- name: rsync-build-pack\n')
     fd.write('  type: rsync-resource\n')
@@ -67,42 +68,45 @@ def write_out_resources(fd):
     fd.write('    private_key: ((common.intermediate-private-key))\n')
     fd.write('    server: bremen.corp.continuum.io\n')
     fd.write('    user: ci\n')
-    # resource for linux-64
-    fd.write('- name: rsync_{}-on-linux_64\n'.format(name))
-    fd.write('  type: rsync-resource\n')
-    fd.write('  source:\n')
-    fd.write('    base_dir: /ci/ktietz/artifacts\n')
-    fd.write('    disable_version_path: true\n')
-    fd.write('    private_key: ((common.intermediate-private-key))\n')
-    fd.write('    server: bremen.corp.continuum.io\n')
-    fd.write('    user: ci\n')
-    # resource for osx-64
-    fd.write('- name: rsync_{}-on-osx\n'.format(name))
-    fd.write('  type: rsync-resource\n')
-    fd.write('  source:\n')
-    fd.write('    base_dir: /ci/ktietz/artifacts\n')
-    fd.write('    disable_version_path: true\n')
-    fd.write('    private_key: ((common.intermediate-private-key))\n')
-    fd.write('    server: bremen.corp.continuum.io\n')
-    fd.write('    user: ci\n')
-    # resource for windows
-    fd.write('- name: rsync_{}-on-winbuilder\n'.format(name))
-    fd.write('  type: rsync-resource\n')
-    fd.write('  source:\n')
-    fd.write('    base_dir: /ci/ktietz/artifacts\n')
-    fd.write('    disable_version_path: true\n')
-    fd.write('    private_key: ((common.intermediate-private-key))\n')
-    fd.write('    server: bremen.corp.continuum.io\n')
-    fd.write('    user: ci\n')
-    # windows 32-bit
-    fd.write('- name: rsync_{}-target_win-32-on-winbuilder\n'.format(name))
-    fd.write('  type: rsync-resource\n')
-    fd.write('  source:\n')
-    fd.write('    base_dir: /ci/ktietz/artifacts\n')
-    fd.write('    disable_version_path: true\n')
-    fd.write('    private_key: ((common.intermediate-private-key))\n')
-    fd.write('    server: bremen.corp.continuum.io\n')
-    fd.write('    user: ci\n')
+    for x in range(0, cnt_jobs):
+        name = 'build_r_script{}'.format(x)
+        # resource for linux-64
+        fd.write('- name: rsync_{}-on-linux_64\n'.format(name))
+        fd.write('  type: rsync-resource\n')
+        fd.write('  source:\n')
+        fd.write('    base_dir: /ci/ktietz/artifacts\n')
+        fd.write('    disable_version_path: true\n')
+        fd.write('    private_key: ((common.intermediate-private-key))\n')
+        fd.write('    server: bremen.corp.continuum.io\n')
+        fd.write('    user: ci\n')
+        # resource for osx-64
+        fd.write('- name: rsync_{}-on-osx\n'.format(name))
+        fd.write('  type: rsync-resource\n')
+        fd.write('  source:\n')
+        fd.write('    base_dir: /ci/ktietz/artifacts\n')
+        fd.write('    disable_version_path: true\n')
+        fd.write('    private_key: ((common.intermediate-private-key))\n')
+        fd.write('    server: bremen.corp.continuum.io\n')
+        fd.write('    user: ci\n')
+        # resource for windows 64
+        fd.write('- name: rsync_{}-on-winbuilder\n'.format(name))
+        fd.write('  type: rsync-resource\n')
+        fd.write('  source:\n')
+        fd.write('    base_dir: /ci/ktietz/artifacts\n')
+        fd.write('    disable_version_path: true\n')
+        fd.write('    private_key: ((common.intermediate-private-key))\n')
+        fd.write('    server: bremen.corp.continuum.io\n')
+        fd.write('    user: ci\n')
+        if enabled_win32 == True:
+            # windows 32-bit
+            fd.write('- name: rsync_{}-target_win-32-on-winbuilder\n'.format(name))
+            fd.write('  type: rsync-resource\n')
+            fd.write('  source:\n')
+            fd.write('    base_dir: /ci/ktietz/artifacts\n')
+            fd.write('    disable_version_path: true\n')
+            fd.write('    private_key: ((common.intermediate-private-key))\n')
+            fd.write('    server: bremen.corp.continuum.io\n')
+            fd.write('    user: ci\n')
 
     fd.write('resource_types:\n')
     fd.write('- name: rsync-resource\n')
@@ -111,9 +115,8 @@ def write_out_resources(fd):
     fd.write('    repository: conda/concourse-rsync-resource\n')
     fd.write('    tag: latest\n')
 
-def write_out_onwin32(fd, feedstocks):
+def write_out_onwin32(fd, feedstocks, name):
     # job for windows
-    name = 'build_r_script'
     fd.write('- name: {}-target_win-32-on-winbuilder\n'.format(name))
     fd.write('  plan:\n')
     fd.write('  - get: rsync-build-pack\n')
@@ -176,9 +179,8 @@ def write_out_onwin32(fd, feedstocks):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
-def write_out_onwin64(fd, feedstocks):
+def write_out_onwin64(fd, feedstocks, name):
     # job for windows
-    name = 'build_r_script'
     fd.write('- name: {}-on-winbuilder\n'.format(name))
     fd.write('  plan:\n')
     fd.write('  - get: rsync-build-pack\n')
@@ -241,9 +243,8 @@ def write_out_onwin64(fd, feedstocks):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
     
-def write_out_onlinux64(fd, feedstocks):
+def write_out_onlinux64(fd, feedstocks, name):
     # job for linux 64
-    name = 'build_r_script'
     fd.write('- name: {}-on-linux_64\n'.format(name))
     fd.write('  plan:\n')
     fd.write('  - task: build\n')
@@ -295,31 +296,25 @@ def write_out_onlinux64(fd, feedstocks):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
-def bld_feedstocks_lines(stages):
+def bld_feedstocks_lines(stages, no):
     rslt = ''
     cnt = do_max_pkg_cnt
     for i, stage in enumerate(stages):
         scount = len(stage)
         j = 0
-        elno = 0
-        while elno < scount and (cnt == -1 or cnt > 0):
-            el = 0
-            while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
-                p = stage[elno]
-                rslt += '         {}/r-{}-feedstock\n'.format(RrepositoryName, p.lower())
-                elno += 1
-                el += 1
-                if cnt != -1:
-                    cnt -= 1
-            j += 1
-        if cnt == 0:
+        elno = no * do_max_pkg_cnt
+        while elno < scount and cnt > 0:
+            p = stage[elno]
+            rslt += '         {}/r-{}-feedstock\n'.format(RrepositoryName, p.lower())
+            elno += 1
+            cnt -= 1
+        if cnt == 0 or elno >= scount:
             break
     # end for
     return rslt
 
-def write_out_onosx64(fd, feedstocks):
+def write_out_onosx64(fd, feedstocks, name):
     # job for linux 64
-    name = 'build_r_script'
     fd.write('- name: {}-on-osx\n'.format(name))
     fd.write('  plan:\n')
     fd.write('  - get: rsync-build-pack\n')
@@ -382,17 +377,21 @@ def write_out_onosx64(fd, feedstocks):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
-def write_out_bld_job(stages):
-    feedstocks = bld_feedstocks_lines(stages)
+def write_out_bld_job(stages, cnt_jobs):
     # write out 
     with open(f'./pipeline-build-stage.yaml', 'w') as fd:
         fd.write('groups: []\n')
-        write_out_resources(fd)
+        write_out_resources(fd, cnt_jobs)
+        # write out the jobs
         fd.write('jobs:\n')
-        write_out_onlinux64(fd, feedstocks)
-        write_out_onosx64(fd, feedstocks)
-        write_out_onwin64(fd, feedstocks)
-        write_out_onwin32(fd, feedstocks)
+        for x in range(0, cnt_jobs):
+            name = 'build_r_script{}'.format(x)
+            feedstocks = bld_feedstocks_lines(stages, no = x)
+            write_out_onlinux64(fd, feedstocks, name)
+            write_out_onosx64(fd, feedstocks, name)
+            write_out_onwin64(fd, feedstocks, name)
+            if enabled_win32 == True:
+                write_out_onwin32(fd, feedstocks, name)
 
 def write_out_bld_script(stages, mode = 'sh'):
     cnt = do_max_pkg_cnt
@@ -482,6 +481,15 @@ def write_out_skeleton_script(stages, mode = 'sh'):
         # leave the git repository
         bsd.write('popd\n')
 
+def get_stage_out_count(stages):
+    rslt = 0
+    for i, stage in enumerate(stages):
+       cnt = len(stage)
+       rslt += cnt
+       if cnt != 0:
+            break
+    return rslt
+       
 pandas2ri.activate()
 readRDS = robjects.r['readRDS']
 session = requests.Session()
@@ -567,9 +575,17 @@ while len(candidates):
     if len(candidates) != 0:
         print("Remaining candidates {}".format(len(candidates)))
 
+cnt_items = get_stage_out_count(stages)
+cnt_jobs = math.floor((cnt_items / do_max_pkg_cnt))+1
+print('In total there are {} feedstocks found to be built in {} job(s)\n'.format(cnt_items, cnt_jobs))
+#write out pipeline file
+write_out_bld_job(stages, cnt_jobs)
+
+# write scripts ...
 write_out_skeleton_script(stages, mode = 'sh')
 write_out_skeleton_script(stages, mode = 'bat')
 write_out_bld_script(stages, mode = 'sh')
 write_out_bld_script(stages, mode = 'bat')
-write_out_bld_job(stages)
+
 print("Done.")
+
