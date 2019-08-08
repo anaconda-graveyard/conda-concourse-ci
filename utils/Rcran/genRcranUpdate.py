@@ -14,7 +14,7 @@ import re, os, time, shutil
 from email.parser import BytesParser
 from email import message_from_string
 
-do_max_pkg_cnt = 100 # set to -1 if all packages shall be done
+do_max_pkg_cnt = 10 # set to -1 if all packages shall be done
 
 CRAN_BASE = 'https://cran.r-project.org'
 RrepositoryName = 'aggregateR'
@@ -85,6 +85,16 @@ def write_out_resources(fd):
     fd.write('    private_key: ((common.intermediate-private-key))\n')
     fd.write('    server: bremen.corp.continuum.io\n')
     fd.write('    user: ci\n')
+    # resource for windows
+    fd.write('- name: rsync_{}-on-winbuilder\n'.format(name))
+    fd.write('  type: rsync-resource\n')
+    fd.write('  source:\n')
+    fd.write('    base_dir: /ci/ktietz/artifacts\n')
+    fd.write('    disable_version_path: true\n')
+    fd.write('    private_key: ((common.intermediate-private-key))\n')
+    fd.write('    server: bremen.corp.continuum.io\n')
+    fd.write('    user: ci\n')
+
     fd.write('resource_types:\n')
     fd.write('- name: rsync-resource\n')
     fd.write('  type: docker-image\n')
@@ -92,6 +102,71 @@ def write_out_resources(fd):
     fd.write('    repository: conda/concourse-rsync-resource\n')
     fd.write('    tag: latest\n')
 
+def write_out_onwin64(fd, feedstocks):
+    # job for windows
+    name = 'build_r_script'
+    fd.write('- name: {}-on-winbuilder\n'.format(name))
+    fd.write('  plan:\n')
+    fd.write('  - get: rsync-recipes\n')
+    fd.write('    trigger: true\n')
+    fd.write('  - get: rsync-build-pack\n')
+    fd.write('    params:\n')
+    fd.write('      rsync_opts:\n')
+    fd.write('      - --include\n')
+    fd.write('      - windows_build_env_latest.zip\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'*\'\n')
+    fd.write('      - -v\n')
+    fd.write('  - task: build\n')
+    fd.write('    config:\n')
+    fd.write('      platform: windows\n')
+    fd.write('      params:\n')
+    fd.write('        GITHUB_TOKEN: ((common.recipe-repo-access-token))\n')
+    fd.write('        GITHUB_USER: SA-PCR-RO\n')
+    fd.write('      run:\n')
+    fd.write('        path: cmd.exe\n')
+    fd.write('        args:\n')
+    fd.write('        - /c\n')
+    fd.write('        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&\n')
+    fd.write('          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&\n')
+    fd.write('          echo Activating build environment&& call .\build_env\Scripts\activate&&\n')
+    fd.write('          echo Unpacking environment&& conda-unpack&& conda config --system --set\n')
+    fd.write('          add_pip_as_python_dependency False&& conda config --system --add default_channels\n')
+    fd.write('          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels\n')
+    fd.write('          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels\n')
+    fd.write('          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com\n')
+    fd.write('          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc\n')
+    fd.write('          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%\n')
+    fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&&\n')
+    fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
+    fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
+    fd.write('          --croot C:\ci --skip-existing -c local -c r_test\n')
+    # write the list of feedstocks ...
+    fd.write(feedstocks)
+    fd.write('          \n')
+    fd.write('      inputs:\n')
+    fd.write('      - name: rsync-build-pack\n')
+    fd.write('      outputs:\n')
+    fd.write('      - name: output-artifacts\n')
+    fd.write('      - name: output-source\n')
+    fd.write('      - name: stats\n')
+    fd.write('  - put: rsync_{}-on-winbuilder\n'.format(name))
+    fd.write('    params:\n')
+    fd.write('      rsync_opts:\n')
+    fd.write('      - --archive\n')
+    fd.write('      - --no-perms\n')
+    fd.write('      - --omit-dir-times\n')
+    fd.write('      - --verbose\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/*.json*"\'\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/*.*ml"\'\n')
+    fd.write('      - --exclude\n')
+    fd.write('      - \'"**/.cache"\'\n')
+    fd.write('      sync_dir: output-artifacts\n')
+    fd.write('    get_params:\n')
+    fd.write('      skip_download: true\n')
+    
 def write_out_onlinux64(fd, feedstocks):
     # job for linux 64
     name = 'build_r_script'
@@ -241,8 +316,7 @@ def write_out_bld_job(stages):
         write_out_resources(fd)
         fd.write('jobs:\n')
         write_out_onlinux64(fd, feedstocks)
-        # write_out_onlinux32(fd)
-        # write_out_onwin64(fd)
+        # write_out_onwin64(fd, feedstocks)
         write_out_onosx64(fd, feedstocks)
 
 def write_out_bld_script(stages, mode = 'sh'):
