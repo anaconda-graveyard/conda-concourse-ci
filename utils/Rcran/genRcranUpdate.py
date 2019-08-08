@@ -138,6 +138,8 @@ def write_out_onwin64(fd, feedstocks):
     fd.write('          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc\n')
     fd.write('          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%\n')
     fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&&\n')
+    fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
+    fd.write('          cd aggregateR && git submodule update --init r-zoo-feedstock && git checkout latest_update && cd .. &&\n')
     fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
     fd.write('          --croot C:\ci --skip-existing -c local -c r_test\n')
@@ -222,7 +224,9 @@ def write_out_onlinux64(fd, feedstocks):
     fd.write('      skip_download: true\n')
 
 def bld_feedstocks_lines(stages):
-    rslt = ''
+    # rslt = ''
+    # hack to have r-zoo dependency on update
+    rslt = '         {}/r-zoo-feedstock\n'.format(RrepositoryName)
     cnt = do_max_pkg_cnt
     for i, stage in enumerate(stages):
         scount = len(stage)
