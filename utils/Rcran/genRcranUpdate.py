@@ -107,8 +107,6 @@ def write_out_onwin64(fd, feedstocks):
     name = 'build_r_script'
     fd.write('- name: {}-on-winbuilder\n'.format(name))
     fd.write('  plan:\n')
-    fd.write('  - get: rsync-recipes\n')
-    fd.write('    trigger: true\n')
     fd.write('  - get: rsync-build-pack\n')
     fd.write('    params:\n')
     fd.write('      rsync_opts:\n')
