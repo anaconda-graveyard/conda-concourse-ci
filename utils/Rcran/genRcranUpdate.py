@@ -129,7 +129,7 @@ def write_out_onwin64(fd, feedstocks):
     fd.write('        - /c\n')
     fd.write('        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&\n')
     fd.write('          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&\n')
-    fd.write('          echo Activating build environment&& call .\build_env\Scripts\activate&&\n')
+    fd.write('          echo Activating build environment&& call .\\build_env\\Scripts\\activate&&\n')
     fd.write('          echo Unpacking environment&& conda-unpack&& conda config --system --set\n')
     fd.write('          add_pip_as_python_dependency False&& conda config --system --add default_channels\n')
     fd.write('          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels\n')
