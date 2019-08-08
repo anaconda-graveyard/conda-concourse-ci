@@ -142,7 +142,7 @@ def write_out_onwin64(fd, feedstocks):
     fd.write('          cd aggregateR && git submodule update --init r-zoo-feedstock && git checkout latest_update && cd .. &&\n')
     fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\ci --skip-existing -c local -c r_test\n')
+    fd.write('          --croot C:\\ci --skip-existing -c local -c r_test\n')
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -320,8 +320,8 @@ def write_out_bld_job(stages):
         write_out_resources(fd)
         fd.write('jobs:\n')
         write_out_onlinux64(fd, feedstocks)
-        # write_out_onwin64(fd, feedstocks)
         write_out_onosx64(fd, feedstocks)
+        write_out_onwin64(fd, feedstocks)
 
 def write_out_bld_script(stages, mode = 'sh'):
     cnt = do_max_pkg_cnt
