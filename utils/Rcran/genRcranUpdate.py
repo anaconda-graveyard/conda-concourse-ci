@@ -578,6 +578,10 @@ while len(candidates):
 cnt_items = get_stage_out_count(stages)
 cnt_jobs = math.floor((cnt_items / do_max_pkg_cnt))+1
 print('In total there are {} feedstocks found to be built in {} job(s)\n'.format(cnt_items, cnt_jobs))
+if cnt_jobs > 10:
+    print('too much jobs!!!!! lowered to 10\n')
+    cnt_jobs = 10
+
 #write out pipeline file
 write_out_bld_job(stages, cnt_jobs)
 
