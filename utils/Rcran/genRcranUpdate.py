@@ -44,7 +44,10 @@ def build_anaconda_pkglist(rver, rchannel = 'r'):
     archs = ['noarch', 'linux-32', 'linux-64', 'win-32', 'win-64', 'osx-64']
     for arch in archs:
         rdata = {}
-        url = 'https://repo.anaconda.com/pkgs/{}/{}/repodata.json'.format(rchannel, arch)
+        if rchannel == 'r':
+            url = 'https://repo.anaconda.com/pkgs/{}/{}/repodata.json'.format(rchannel, arch)
+        else:
+            url = 'https://conda.anaconda.org/{}/{}/repodata.json'.format(rchannel, arch)
         repodata = session.get(url)
         if repodata.status_code != 200:
             print('\n{} returned code {}'.format(url, page.status_code))
@@ -515,6 +518,9 @@ session = requests.Session()
 get_ipython().run_line_magic('matplotlib', 'auto')
 
 anaconda_pkgs = build_anaconda_pkglist(rver = Rver)
+# for testing we are also look into 'r_test' channel
+tmp = build_anaconda_pkglist(rver = Rver, rchannel = 'r_test')
+anaconda_pkgs.update(tmp)
 
 built_pkgs = set()
 
