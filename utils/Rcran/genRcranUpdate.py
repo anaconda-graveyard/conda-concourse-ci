@@ -393,7 +393,7 @@ def write_out_bld_job_fly_trigger(cnt_jobs):
             if enabled_win32 == True:
                 # windows 32-bit
                 fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-target_win-32-on_winbuilder\n'.format(name))
-        fd.write('echo "{} jobs triggered"\n'.format(cnt_jobs)
+        fd.write('echo "{} jobs triggered"\n'.format(cnt_jobs))
 
 def write_out_bld_job(stages, cnt_jobs):
     # write out 
