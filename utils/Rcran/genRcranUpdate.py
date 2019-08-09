@@ -32,10 +32,10 @@ do_recursive = '' # '--dirty --recursive'
 
 # The Microsoft CRAN time machine allows us to select a snapshot of CRAN at any day in time. For instance, 2018-01-01 is (in Microsoft's determination) the "official" snapshot date for R 3.4.3.
 
-def get_anaconda_pkglist(rdata, arch, start_with = 'r', ver = '36'):
+def get_anaconda_pkglist(rdata, arch, rchannel, ver, start_with = 'r'):
     """ Read from r channel architecture specific package list with specific version """
     pkgs = set(v['name'][2:] for v in rdata['packages'].values() if v['name'].startswith('r-') and v['build'].startswith('' + start_with + Rver))
-    print('{} Anaconda R {} packages in {} found.'.format(len(pkgs), arch, start_with))
+    print('{} Anaconda R {} packages in {} found.'.format(len(pkgs), arch, rchannel))
     return pkgs
 
 def build_anaconda_pkglist(rver, rchannel = 'r'):
@@ -53,7 +53,7 @@ def build_anaconda_pkglist(rver, rchannel = 'r'):
             print('\n{} returned code {}'.format(url, page.status_code))
         else:
             rdata = json.loads(repodata.text)
-            pkgs2 = get_anaconda_pkglist(rdata, arch, ver = rver)
+            pkgs2 = get_anaconda_pkglist(rdata, arch, rchannel, rver)
             pkgs.update(pkgs2)
             # we don't look at mro packages
 
