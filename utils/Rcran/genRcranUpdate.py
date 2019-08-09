@@ -414,8 +414,8 @@ def write_out_bld_job(stages, cnt_jobs):
             if enabled_win32 == True:
                 write_out_onwin32(fd, feedstocks, name)
 
-def write_out_bld_script(stages, mode = 'sh'):
-    cnt = do_max_pkg_cnt
+def write_out_bld_script(stages, jcnt, mode = 'sh'):
+    cnt = jcnt
     comment_line = '#'
     sep_line = ' \\\n    '
     if mode != 'sh':
@@ -449,7 +449,7 @@ def write_out_bld_script(stages, mode = 'sh'):
                 break
         # end for
 
-def write_out_skeleton_script(stages, mode = 'sh'):
+def write_out_skeleton_script(stages, jcnt, mode = 'sh'):
     sep_line = ' \\\n    '
     comment_line = '#'
     bash_cmd = ''
@@ -457,7 +457,7 @@ def write_out_skeleton_script(stages, mode = 'sh'):
       sep_line = ' '
       comment_line = 'REM'
       bash_cmd = 'cmd /C '
-    cnt = do_max_pkg_cnt
+    cnt = jcnt
 
     with open(f'./build-skeleton.{mode}', 'w') as bsd:
         if mode == 'sh':
@@ -605,16 +605,17 @@ print('In total there are {} feedstocks found to be built in {} job(s)\n'.format
 if cnt_jobs > 10:
     print('too much jobs!!!!! lowered to 10\n')
     cnt_jobs = 10
+    cnt_items = cnt_jobs * do_max_pkg_cnt
 
 #write out pipeline file
 write_out_bld_job(stages, cnt_jobs)
 write_out_bld_job_fly_trigger(cnt_jobs)
 
 # write scripts ...
-write_out_skeleton_script(stages, mode = 'sh')
-write_out_skeleton_script(stages, mode = 'bat')
-write_out_bld_script(stages, mode = 'sh')
-write_out_bld_script(stages, mode = 'bat')
+write_out_skeleton_script(stages, cnt_items, mode = 'sh')
+write_out_skeleton_script(stages, cnt_items, mode = 'bat')
+write_out_bld_script(stages, cnt_items, mode = 'sh')
+write_out_bld_script(stages, cnt_items, mode = 'bat')
 
 print("Done.")
 
