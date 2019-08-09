@@ -387,12 +387,13 @@ def write_out_bld_job_fly_trigger(cnt_jobs):
         fd.write('# put pileline upstream via:\n')
         fd.write('#  fly -t conda-concourse-server sp -p kais_test_r\n')
         fd.write('#     -c pipeline-build-stage.yaml -l ...anaconda_public/config.yml\n')
+        fd.write('fly -t conda-concourse-server up -p kais_test_r\n')
         fd.write('\n')
         for x in range(0, cnt_jobs):
             name = 'build_r_script{}'.format(x)
-            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on_osx\n'.format(name))
-            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on_linux_64\n'.format(name))
-            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on_winbuilder\n'.format(name))
+            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-osx\n'.format(name))
+            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-linux_64\n'.format(name))
+            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-winbuilder\n'.format(name))
             if enabled_win32 == True:
                 # windows 32-bit
                 fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-target_win-32-on_winbuilder\n'.format(name))
