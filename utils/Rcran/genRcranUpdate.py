@@ -377,6 +377,24 @@ def write_out_onosx64(fd, feedstocks, name):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
+def write_out_bld_job_fly_trigger(cnt_jobs):
+    # write out 
+    with open(f'./pipeline-build-stage.sh', 'w') as fd:
+        fd.write('#!/bin/bash\n\n')
+        fd.write('# put pileline upstream via:\n')
+        fd.write('#  fly -t conda-concourse-server sp -p kais_test_r\n')
+        fd.write('#     -c pipeline-build-stage.yaml -l ...anaconda_public/config.yml\n')
+        fd.write('\n')
+        for x in range(0, cnt_jobs):
+            name = 'build_r_script{}'.format(x)
+            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on_osx\n'.format(name))
+            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on_linux_64\n'.format(name))
+            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on_winbuilder\n'.format(name))
+            if enabled_win32 == True:
+                # windows 32-bit
+                fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-target_win-32-on_winbuilder\n'.format(name))
+        fd.write('echo "{}jobs triggered"\n'.format(cnt_jobs)
+
 def write_out_bld_job(stages, cnt_jobs):
     # write out 
     with open(f'./pipeline-build-stage.yaml', 'w') as fd:
@@ -584,6 +602,7 @@ if cnt_jobs > 10:
 
 #write out pipeline file
 write_out_bld_job(stages, cnt_jobs)
+write_out_bld_job_fly_trigger(cnt_jobs)
 
 # write scripts ...
 write_out_skeleton_script(stages, mode = 'sh')
