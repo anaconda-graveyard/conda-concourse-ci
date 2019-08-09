@@ -1,0 +1,82 @@
+{% set version = '1.0' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-apcanalysis
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/APCanalysis_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/APCanalysis/APCanalysis_{{ version }}.tar.gz
+  sha256: c2a04ef7bb016da249e71129044b3f9b847b9d3047b1888afb57fa8f62b15687
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('APCanalysis')"           # [not win]
+    - "\"%R%\" -e \"library('APCanalysis')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=APCanalysis
+  license: GPL-3
+  summary: Analysis of  data from unreplicated orthogonal experiments such as 2-level factorial
+    and fractional factorial designs and Plackett-Burman designs using the all possible
+    comparisons (APC) methodology developed by Miller (2005) <doi:10.1198/004017004000000608>.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-3'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: APCanalysis
+# Type: Package
+# Title: Analysis of Unreplicated Orthogonal Experiments using All Possible Comparisons
+# Version: 1.0
+# Date: 2017-11-03
+# Author: Arden Miller and Abu Zar Md. Shafiullah.
+# Maintainer: Arden Miller <a.miller@auckland.ac.nz>
+# Description: Analysis of  data from unreplicated orthogonal experiments such as 2-level factorial and fractional factorial designs and Plackett-Burman designs using the all possible comparisons (APC) methodology developed by Miller (2005) <doi:10.1198/004017004000000608>.
+# Depends: R (>= 3.3.0)
+# License: GPL-3
+# LazyData: true
+# NeedsCompilation: no
+# Packaged: 2017-11-06 18:33:19 UTC; amil053
+# Repository: CRAN
+# Date/Publication: 2017-11-07 13:03:34 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

@@ -1,0 +1,88 @@
+{% set version = '0.10.2' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-argumentcheck
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/ArgumentCheck_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/ArgumentCheck/ArgumentCheck_{{ version }}.tar.gz
+  sha256: 6c4222bc7e9cefbdabdc2e4336d851f3939b22d01b26c77ab49e8bb77e3dfd55
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+# Suggests: knitr, testthat
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('ArgumentCheck')"           # [not win]
+    - "\"%R%\" -e \"library('ArgumentCheck')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://github.com/nutterb/ArgumentCheck
+  license: GPL-3
+  summary: The typical process of checking arguments in functions is iterative.  In this process,
+    an error may be returned and the user may fix it only to receive another error on
+    a different argument.  'ArgumentCheck' facilitates a more helpful way to perform
+    argument checks allowing the programmer to run all of the checks and then return
+    all of the errors and warnings in a single message.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-3'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: ArgumentCheck
+# Title: Improved Communication to Users with Respect to Problems in Function Arguments
+# Version: 0.10.2
+# Author: Benjamin Nutter
+# Maintainer: Benjamin Nutter <benjamin.nutter@gmail.com>
+# Description: The typical process of checking arguments in functions is iterative.  In this process, an error may be returned and the user may fix it only to receive another error on a different argument.  'ArgumentCheck' facilitates a more helpful way to perform argument checks allowing the programmer to run all of the checks and then return all of the errors and warnings in a single message.
+# Depends: R (>= 3.0.0)
+# Suggests: knitr, testthat
+# VignetteBuilder: knitr
+# License: GPL-3
+# LazyData: true
+# URL: https://github.com/nutterb/ArgumentCheck
+# BugReports: https://github.com/nutterb/ArgumentCheck/issues/
+# RoxygenNote: 5.0.1
+# NeedsCompilation: no
+# Packaged: 2016-04-01 18:17:27 UTC; Nutter
+# Repository: CRAN
+# Date/Publication: 2016-04-01 22:47:22
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

@@ -1,0 +1,83 @@
+{% set version = '0.2' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-ampd
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/ampd_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/ampd/ampd_{{ version }}.tar.gz
+  sha256: ecc8643887e004311a2d38035379db6614d6a162d29b50aa07c69ed19ec5282e
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('ampd')"           # [not win]
+    - "\"%R%\" -e \"library('ampd')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=ampd
+  license: GPL
+  summary: A method for automatic detection of peaks in noisy periodic and quasi-periodic signals.
+    This method, called automatic multiscale-based peak detection (AMPD), is based on
+    the calculation and analysis of the local maxima scalogram, a matrix comprising
+    the scale-dependent occurrences of local maxima. For further information see  <doi:10.3390/a5040588>.
+  license_family: GPL
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-3'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: ampd
+# Title: An Algorithm for Automatic Peak Detection in Noisy Periodic and Quasi-Periodic Signals
+# Version: 0.2
+# Author: Felix Scholkmann <felix.scholkmann@gmail.com>
+# Maintainer: Oliver Sieber <oliver.sieber@gmail.com>
+# Description: A method for automatic detection of peaks in noisy periodic and quasi-periodic signals. This method, called automatic multiscale-based peak detection (AMPD), is based on the calculation and analysis of the local maxima scalogram, a matrix comprising the scale-dependent occurrences of local maxima. For further information see  <doi:10.3390/a5040588>.
+# Depends: R (>= 3.2.0)
+# License: GPL
+# Encoding: UTF-8
+# LazyData: true
+# RoxygenNote: 5.0.1
+# NeedsCompilation: no
+# Packaged: 2016-12-11 12:25:24 UTC; oliver
+# Repository: CRAN
+# Date/Publication: 2016-12-11 16:37:19
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

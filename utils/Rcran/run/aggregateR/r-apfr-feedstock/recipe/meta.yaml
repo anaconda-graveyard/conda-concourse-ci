@@ -1,0 +1,89 @@
+{% set version = '1.0.2' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-apfr
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/APFr_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/APFr/APFr_{{ version }}.tar.gz
+  sha256: e4913a5a1d6252bcf4ad3c8c31f9ed5626faed80c19ab8c6c74637c65c3e5ded
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('APFr')"           # [not win]
+    - "\"%R%\" -e \"library('APFr')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=APFr
+  license: GPL-3
+  summary: Implements a multiple testing approach to the choice of a threshold gamma on the p-values
+    using the Average Power Function (APF) and Bayes False Discovery Rate (FDR) robust
+    estimation. Function apf_fdr()  estimates both quantities from either raw data or
+    p-values. Function apf_plot() produces smooth graphs  and tables of the relevant
+    results. Details of the methods can be found in Quatto P, Margaritella N, et al.
+    (2019)  <doi:10.1177/0962280219844288>.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-3'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: APFr
+# Type: Package
+# Title: Multiple Testing Approach using Average Power Function (APF) and Bayes FDR Robust Estimation
+# Version: 1.0.2
+# Date: 2019-06-14
+# Authors@R: c(person("Nicolo", "Margaritella", email = "N.Margaritella@sms.ed.ac.uk", role = c("cre", "aut")), person("Piero", "Quatto", role = "aut"))
+# Author: Nicolo Margaritella [cre, aut], Piero Quatto [aut]
+# Maintainer: Nicolo Margaritella <N.Margaritella@sms.ed.ac.uk>
+# Depends: R (>= 3.5.0)
+# Imports: stats (>= 3.5.2), graphics (>= 3.5.2)
+# Description: Implements a multiple testing approach to the choice of a threshold gamma on the p-values using the Average Power Function (APF) and Bayes False Discovery Rate (FDR) robust estimation. Function apf_fdr()  estimates both quantities from either raw data or p-values. Function apf_plot() produces smooth graphs  and tables of the relevant results. Details of the methods can be found in Quatto P, Margaritella N, et al. (2019)  <doi:10.1177/0962280219844288>.
+# License: GPL-3
+# Encoding: UTF-8
+# LazyData: true
+# RoxygenNote: 6.1.1
+# NeedsCompilation: no
+# Packaged: 2019-06-17 07:49:35 UTC; Nico
+# Repository: CRAN
+# Date/Publication: 2019-06-18 12:20:07 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

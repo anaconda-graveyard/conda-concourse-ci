@@ -1,0 +1,82 @@
+{% set version = '1.0' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-amget
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/AMGET_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/AMGET/AMGET_{{ version }}.tar.gz
+  sha256: b8b7e159b47602d433e3f0dd57ac588e105f77254aab18da9aea645edeff8da3
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('AMGET')"           # [not win]
+    - "\"%R%\" -e \"library('AMGET')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=AMGET
+  license: GPL (>= 2)
+  summary: AMGET allows to simply and rapidly creates highly informative diagnostic plots for
+    ADAPT 5 models. Features include data analysis prior any modeling form either NONMEM
+    or ADAPT shaped dataset, goodness-of-fit plots (GOF), posthoc-fits plots (PHF),
+    parameters distribution plots (PRM) and visual predictive check plots (VPC) based
+    on ADAPT output.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: AMGET
+# Type: Package
+# Title: Post-processing tool for ADAPT 5
+# Version: 1.0
+# Date: 2013-08-02
+# Author: Benjamin Guiastrennec
+# Maintainer: Benjamin Guiastrennec <guiastrennec@gmail.com>
+# Description: AMGET allows to simply and rapidly creates highly informative diagnostic plots for ADAPT 5 models. Features include data analysis prior any modeling form either NONMEM or ADAPT shaped dataset, goodness-of-fit plots (GOF), posthoc-fits plots (PHF), parameters distribution plots (PRM) and visual predictive check plots (VPC) based on ADAPT output.
+# License: GPL (>= 2)
+# Packaged: 2013-08-02 10:03:31 UTC; bengu839
+# NeedsCompilation: no
+# Repository: CRAN
+# Date/Publication: 2013-08-02 14:19:54
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

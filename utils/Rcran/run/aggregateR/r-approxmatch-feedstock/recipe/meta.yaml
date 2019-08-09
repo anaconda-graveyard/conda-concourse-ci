@@ -1,0 +1,83 @@
+{% set version = '1.0' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-approxmatch
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/approxmatch_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/approxmatch/approxmatch_{{ version }}.tar.gz
+  sha256: 1e1f7a01ac4da814774af57370a0d8eb31e146ee1922f495b8008dbaddca34fc
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+# Suggests: optmatch, MASS
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('approxmatch')"           # [not win]
+    - "\"%R%\" -e \"library('approxmatch')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=approxmatch
+  license: MIT + file LICENSE
+  summary: 'Tools for constructing a matched design with multiple comparison groups. Further
+    specifications of refined covariate balance restriction and exact match on  covariate
+    can be imposed. Matches are approximately optimal in  the sense that the  cost of
+    the solution is at most twice the optimal cost, Crama and Spieksma (1992)  <doi:10.1016/0377-2217(92)90078-N>. '
+
+  license_family: MIT
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: approxmatch
+# Type: Package
+# Title: Approximately Optimal Fine Balance Matching with Multiple Groups
+# Version: 1.0
+# Date: 2017-10-23
+# Author: Bikram Karmakar
+# Maintainer: Bikram Karmakar <bikramk@wharton.upenn.edu>
+# Description: Tools for constructing a matched design with multiple comparison groups. Further specifications of refined covariate balance restriction and exact match on  covariate can be imposed. Matches are approximately optimal in  the sense that the  cost of the solution is at most twice the optimal cost, Crama and Spieksma (1992)  <doi:10.1016/0377-2217(92)90078-N>.
+# Suggests: optmatch, MASS
+# License: MIT + file LICENSE
+# NeedsCompilation: no
+# Packaged: 2017-11-03 22:30:20 UTC; bikramk
+# Repository: CRAN
+# Date/Publication: 2017-11-05 12:47:37 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

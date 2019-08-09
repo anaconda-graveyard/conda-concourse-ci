@@ -1,0 +1,104 @@
+{% set version = '1.4.7' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-apcluster
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/apcluster_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/apcluster/apcluster_{{ version }}.tar.gz
+  sha256: 5ac068e40e6c90868da7ab44f8a24c32552cffacdca6545854a34bc9ab6b10a1
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+# Suggests: Biostrings, kebabs (>= 1.5.4), knitr
+requirements:
+  build:
+    - {{ compiler('c') }}              # [not win]
+    - {{ compiler('m2w64_c') }}        # [win]
+    - {{ compiler('cxx') }}            # [not win]
+    - {{ compiler('m2w64_cxx') }}      # [win]
+    - {{posix}}filesystem        # [win]
+    - {{posix}}make
+    - {{posix}}sed               # [win]
+    - {{posix}}coreutils         # [win]
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-matrix
+    - r-rcpp >=0.11.1
+
+  run:
+    - r-base
+    - {{native}}gcc-libs         # [win]
+    - r-matrix
+    - r-rcpp >=0.11.1
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('apcluster')"           # [not win]
+    - "\"%R%\" -e \"library('apcluster')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: http://www.bioinf.jku.at/software/apcluster/ https://github.com/UBod/apcluster
+  license: GPL (>= 2)
+  summary: Implements Affinity Propagation clustering introduced by Frey and Dueck (2007) <DOI:10.1126/science.1136800>.
+    The algorithms are largely analogous to the 'Matlab' code published by Frey and
+    Dueck. The package further provides leveraged affinity propagation and an algorithm
+    for exemplar-based agglomerative clustering that can also be used to join clusters
+    obtained from affinity propagation. Various plotting functions are available for
+    analyzing clustering results.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: apcluster
+# Type: Package
+# Title: Affinity Propagation Clustering
+# Version: 1.4.7
+# Date: 2018-05-29
+# Depends: R (>= 3.0.0)
+# Imports: Rcpp (>= 0.11.1), methods, Matrix, stats, graphics, grDevices
+# Suggests: Biostrings, kebabs (>= 1.5.4), knitr
+# Author: Ulrich Bodenhofer, Johannes Palme, Chrats Melkonian, Andreas Kothmeier, Nikola Kostic
+# Maintainer: Ulrich Bodenhofer <bodenhofer@bioinf.jku.at>
+# Description: Implements Affinity Propagation clustering introduced by Frey and Dueck (2007) <DOI:10.1126/science.1136800>. The algorithms are largely analogous to the 'Matlab' code published by Frey and Dueck. The package further provides leveraged affinity propagation and an algorithm for exemplar-based agglomerative clustering that can also be used to join clusters obtained from affinity propagation. Various plotting functions are available for analyzing clustering results.
+# License: GPL (>= 2)
+# Collate: AllClasses.R AllGenerics.R access-methods.R coerce-methods.R show-methods.R labels-methods.R length-methods.R revDend.R heatmap-methods.R plot-methods.R cutree-methods.R sort-methods.R aggExCluster-methods.R apcluster-methods.R apclusterL-methods.R apclusterK-methods.R apclusterDemo.R preferenceRange-methods.R similarity.R simpleDist.R conversions.R
+# URL: http://www.bioinf.jku.at/software/apcluster/ https://github.com/UBod/apcluster
+# VignetteBuilder: knitr
+# LinkingTo: Rcpp
+# LazyLoad: yes
+# Repository: CRAN
+# NeedsCompilation: yes
+# Packaged: 2018-05-29 19:43:28 UTC; bodenhof
+# Date/Publication: 2018-05-29 22:07:55 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

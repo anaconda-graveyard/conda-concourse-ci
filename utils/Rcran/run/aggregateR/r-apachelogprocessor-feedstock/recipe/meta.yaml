@@ -1,0 +1,88 @@
+{% set version = '0.2.3' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-apachelogprocessor
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/ApacheLogProcessor_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/ApacheLogProcessor/ApacheLogProcessor_{{ version }}.tar.gz
+  sha256: fbb1f22ad5d470bb3677a833f1f9668425b8b059048ac2371917fa005fb49a40
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-doparallel
+    - r-foreach
+    - r-stringr
+
+  run:
+    - r-base
+    - r-doparallel
+    - r-foreach
+    - r-stringr
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('ApacheLogProcessor')"           # [not win]
+    - "\"%R%\" -e \"library('ApacheLogProcessor')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://github.com/diogosmendonca/ApacheLogProcessor
+  license: LGPL-3 | file LICENSE
+  summary: Provides capabilities to process Apache HTTPD Log files.The main functionalities are
+    to extract data from access and error log files to data frames.
+  license_family: LGPL
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: ApacheLogProcessor
+# Type: Package
+# Title: Process the Apache Web Server Log Files
+# Version: 0.2.3
+# Date: 2018-07-18
+# Author: Diogo Silveira Mendonca
+# Maintainer: Diogo Silveira Mendonca <diogosmendonca@gmail.com>
+# Description: Provides capabilities to process Apache HTTPD Log files.The main functionalities are to extract data from access and error log files to data frames.
+# License: LGPL-3 | file LICENSE
+# URL: https://github.com/diogosmendonca/ApacheLogProcessor
+# BugReports: https://github.com/diogosmendonca/ApacheLogProcessor/issues
+# Imports: foreach, parallel, doParallel, utils, stringr
+# RoxygenNote: 6.0.1
+# NeedsCompilation: no
+# Packaged: 2018-07-19 02:09:54 UTC; 09513592740
+# Repository: CRAN
+# Date/Publication: 2018-07-19 07:30:08 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

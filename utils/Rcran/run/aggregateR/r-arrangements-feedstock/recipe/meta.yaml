@@ -1,0 +1,101 @@
+{% set version = '1.1.5' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-arrangements
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/arrangements_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/arrangements/arrangements_{{ version }}.tar.gz
+  sha256: c7cafd698d6be9d4a40b51fbb9ef78cb7d24f92ebb5621f35c4b7699e663d915
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+# Suggests: foreach, testthat, knitr, rmarkdown
+requirements:
+  build:
+    - {{ compiler('c') }}              # [not win]
+    - {{ compiler('m2w64_c') }}        # [win]
+    - {{posix}}filesystem        # [win]
+    - {{posix}}make
+    - {{posix}}sed               # [win]
+    - {{posix}}coreutils         # [win]
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-r6
+    - r-gmp
+
+  run:
+    - r-base
+    - {{native}}gcc-libs         # [win]
+    - r-r6
+    - r-gmp
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('arrangements')"           # [not win]
+    - "\"%R%\" -e \"library('arrangements')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://randy3k.github.io/arrangements
+  license: MIT + file LICENSE
+  summary: Fast generators and iterators for permutations, combinations and partitions. The iterators
+    allow users to generate arrangements in  a memory efficient manner and the generated
+    arrangements are in  lexicographical (dictionary) order. Permutations and combinations
+    can  be drawn with/without replacement and support multisets. It has been  demonstrated
+    that 'arrangements' outperforms most of the existing  packages of similar kind.
+    Some benchmarks could be found at  <https://randy3k.github.io/arrangements/articles/benchmark.html>.
+  license_family: MIT
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: arrangements
+# Type: Package
+# Title: Fast Generators and Iterators for Permutations, Combinations and Partitions
+# Version: 1.1.5
+# Date: 2018-11-07
+# Authors@R: c( person("Randy", "Lai", , "randy.cs.lai@gmail.com", role = c("aut", "cre")) )
+# Description: Fast generators and iterators for permutations, combinations and partitions. The iterators allow users to generate arrangements in  a memory efficient manner and the generated arrangements are in  lexicographical (dictionary) order. Permutations and combinations can  be drawn with/without replacement and support multisets. It has been  demonstrated that 'arrangements' outperforms most of the existing  packages of similar kind. Some benchmarks could be found at  <https://randy3k.github.io/arrangements/articles/benchmark.html>.
+# URL: https://randy3k.github.io/arrangements
+# License: MIT + file LICENSE
+# Depends: R (>= 3.4.0)
+# Imports: methods, R6, gmp
+# Suggests: foreach, testthat, knitr, rmarkdown
+# NeedsCompilation: yes
+# SystemRequirements: gmp (>= 4.2.3)
+# ByteCompile: yes
+# RoxygenNote: 6.1.0
+# Packaged: 2018-11-08 04:00:53 UTC; Randy
+# Author: Randy Lai [aut, cre]
+# Maintainer: Randy Lai <randy.cs.lai@gmail.com>
+# Repository: CRAN
+# Date/Publication: 2018-11-08 15:20:06 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

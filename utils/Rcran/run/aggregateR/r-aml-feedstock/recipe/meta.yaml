@@ -1,0 +1,89 @@
+{% set version = '0.1-1' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-aml
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/aml_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/aml/aml_{{ version }}.tar.gz
+  sha256: 548d4636c61092ccd1bcc5b393c8743741e1901cda5e154c599413746ea7bd27
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+# Suggests: MASS
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-lars
+
+  run:
+    - r-base
+    - r-lars
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('aml')"           # [not win]
+    - "\"%R%\" -e \"library('aml')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: http://www.r-project.org
+  license: GPL (>= 2)
+  summary: This package implements the adaptive mixed lasso (AML) method proposed by Wang et
+    al.(2011).  AML applies adaptive lasso penalty to a large number of predictors,  thus
+    producing a sparse model, while accounting for the population structure in the linear
+    mixed model framework.  The package here is primarily designed for application to
+    genome wide association studies or genomic prediction in plant breeding populations,
+    though it could be applied to other settings of linear mixed models.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: aml
+# Version: 0.1-1
+# Date: 2013-11-26
+# Title: Adaptive Mixed LASSO
+# Authors@R: c(person("Dong", "Wang", role = c("aut", "cre"), email = "dwangstat@gmail.com"))
+# Author: Dong Wang
+# Maintainer: Dong Wang <dwangstat@gmail.com>
+# Depends: R (>= 2.10), lars
+# Suggests: MASS
+# Description: This package implements the adaptive mixed lasso (AML) method proposed by Wang et al.(2011).  AML applies adaptive lasso penalty to a large number of predictors,  thus producing a sparse model, while accounting for the population structure in the linear mixed model framework.  The package here is primarily designed for application to genome wide association studies or genomic prediction in plant breeding populations, though it could be applied to other settings of linear mixed models.
+# License: GPL (>= 2)
+# URL: http://www.r-project.org
+# Packaged: 2013-11-27 21:41:23 UTC; bywang
+# NeedsCompilation: no
+# Repository: CRAN
+# Date/Publication: 2013-11-28 08:14:36
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

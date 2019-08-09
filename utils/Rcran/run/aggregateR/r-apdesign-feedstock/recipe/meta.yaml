@@ -1,0 +1,87 @@
+{% set version = '1.0.0' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-apdesign
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/apdesign_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/apdesign/apdesign_{{ version }}.tar.gz
+  sha256: c6d0d263e04d45bfc9c1c4f4df82ac34c918944f6b27294592d626184ff33f10
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+# Suggests: testthat
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-matrix >=1.2
+
+  run:
+    - r-base
+    - r-matrix >=1.2
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('apdesign')"           # [not win]
+    - "\"%R%\" -e \"library('apdesign')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=apdesign
+  license: GPL-3
+  summary: An implementation of the additive polynomial (AP) design matrix. It constructs and
+    appends an AP design matrix to a data frame for use with longitudinal data subject
+    to seasonality.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-3'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: apdesign
+# Title: An Implementation of the Additive Polynomial Design Matrix
+# Version: 1.0.0
+# Authors@R: c( person("Tyler", "Matta", email = "tyler.matta@gmail.com", role = c("aut", "cre")), person("Quinn", "Lathrop", role = c("ctb")), person("Yeow Meng", "Thum", role = c("ctb")))
+# Description: An implementation of the additive polynomial (AP) design matrix. It constructs and appends an AP design matrix to a data frame for use with longitudinal data subject to seasonality.
+# Depends: R (>= 3.2.3)
+# License: GPL-3
+# LazyData: true
+# Imports: Matrix (>= 1.2)
+# RoxygenNote: 5.0.1
+# Suggests: testthat
+# NeedsCompilation: no
+# Packaged: 2016-11-14 16:49:49 UTC; tylerm
+# Author: Tyler Matta [aut, cre], Quinn Lathrop [ctb], Yeow Meng Thum [ctb]
+# Maintainer: Tyler Matta <tyler.matta@gmail.com>
+# Repository: CRAN
+# Date/Publication: 2016-11-15 07:16:42
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

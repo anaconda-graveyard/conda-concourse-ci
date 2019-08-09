@@ -1,0 +1,91 @@
+{% set version = '0.1-10' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-assotester
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/AssotesteR_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/AssotesteR/AssotesteR_{{ version }}.tar.gz
+  sha256: 9ca548dd1eee059e311a74ccd8455231f81c7461e6e31ca567f9ee741e8dda2b
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{ compiler('c') }}              # [not win]
+    - {{ compiler('m2w64_c') }}        # [win]
+    - {{posix}}filesystem        # [win]
+    - {{posix}}make
+    - {{posix}}sed               # [win]
+    - {{posix}}coreutils         # [win]
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-mvtnorm
+
+  run:
+    - r-base
+    - {{native}}gcc-libs         # [win]
+    - r-mvtnorm
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('AssotesteR')"           # [not win]
+    - "\"%R%\" -e \"library('AssotesteR')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: http://www.gastonsanchez.com
+  license: GPL (>= 3)
+  summary: R package with statistical tests and methods for genetic association studies with
+    emphasis on rare variants and binary (dichotomous) traits
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-3'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: AssotesteR
+# Type: Package
+# Title: Statistical Tests for Genetic Association Studies
+# Version: 0.1-10
+# Date: 2013-12-29
+# Author: Gaston Sanchez
+# Maintainer: Gaston Sanchez <gaston.stat@gmail.com>
+# Depends: mvtnorm
+# Description: R package with statistical tests and methods for genetic association studies with emphasis on rare variants and binary (dichotomous) traits
+# License: GPL (>= 3)
+# URL: http://www.gastonsanchez.com
+# LazyLoad: yes
+# Collate: 'ASCORE.Ord.R' 'ASCORE.R' 'ASSU.Ord.R' 'ASSU.R' 'ASSUW.Ord.R' 'ASSUW.R' 'ASUM.Ord.R' 'ASUM.R' 'AssotesteR-internal.R' 'BST.R' 'CALPHA.R' 'CARV.R' 'CAST.R' 'CMAT.R' 'CMC.R' 'GDBR.R' 'MULTI.R' 'ORWSS.R' 'RARECOVER.R' 'RBT.R' 'RVT1.R' 'RVT2.R' 'RWAS.R' 'SCORE.R' 'SEQSUM.R' 'SKAT.R' 'SSU.R' 'SSUW.R' 'SUM.R' 'TTEST.R' 'UMINP.R' 'VT.R' 'WSS.R' 'WST.R' 'gdbr_IBS.R' 'gdbr_wIBS.R' 'kernel_IBS.R' 'kernel_twowayx.R' 'kernel_wIBS.R' 'my_check.R' 'print.assoctest.R'
+# Packaged: 2013-12-18 21:54:01 UTC; Gaston
+# NeedsCompilation: yes
+# Repository: CRAN
+# Date/Publication: 2013-12-19 00:09:14
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

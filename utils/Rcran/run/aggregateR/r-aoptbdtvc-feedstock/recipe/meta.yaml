@@ -1,0 +1,97 @@
+{% set version = '0.0.2' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-aoptbdtvc
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/Aoptbdtvc_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/Aoptbdtvc/Aoptbdtvc_{{ version }}.tar.gz
+  sha256: f07f041bcd798950b597526a6e03af9fa0336fefa2174488e2e3ffb791dbcfaf
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-mass
+    - r-lpsolve
+
+  run:
+    - r-base
+    - r-mass
+    - r-lpsolve
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('Aoptbdtvc')"           # [not win]
+    - "\"%R%\" -e \"library('Aoptbdtvc')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=Aoptbdtvc
+  license: GPL (>= 2)
+  summary: 'A collection of functions to construct A-optimal block designs for comparing test
+    treatments with one or more control(s). Mainly A-optimal balanced treatment incomplete
+    block designs, weighted A-optimal balanced treatment incomplete block designs, A-optimal
+    group divisible treatment designs and A-optimal balanced bipartite block designs
+    can be constructed using the package. The designs are constructed using algorithms
+    based on linear integer programming. To the best of our knowledge, these facilities
+    to construct A-optimal block designs for comparing test treatments with one or more
+    controls are not available in the existing R packages. For more details on designs
+    for tests versus control(s) comparisons, please see Hedayat, A. S. and Majumdar,
+    D. (1984) <doi:10.1080/00401706.1984.10487989> A-Optimal Incomplete Block Designs
+    for Control-Test Treatment Comparisons, Technometrics, 26, 363-370 and Mandal, B.
+    N. , Gupta, V. K., Parsad, Rajender. (2017) <doi:10.1080/03610926.2015.1071394>
+    Balanced treatment incomplete block designs through integer programming. Communications
+    in Statistics - Theory and Methods 46(8), 3728-3737. '
+
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: Aoptbdtvc
+# Title: A-Optimal Block Designs for Comparing Test Treatments with Controls
+# Version: 0.0.2
+# Authors@R: c(person("Baidya Nath", "Mandal", email = "mandal.stat@gmail.com", role = c("aut", "cre")),person("Sukanta", "Dash", role = "aut"),person("Rajender", "Parsad", role = "aut"))
+# Author: Baidya Nath Mandal [aut, cre], Sukanta Dash [aut], Rajender Parsad [aut]
+# Maintainer: Baidya Nath Mandal <mandal.stat@gmail.com>
+# Description: A collection of functions to construct A-optimal block designs for comparing test treatments with one or more control(s). Mainly A-optimal balanced treatment incomplete block designs, weighted A-optimal balanced treatment incomplete block designs, A-optimal group divisible treatment designs and A-optimal balanced bipartite block designs can be constructed using the package. The designs are constructed using algorithms based on linear integer programming. To the best of our knowledge, these facilities to construct A-optimal block designs for comparing test treatments with one or more controls are not available in the existing R packages. For more details on designs for tests versus control(s) comparisons, please see Hedayat, A. S. and Majumdar, D. (1984) <doi:10.1080/00401706.1984.10487989> A-Optimal Incomplete Block Designs for Control-Test Treatment Comparisons, Technometrics, 26, 363-370 and Mandal, B. N. , Gupta, V. K., Parsad, Rajender. (2017) <doi:10.1080/03610926.2015.1071394> Balanced treatment incomplete block designs through integer programming. Communications in Statistics - Theory and Methods 46(8), 3728-3737.
+# Depends: R (>= 3.4.0), lpSolve, MASS
+# License: GPL (>= 2)
+# Encoding: UTF-8
+# NeedsCompilation: no
+# Packaged: 2017-11-24 05:27:46 UTC; LG
+# Repository: CRAN
+# Date/Publication: 2017-11-24 13:56:17 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

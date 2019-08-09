@@ -1,0 +1,90 @@
+{% set version = '1.1.11' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-asnipe
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/asnipe_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/asnipe/asnipe_{{ version }}.tar.gz
+  sha256: 982b9f34dbcf98136a8406b9ce4717faf155c7d5d923dcdf0dca6a9d53e27219
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+# Suggests: ape, raster, sna
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-mass
+    - r-matrix
+
+  run:
+    - r-base
+    - r-mass
+    - r-matrix
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('asnipe')"           # [not win]
+    - "\"%R%\" -e \"library('asnipe')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=asnipe
+  license: GPL-2
+  summary: Implements several tools that are used in animal social network analysis. In particular,
+    this package provides the tools to infer groups and generate networks from observation
+    data, perform permutation tests on the data, calculate lagged association rates,
+    and performed multiple regression analysis on social network data.
+  license_family: GPL2
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: asnipe
+# Type: Package
+# Title: Animal Social Network Inference and Permutations for Ecologists
+# Version: 1.1.11
+# Date: 2018-11-22
+# Author: Damien R. Farine <dfarine@orn.mpg.de>
+# Maintainer: Damien R. Farine <dfarine@orn.mpg.de>
+# Description: Implements several tools that are used in animal social network analysis. In particular, this package provides the tools to infer groups and generate networks from observation data, perform permutation tests on the data, calculate lagged association rates, and performed multiple regression analysis on social network data.
+# License: GPL-2
+# Encoding: latin1
+# Packaged: 2018-11-22 16:00:53 UTC; damienfarine
+# Depends: R (>= 2.10)
+# Imports: MASS, Matrix
+# Suggests: ape, raster, sna
+# NeedsCompilation: no
+# Repository: CRAN
+# Date/Publication: 2018-11-22 16:30:03 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

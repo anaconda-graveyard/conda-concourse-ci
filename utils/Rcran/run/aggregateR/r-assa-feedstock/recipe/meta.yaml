@@ -1,0 +1,90 @@
+{% set version = '1.0' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-assa
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/ASSA_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/ASSA/ASSA_{{ version }}.tar.gz
+  sha256: b3233406e47dcb3204a5f86c65d3fb08b1f221ce86c7cbcbca26068f079db575
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{ compiler('c') }}              # [not win]
+    - {{ compiler('m2w64_c') }}        # [win]
+    - {{ compiler('fortran') }}        # [not win]
+    - {{ compiler('m2w64_fortran') }}  # [win]
+    - {{posix}}filesystem        # [win]
+    - {{posix}}make
+    - {{posix}}sed               # [win]
+    - {{posix}}coreutils         # [win]
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+    - {{native}}gcc-libs         # [win]
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('ASSA')"           # [not win]
+    - "\"%R%\" -e \"library('ASSA')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=ASSA
+  license: GPL (>= 3)
+  summary: Functions to model and decompose time series into principal components using singular
+    spectrum analysis (de Carvalho and Rua (2017) <doi:10.1016/j.ijforecast.2015.09.004>;
+    de Carvalho et al (2012) <doi:10.1016/j.econlet.2011.09.007>).
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-3'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: ASSA
+# Version: 1.0
+# Date: 2018-05-08
+# Title: Applied Singular Spectrum Analysis (ASSA)
+# Description: Functions to model and decompose time series into principal components using singular spectrum analysis (de Carvalho and Rua (2017) <doi:10.1016/j.ijforecast.2015.09.004>; de Carvalho et al (2012) <doi:10.1016/j.econlet.2011.09.007>).
+# Authors@R: c(person("Miguel", "de Carvalho", role = c("aut", "cre"), email = "miguel.decarvalho@ed.ac.uk"), person("Gabriel", "Martos", role = "aut", email = "gabrielmartos@gmail.com"))
+# Author: Miguel de Carvalho [aut, cre], Gabriel Martos [aut]
+# Depends: R (>= 3.0.1)
+# Maintainer: Miguel de Carvalho <miguel.decarvalho@ed.ac.uk>
+# License: GPL (>= 3)
+# Repository: CRAN
+# Imports: stats
+# NeedsCompilation: yes
+# Packaged: 2018-05-14 12:27:17 UTC; epscrux
+# Date/Publication: 2018-05-14 12:51:57 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

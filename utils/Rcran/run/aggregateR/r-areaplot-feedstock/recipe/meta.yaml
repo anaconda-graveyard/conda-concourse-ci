@@ -1,0 +1,85 @@
+{% set version = '1.2-1' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-areaplot
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/areaplot_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/areaplot/areaplot_{{ version }}.tar.gz
+  sha256: cac62aa20322403d4251f83c57b988a750d98b86c17750b4f68fba774502b9ae
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+# Suggests: MASS
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('areaplot')"           # [not win]
+    - "\"%R%\" -e \"library('areaplot')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=areaplot
+  license: GPL (>= 2)
+  summary: Plot stacked areas and confidence bands as filled polygons, or add polygons to existing
+    plots. A variety of input formats are supported, including vectors, matrices, data
+    frames, formulas, etc.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: areaplot
+# Version: 1.2-1
+# Date: 2019-02-16
+# Title: Plot Stacked Areas and Confidence Bands as Filled Polygons
+# Authors@R: person("Arni", "Magnusson", role=c("aut","cre"), email="arni.magnusson@ices.dk")
+# Imports: graphics, grDevices, stats
+# Suggests: MASS
+# Description: Plot stacked areas and confidence bands as filled polygons, or add polygons to existing plots. A variety of input formats are supported, including vectors, matrices, data frames, formulas, etc.
+# License: GPL (>= 2)
+# Encoding: UTF-8
+# RoxygenNote: 6.1.1
+# NeedsCompilation: no
+# Packaged: 2019-02-16 05:41:15 UTC; arnima
+# Author: Arni Magnusson [aut, cre]
+# Maintainer: Arni Magnusson <arni.magnusson@ices.dk>
+# Repository: CRAN
+# Date/Publication: 2019-02-16 06:00:03 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

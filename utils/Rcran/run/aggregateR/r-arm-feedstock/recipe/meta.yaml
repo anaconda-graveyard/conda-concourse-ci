@@ -1,0 +1,95 @@
+{% set version = '1.10-1' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-arm
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/arm_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/arm/arm_{{ version }}.tar.gz
+  sha256: 6f1158c9295e65bd649139224497d3356189b931ff143f9b374daae72548776f
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-mass
+    - r-matrix >=1.0
+    - r-abind
+    - r-coda
+    - r-lme4 >=1.0
+    - r-nlme
+
+  run:
+    - r-base
+    - r-mass
+    - r-matrix >=1.0
+    - r-abind
+    - r-coda
+    - r-lme4 >=1.0
+    - r-nlme
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('arm')"           # [not win]
+    - "\"%R%\" -e \"library('arm')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=arm
+  license: GPL (>= 3)
+  summary: Functions to accompany A. Gelman and J. Hill, Data Analysis Using Regression and Multilevel/Hierarchical
+    Models, Cambridge University Press, 2007.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-3'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: arm
+# Version: 1.10-1
+# Date: 2018-4-12
+# Title: Data Analysis Using Regression and Multilevel/Hierarchical Models
+# Authors@R: c(person("Andrew", "Gelman", role = "aut", email = "gelman@stat.columbia.edu"), person("Yu-Sung", "Su", role =  c("aut", "cre"), email = "suyusung@tsinghua.edu.cn"), person("Masanao", "Yajima", role =  "ctb", email = "yajima@stat.ucla.edu"), person("Jennifer", "Hill", role =  "ctb", email = "jennifer.hill@nyu.edu"), person("Maria Grazia", "Pittau", role =  "ctb", email = "grazia@stat.columbia.edu"), person("Jouni", "Kerman", role =  "ctb", email = "jouni@kerman.com"), person("Tian", "Zheng", role =  "ctb", email = "tzheng@stat.columbia.edu"), person("Vincent", "Dorie", role =  "ctb", email = "vjd4@nyu.edu") )
+# Author: Andrew Gelman [aut], Yu-Sung Su [aut, cre], Masanao Yajima [ctb], Jennifer Hill [ctb], Maria Grazia Pittau [ctb], Jouni Kerman [ctb], Tian Zheng [ctb], Vincent Dorie [ctb]
+# Maintainer: Yu-Sung Su <suyusung@tsinghua.edu.cn>
+# BugReports: https://github.com/suyusung/arm/issues/
+# Depends: R (>= 3.1.0), MASS, Matrix (>= 1.0), stats, lme4 (>= 1.0)
+# Imports: abind, coda, graphics, grDevices, methods, nlme, utils
+# Description: Functions to accompany A. Gelman and J. Hill, Data Analysis Using Regression and Multilevel/Hierarchical Models, Cambridge University Press, 2007.
+# URL: https://CRAN.R-project.org/package=arm
+# License: GPL (>= 3)
+# NeedsCompilation: no
+# Packaged: 2018-04-13 05:56:24 UTC; yusung
+# Repository: CRAN
+# Date/Publication: 2018-04-13 06:43:04 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

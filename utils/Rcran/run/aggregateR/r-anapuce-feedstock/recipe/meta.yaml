@@ -1,0 +1,82 @@
+{% set version = '2.3' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-anapuce
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/anapuce_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/anapuce/anapuce_{{ version }}.tar.gz
+  sha256: 4fb3e49bb3b3e89823b32612d174e561f1768d9967f805b62418b146fcf56316
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+
+  run:
+    - r-base
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('anapuce')"           # [not win]
+    - "\"%R%\" -e \"library('anapuce')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=anapuce
+  license: GPL-2
+  summary: Functions for normalisation, differentially analysis of microarray data and local
+    False Discovery Rate.
+  license_family: GPL2
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: anapuce
+# Title: Tools for Microarray Data Analysis
+# Version: 2.3
+# Authors@R: person("Julie", "Aubert", email = "julie.aubert@agroparistech.fr", role = c("aut", "cre"))
+# Description: Functions for normalisation, differentially analysis of microarray data and local False Discovery Rate.
+# Depends: R (>= 3.4.0)
+# License: GPL-2
+# Encoding: UTF-8
+# LazyData: true
+# RoxygenNote: 6.0.1
+# NeedsCompilation: no
+# Packaged: 2019-02-05 14:36:42 UTC; aubert
+# Author: Julie Aubert [aut, cre]
+# Maintainer: Julie Aubert <julie.aubert@agroparistech.fr>
+# Repository: CRAN
+# Date/Publication: 2019-02-05 15:13:20 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

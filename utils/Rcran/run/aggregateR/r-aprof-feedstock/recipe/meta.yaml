@@ -1,0 +1,89 @@
+{% set version = '0.4.1' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-aprof
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/aprof_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/aprof/aprof_{{ version }}.tar.gz
+  sha256: 70dfa693d09c18bbef6fcc632da5623c8d94b4f0eff69e3769cf1389d0a50c93
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-testthat
+
+  run:
+    - r-base
+    - r-testthat
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('aprof')"           # [not win]
+    - "\"%R%\" -e \"library('aprof')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: http://github.com/MarcoDVisser/aprof
+  license: GPL (>= 2)
+  summary: Assists the evaluation of whether and where to focus code optimization, using Amdahl's
+    law and visual aids based on line profiling. Amdahl's profiler organizes profiling
+    output files (including memory profiling) in a visually appealing way. It is meant
+    to help to balance development vs. execution time by helping to identify the most
+    promising sections of code to optimize and projecting potential gains. The package
+    is an addition to R's standard profiling tools and is not a wrapper for them.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: aprof
+# Type: Package
+# Title: Amdahl's Profiler, Directed Optimization Made Easy
+# Version: 0.4.1
+# Date: 2018-05-17
+# Author: Marco D. Visser
+# Maintainer: Marco D. Visser <marco.d.visser@gmail.com>
+# Description: Assists the evaluation of whether and where to focus code optimization, using Amdahl's law and visual aids based on line profiling. Amdahl's profiler organizes profiling output files (including memory profiling) in a visually appealing way. It is meant to help to balance development vs. execution time by helping to identify the most promising sections of code to optimize and projecting potential gains. The package is an addition to R's standard profiling tools and is not a wrapper for them.
+# License: GPL (>= 2)
+# URL: http://github.com/MarcoDVisser/aprof
+# BugReports: http://github.com/MarcoDVisser/aprof/issues
+# Imports: graphics, grDevices, stats, testthat
+# Repository: CRAN
+# RoxygenNote: 5.0.1
+# NeedsCompilation: no
+# Packaged: 2018-05-17 12:42:51 UTC; marcov
+# Date/Publication: 2018-05-22 18:23:45 UTC
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml

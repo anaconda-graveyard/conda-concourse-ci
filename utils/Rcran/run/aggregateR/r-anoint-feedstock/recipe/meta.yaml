@@ -1,0 +1,88 @@
+{% set version = '1.4' %}
+
+{% set posix = 'm2-' if win else '' %}
+{% set native = 'm2w64-' if win else '' %}
+
+package:
+  name: r-anoint
+  version: {{ version|replace("-", "_") }}
+
+source:
+  url:
+    - {{ cran_mirror }}/src/contrib/anoint_{{ version }}.tar.gz
+    - {{ cran_mirror }}/src/contrib/Archive/anoint/anoint_{{ version }}.tar.gz
+  sha256: 65d78db330efc0f15838eab24b1e3924ecfdd44385408060dfadddf4d4c3ed81
+
+build:
+  merge_build_host: True  # [win]
+  # If this is a new build for the same version, increment the build number.
+  number: 0
+  noarch: generic
+
+  # This is required to make R link correctly on Linux.
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  build:
+    - {{posix}}zip               # [win]
+
+  host:
+    - r-base
+    - r-mass
+    - r-glmnet
+    - r-survival
+
+  run:
+    - r-base
+    - r-mass
+    - r-glmnet
+    - r-survival
+
+test:
+  commands:
+    # You can put additional test commands to be run here.
+    - $R -e "library('anoint')"           # [not win]
+    - "\"%R%\" -e \"library('anoint')\""  # [win]
+
+  # You can also put a file called run_test.py, run_test.sh, or run_test.bat
+  # in the recipe that will be run at test time.
+
+  # requires:
+    # Put any additional test requirements here.
+
+about:
+  home: https://CRAN.R-project.org/package=anoint
+  license: GPL (>= 2)
+  summary: The tools in this package are intended to help researchers assess multiple treatment-covariate
+    interactions with data from a parallel-group randomized controlled clinical trial.
+  license_family: GPL3
+  license_file: '{{ environ["PREFIX"] }}/lib/R/share/licenses/GPL-2'
+
+extra:
+  recipe-maintainers:
+    - katietz
+
+# The original CRAN metadata for this package was:
+
+# Package: anoint
+# Type: Package
+# Title: Analysis of Interactions
+# Version: 1.4
+# Date: 2015-07-10
+# Author: Ravi Varadhan <rvaradhan@jhmi.edu> and Stephanie Kovalchik
+# Maintainer: Stephanie Kovalchik <s.a.kovalchik@gmail.com>
+# Description: The tools in this package are intended to help researchers assess multiple treatment-covariate interactions with data from a parallel-group randomized controlled clinical trial.
+# License: GPL (>= 2)
+# LazyLoad: yes
+# Depends: R (>= 2.13.0), stats, survival, MASS, graphics, grid
+# Imports: methods, glmnet
+# NeedsCompilation: no
+# Packaged: 2015-07-19 08:25:13 UTC; skovalch
+# Repository: CRAN
+# Date/Publication: 2015-07-19 19:44:25
+
+# See
+# https://docs.conda.io/projects/conda-build for
+# more information about meta.yaml
