@@ -152,7 +152,7 @@ def write_out_onwin32(fd, feedstocks, name):
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
     fd.write('          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\\ci --skip-existing -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -216,7 +216,7 @@ def write_out_onwin64(fd, feedstocks, name):
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
     fd.write('          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\\ci --skip-existing -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
