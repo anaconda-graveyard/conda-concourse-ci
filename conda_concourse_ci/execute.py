@@ -1136,7 +1136,7 @@ def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throug
 
     if do_it_dammit or confirmation == 'y':
         # make sure we have aborted all pipelines and their jobs ...
-        abort_pipeline_names(pipelines_to_remove, config_root_dir)
+        abort_pipeline(pipelines_to_remove, config_root_dir)
         # remove the specified pipelines
         for pipeline_name in pipelines_to_remove:
             subprocess.check_call(['fly', '-t', 'conda-concourse-server',
