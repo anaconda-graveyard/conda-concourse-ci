@@ -279,7 +279,7 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     if prefix_commands:
         prefix_commands = prefix_commands + '&& '
     prefix_commands = prefix_commands + 'conda update -y -n base conda'
-    prefix_commands = prefix_commands + 'conda update -y --all'
+    prefix_commands = prefix_commands + '&& conda update -y --all'
     if prefix_commands:
         cmds = prefix_commands + '&& ' + cmds
     if suffix_commands:
