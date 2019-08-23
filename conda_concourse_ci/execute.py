@@ -274,6 +274,12 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
            ' ' + build_suffix_commands
     prefix_commands = "&& ".join(ensure_list(worker.get('prefix_commands')))
     suffix_commands = "&& ".join(ensure_list(worker.get('suffix_commands')))
+
+    # make sure we update conda and installed packages
+    if prefix_commands:
+        prefix_commands = prefix_commands + '&& '
+    prefix_commands = prefix_commands + 'conda update -y -n base conda'
+    prefix_commands = prefix_commands + 'conda update -y --all'
     if prefix_commands:
         cmds = prefix_commands + '&& ' + cmds
     if suffix_commands:
