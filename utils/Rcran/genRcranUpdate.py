@@ -14,6 +14,9 @@ import numpy as np
 import re, os, time, shutil
 from email.parser import BytesParser
 from email import message_from_string
+# Git stuff
+import os
+import git
 
 do_max_pkg_cnt = 10
 enabled_win32 = False
@@ -29,6 +32,32 @@ Rfullver = '3.6.1'
 
 batch_count_max=100
 do_recursive = '' # '--dirty --recursive'
+
+def get_aggregateR_repo(rpath = './run', branch = 'latest_update'):
+    if not os.path.exists(rpath):
+        os.mkdir(rpath)
+        print("Path {} does not exist creating".format(rpath))
+    if not os.path.exists(rpath + '/aggregateR'):
+        repo = git.Repo.clone_from('git@github.com:AnacondaRecipes/aggregateR.git', rpath + '/aggregateR')
+    else:
+        repo = git.Repo(rpath + '/aggregateR')
+    if not repo.bare:
+        print("Repo loaded successful at {}".format(rpath))
+        g = repo.git
+        try:
+            g.checkout('HEAD', b=branch)
+        except:
+            print("{} already exists".format(branch))
+        try:
+            g.checkout(branch)
+        except:
+            print("{} already on branch".format(branch))
+    else:
+        print("Repo not found at {}".format(rpath))
+
+def is_repo_feedstock(feed, rpath = './run/aggregateR'):
+    epath = rpath + '/' + feed
+    return os.path.isdir(epath)
 
 # The Microsoft CRAN time machine allows us to select a snapshot of CRAN at any day in time. For instance, 2018-01-01 is (in Microsoft's determination) the "official" snapshot date for R 3.4.3.
 
@@ -588,18 +617,27 @@ candidates = summary[summary.valid & ~summary.name.str.lower().isin(completed)].
 
 to_compile = []
 stages = []
+existings = []
 while len(candidates):
     can_do = candidates.superdepends.apply(lambda x: completed.issuperset(a.lower() for a in x))
     can_do = candidates.index[can_do]
     if len(can_do) == 0:
         break
+    candidates = candidates.drop(can_do, 'index')
+    cds = []
+    for x in can_do:
+        if is_repo_feedstock('r-' + x + '-feedstock'):
+            existings.append(x)
+            print("{} exists already in repo".format(x))
+        else:
+            cds.append(x)
     completed.update(a.lower() for a in can_do)
     to_compile.extend(can_do)
-    stages.append(can_do)
-    candidates = candidates.drop(can_do, 'index')
+    stages.append(cds)
     if len(candidates) != 0:
         print("Remaining candidates {}".format(len(candidates)))
 
+print("{} element(s) are already present in repo".format(len(existings)))
 cnt_items = get_stage_out_count(stages)
 cnt_jobs = math.floor((cnt_items / do_max_pkg_cnt))+1
 print('In total there are {} feedstocks found to be built in {} job(s)\n'.format(cnt_items, cnt_jobs))
@@ -617,6 +655,8 @@ write_out_skeleton_script(stages, cnt_items, mode = 'sh')
 write_out_skeleton_script(stages, cnt_items, mode = 'bat')
 write_out_bld_script(stages, cnt_items, mode = 'sh')
 write_out_bld_script(stages, cnt_items, mode = 'bat')
+
+get_aggregateR_repo()
 
 print("Done.")
 
