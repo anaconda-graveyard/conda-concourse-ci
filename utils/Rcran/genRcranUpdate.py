@@ -604,7 +604,7 @@ while len(candidates):
     candidates = candidates.drop(can_do, 'index')
     cds = []
     for x in can_do:
-        if is_repo_feedstock('r-' + x + '-feedstock'):
+        if is_repo_feedstock('r-' + x.lower() + '-feedstock'):
             existings.append(x)
             print("{} exists already in repo".format(x))
         else:
