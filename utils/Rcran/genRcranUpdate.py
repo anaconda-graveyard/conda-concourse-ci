@@ -487,69 +487,25 @@ def call_skeleton_cmds(stages, jcnt):
         scount = len(stage)
         j = 0
         elno = 0
-        while elno < scount and (cnt == -1 or cnt > 0):
+        while elno < scount and cnt > 0:
             # Write out skeleton creation ...
             bsd = 'conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe {}'.format(CRAN_BASE, do_recursive)
             bsd += ' --add-maintainer={} --update-policy=merge-keep-build-num --r-interp=r-base --use-noarch-generic'.format(RecipeMaintainer)
             el = 0
-            while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
+            while elno < scount and el < batch_count_max and cnt > 0:
                 p = stage[elno]
                 bsd += ' ' + p
                 elno += 1
                 el += 1
-                if cnt != -1:
-                    cnt -= 1
+                cnt -= 1
             print("Call: {}".format(bsd))
             subprocess.call(bsd.split())
             j += 1
-            # terminate lines ...
-            bsd.write('\n')
         print("State {} is splitted into {} parts".format(i, j))
         if cnt == 0:
             break
     # end for
     os.chdir('../..')
-
-def write_out_skeleton_script(stages, jcnt, mode = 'sh'):
-    sep_line = ' \\\n    '
-    comment_line = '#'
-    bash_cmd = ''
-    if mode != 'sh':
-      sep_line = ' '
-      comment_line = 'REM'
-      bash_cmd = 'cmd /C '
-    cnt = jcnt
-
-    with open(f'./build-skeleton.{mode}', 'w') as bsd:
-        if mode == 'sh':
-            bsd.write('#!/bin/bash\n\n')
-        bsd.write('{} do imports via conda skeleton cran\n\n'.format(comment_line))
-        bsd.write('{} first checkout the R repository\n'.format(comment_line))
-        for i, stage in enumerate(stages):
-            scount = len(stage)
-            j = 0
-            elno = 0
-            while elno < scount and (cnt == -1 or cnt > 0):
-                # Write out skeleton creation ...
-                bsd.write('{}conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe {}{}'.format(bash_cmd, CRAN_BASE, do_recursive, sep_line))
-                bsd.write(' --add-maintainer={} --update-policy=merge-keep-build-num --r-interp=r-base --use-noarch-generic{}'.format(RecipeMaintainer, sep_line))
-                el = 0
-                while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
-                    p = stage[elno]
-                    bsd.write(' ' + p)
-                    elno += 1
-                    el += 1
-                    if cnt != -1:
-                        cnt -= 1
-                j += 1
-                # terminate lines ...
-                bsd.write('\n')
-            print("State {} is splitted into {} parts".format(i, j))
-            if cnt == 0:
-                break
-        # end for
-        bsd.write('{} now write out git commands to list and add new files\n'.format(comment_line))
-        # leave the git repository
 
 def get_stage_out_count(stages):
     rslt = 0
@@ -673,8 +629,6 @@ write_out_bld_job(stages, cnt_jobs)
 write_out_bld_job_fly_trigger(cnt_jobs)
 
 # write scripts ...
-write_out_skeleton_script(stages, cnt_items, mode = 'sh')
-write_out_skeleton_script(stages, cnt_items, mode = 'bat')
 write_out_bld_script(stages, cnt_items, mode = 'sh')
 write_out_bld_script(stages, cnt_items, mode = 'bat')
 
