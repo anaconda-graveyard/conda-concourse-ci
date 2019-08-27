@@ -17,6 +17,7 @@ from email import message_from_string
 # Git stuff
 import os
 import git
+import subprocess
 
 do_max_pkg_cnt = 10
 enabled_win32 = False
@@ -182,7 +183,7 @@ def write_out_onwin32(fd, feedstocks, name):
     fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&& (set CONDA_SUBDIR=win-32 ) &&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
-    fd.write('          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
+    fd.write('          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
     fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
@@ -246,7 +247,7 @@ def write_out_onwin64(fd, feedstocks, name):
     fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
-    fd.write('          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
+    fd.write('          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
     fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
@@ -479,6 +480,36 @@ def write_out_bld_script(stages, jcnt, mode = 'sh'):
                 break
         # end for
 
+def call_skeleton_cmds(stages, jcnt):
+    os.chdir('./run/aggregateR')
+    cnt = jcnt
+    for i, stage in enumerate(stages):
+        scount = len(stage)
+        j = 0
+        elno = 0
+        while elno < scount and (cnt == -1 or cnt > 0):
+            # Write out skeleton creation ...
+            bsd = 'conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe {}'.format(CRAN_BASE, do_recursive)
+            bsd += ' --add-maintainer={} --update-policy=merge-keep-build-num --r-interp=r-base --use-noarch-generic'.format(RecipeMaintainer)
+            el = 0
+            while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
+                p = stage[elno]
+                bsd += ' ' + p
+                elno += 1
+                el += 1
+                if cnt != -1:
+                    cnt -= 1
+            print("Call: {}".format(bsd))
+            subprocess.call(bsd.split())
+            j += 1
+            # terminate lines ...
+            bsd.write('\n')
+        print("State {} is splitted into {} parts".format(i, j))
+        if cnt == 0:
+            break
+    # end for
+    os.chdir('../..')
+
 def write_out_skeleton_script(stages, jcnt, mode = 'sh'):
     sep_line = ' \\\n    '
     comment_line = '#'
@@ -494,13 +525,6 @@ def write_out_skeleton_script(stages, jcnt, mode = 'sh'):
             bsd.write('#!/bin/bash\n\n')
         bsd.write('{} do imports via conda skeleton cran\n\n'.format(comment_line))
         bsd.write('{} first checkout the R repository\n'.format(comment_line))
-        if mode == 'sh':
-            bsd.write('rm -rf {}\ngit clone {} --recursive\n'.format(RrepositoryName, RrepositoryURL))
-        else:
-            # fetch via https as there might be no RSA key for github
-            bsd.write('del /F /S /Q {}\ngit clone {} --recursive\n'.format(RrepositoryName, RrepositoryURL2))
-        bsd.write('pushd {}\ngit submodule update --init\n'.format(RrepositoryName))
-        bsd.write('git checkout latest_update\n')
         for i, stage in enumerate(stages):
             scount = len(stage)
             j = 0
@@ -525,12 +549,7 @@ def write_out_skeleton_script(stages, jcnt, mode = 'sh'):
                 break
         # end for
         bsd.write('{} now write out git commands to list and add new files\n'.format(comment_line))
-        bsd.write('git add -N . >new_files_added.txt\n')
-        bsd.write('git add .\n')
-        bsd.write('git commit -m "Updated CRAN recipes"\n')
-        bsd.write('git push latest_update latest_update\n')
         # leave the git repository
-        bsd.write('popd\n')
 
 def get_stage_out_count(stages):
     rslt = 0
@@ -615,6 +634,9 @@ summary[~summary.valid]
 completed = built_pkgs | anaconda_pkgs
 candidates = summary[summary.valid & ~summary.name.str.lower().isin(completed)].set_index('name')
 
+# We need to checkout aggregateR repository and make sure paths are created
+get_aggregateR_repo()
+
 to_compile = []
 stages = []
 existings = []
@@ -656,7 +678,7 @@ write_out_skeleton_script(stages, cnt_items, mode = 'bat')
 write_out_bld_script(stages, cnt_items, mode = 'sh')
 write_out_bld_script(stages, cnt_items, mode = 'bat')
 
-get_aggregateR_repo()
+call_skeleton_cmds(stages, cnt_items)
 
 print("Done.")
 
