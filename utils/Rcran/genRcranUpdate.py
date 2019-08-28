@@ -183,6 +183,7 @@ def write_out_onwin32(fd, feedstocks, name):
     fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&& (set CONDA_SUBDIR=win-32 ) &&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
+    fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write('          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
     fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
@@ -247,6 +248,8 @@ def write_out_onwin64(fd, feedstocks, name):
     fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
+    fd.write('          conda update -y -n base conda && conda update -y --all &
+&\n')
     fd.write('          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
     fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
@@ -302,6 +305,8 @@ def write_out_onlinux64(fd, feedstocks, name):
     fd.write('          protocol https > ~/.netrc&& set -x &&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
+    fd.write('          conda update -y -n base conda && conda update -y --all &
+&\n')
     fd.write('          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test\n')
     fd.write('          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/{}-on-linux_64_1564756033.json\n'.format(name))
     fd.write('          --skip-existing --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
@@ -381,6 +386,8 @@ def write_out_onosx64(fd, feedstocks, name):
     fd.write('          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
+    fd.write('          conda update -y -n base conda && conda update -y --all &
+&\n')
     fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}-on-osx_1564756033.json\n'.format(name))
     fd.write('          --skip-existing -c local -c r_test --R 3.6.1 --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
