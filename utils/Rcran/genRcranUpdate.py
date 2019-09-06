@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# requires ipython rpy2 matplotlib tzlocal pandas
+# requires ipython rpy2 matplotlib tzlocal pandas gitpython
 
 from bs4 import BeautifulSoup
 import rpy2.robjects as robjects
