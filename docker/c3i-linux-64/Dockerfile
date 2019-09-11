@@ -42,6 +42,8 @@ RUN yum install -y \
   && yum clean all
 
 WORKDIR /build_scripts
+ENV CONDA_SHOW_CHANNEL_URLS 1
+ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY 0
 COPY install_miniconda.sh /build_scripts
 RUN ./install_miniconda.sh
 
