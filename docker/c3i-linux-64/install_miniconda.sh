@@ -10,4 +10,5 @@ chmod +x conda
 ./conda clean -ay
 /opt/conda/bin/pip install https://github.com/conda/conda-concourse-ci/archive/master.zip
 /opt/conda/bin/conda init bash
+mkdir -p /opt/conda/pkgs
 rm conda
