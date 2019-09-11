@@ -561,9 +561,8 @@ def graph_to_plan_with_jobs(
                                     release_lock_step=release_lock_step,
                                     use_repo_access=use_repo_access))
 
-        tasks.append(convert_task(meta.config.host_subdir))
-
         if not test_only:
+            tasks.append(convert_task(meta.config.host_subdir))
             tasks.append({'put': resource_name,
                         'params': {'sync_dir': 'converted-artifacts',
                                     'rsync_opts': ["--archive", "--no-perms",
