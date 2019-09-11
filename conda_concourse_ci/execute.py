@@ -319,11 +319,43 @@ def _resource_to_dict(resource):
     return out
 
 
+def convert_task(subdir):
+    inputs = [{'name': 'output-artifacts'}]
+    outputs = [{'name': 'converted-artifacts'}]
+    task_dict = {
+        # we can always do this on linux, so prefer it for speed.
+        'platform': 'linux',
+        'inputs': inputs,
+        'outputs': outputs,
+        'image_resource': {
+            'type': 'docker-image',
+            'source': {
+                'repository': 'conda/c3i-linux-64',
+                'tag': 'latest',
+                }
+            },
+        'run': {
+            'path': 'sh',
+            'args': [
+                '-exc',
+                     'mkdir -p converted-artifacts/{subdir}\n'
+                     'mkdir -p converted-artifacts/noarch\n'
+                     'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
+                     'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
+                'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
+                'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
+                .format(subdir=subdir)
+                ],
+            }
+        }
+    return {'task': 'convert .tar.bz2 to .conda', 'config': task_dict}
+
+
 def sourceclear_task(meta, node, config_vars):
     build_args = []
     inputs = [{'name': 'output-source'},
               {'name': 'rsync-recipes'},
-              {'name': 'output-artifacts'}]
+              {'name': 'converted-artifacts'}]
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     # if artifact_input:
@@ -363,8 +395,8 @@ def sourceclear_task(meta, node, config_vars):
                 #   we need to extract our source code and init a git repo there.  The
                 #   git repo is a requirement for sourceclear.  I'm not sure we'll be
                 #   able to bypass that requirement with this hack, but we'll see.
-                ('conda-index output-artifacts \n '
-                 'export activation_text="$(conda-debug -a -c file://$(pwd)/output-artifacts rsync-recipes/{node})" && '
+                ('conda-index converted-artifacts \n '
+                 'export activation_text="$(conda-debug -a -c file://$(pwd)/converted-artifacts rsync-recipes/{node})" && '
                  'echo ". ~/.bashrc; $activation_text" > ./temp_rcfile && '
                  'source ./temp_rcfile && '
                  'echo "system_site_packages: true" > srcclr.yml && '
@@ -529,9 +561,11 @@ def graph_to_plan_with_jobs(
                                     release_lock_step=release_lock_step,
                                     use_repo_access=use_repo_access))
 
+        tasks.append(convert_task(meta.config.host_subdir))
+
         if not test_only:
             tasks.append({'put': resource_name,
-                        'params': {'sync_dir': 'output-artifacts',
+                        'params': {'sync_dir': 'converted-artifacts',
                                     'rsync_opts': ["--archive", "--no-perms",
                                                     "--omit-dir-times", "--verbose",
                                                     "--exclude", '"**/*.json*"',
