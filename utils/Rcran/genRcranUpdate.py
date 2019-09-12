@@ -485,8 +485,8 @@ def write_out_one_pipeline(num, idx_comp, num_comp, idx_noa, num_noa, j_comp, j_
     with open(f'./stages/p{num}.sh', 'w') as pd:
         pd.write('#/bash/bin\n\n')
         pd.write('# put pileline upstream via:\n')
-        pd.write('#  fly -t conda-concourse-server sp -p kais_test_r\n')
-        pd.write('#     -c ./pipeline{}.yaml -l ...anaconda_public/config.yml\n'.format(num))
+        pd.write('fly -t conda-concourse-server sp -p kais_test_r \\\n')
+        pd.write('  -c ./pipeline{}.yaml -l ~/Code/oss/automated-build/c3i_configurations/anaconda_public/config.yml\n'.format(num))
         pd.write('fly -t conda-concourse-server up -p kais_test_r\n')
         pd.write('\n')
         for x in range(0, j_comp):
