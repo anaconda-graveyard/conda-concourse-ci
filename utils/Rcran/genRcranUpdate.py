@@ -34,6 +34,15 @@ Rfullver = '3.6.1'
 batch_count_max=100
 do_recursive = '' # '--dirty --recursive'
 
+def is_noarch(name, acompiled):
+    return acompiled[name] == False
+
+def is_dependon(name, adepends):
+    for dep in adepends:
+        if name in dep:
+            return True
+    return False
+
 def get_aggregateR_repo(rpath = './run', branch = 'latest_update'):
     if not os.path.exists(rpath):
         os.mkdir(rpath)
@@ -91,62 +100,81 @@ def build_anaconda_pkglist(rver, rchannel = 'r'):
     # print(list(pkgs))
     return pkgs
 
-def write_out_resources(fd, cnt_jobs):
+def write_out_resheader(fd, has_wbuildpack):
     fd.write('resources:\n')
-    fd.write('- name: rsync-build-pack\n')
+    if has_wbuildpack == True:
+      fd.write('- name: rsync-build-pack\n')
+      fd.write('  type: rsync-resource\n')
+      fd.write('  source:\n')
+      fd.write('    base_dir: /ci/build_pack\n')
+      fd.write('    disable_version_path: true\n')
+      fd.write('    private_key: ((common.intermediate-private-key))\n')
+      fd.write('    server: bremen.corp.continuum.io\n')
+      fd.write('    user: ci\n')
+
+
+def write_out_reslinux64(fd, name):
+    # resource for linux-64
+    fd.write('- name: rsync_{}-on-linux_64\n'.format(name))
     fd.write('  type: rsync-resource\n')
     fd.write('  source:\n')
-    fd.write('    base_dir: /ci/build_pack\n')
+    fd.write('    base_dir: /ci/ktietz/artifacts\n')
     fd.write('    disable_version_path: true\n')
     fd.write('    private_key: ((common.intermediate-private-key))\n')
     fd.write('    server: bremen.corp.continuum.io\n')
     fd.write('    user: ci\n')
-    for x in range(0, cnt_jobs):
-        name = 'build_r_script{}'.format(x)
-        # resource for linux-64
-        fd.write('- name: rsync_{}-on-linux_64\n'.format(name))
-        fd.write('  type: rsync-resource\n')
-        fd.write('  source:\n')
-        fd.write('    base_dir: /ci/ktietz/artifacts\n')
-        fd.write('    disable_version_path: true\n')
-        fd.write('    private_key: ((common.intermediate-private-key))\n')
-        fd.write('    server: bremen.corp.continuum.io\n')
-        fd.write('    user: ci\n')
-        # resource for osx-64
-        fd.write('- name: rsync_{}-on-osx\n'.format(name))
-        fd.write('  type: rsync-resource\n')
-        fd.write('  source:\n')
-        fd.write('    base_dir: /ci/ktietz/artifacts\n')
-        fd.write('    disable_version_path: true\n')
-        fd.write('    private_key: ((common.intermediate-private-key))\n')
-        fd.write('    server: bremen.corp.continuum.io\n')
-        fd.write('    user: ci\n')
-        # resource for windows 64
-        fd.write('- name: rsync_{}-on-winbuilder\n'.format(name))
-        fd.write('  type: rsync-resource\n')
-        fd.write('  source:\n')
-        fd.write('    base_dir: /ci/ktietz/artifacts\n')
-        fd.write('    disable_version_path: true\n')
-        fd.write('    private_key: ((common.intermediate-private-key))\n')
-        fd.write('    server: bremen.corp.continuum.io\n')
-        fd.write('    user: ci\n')
-        if enabled_win32 == True:
-            # windows 32-bit
-            fd.write('- name: rsync_{}-target_win-32-on-winbuilder\n'.format(name))
-            fd.write('  type: rsync-resource\n')
-            fd.write('  source:\n')
-            fd.write('    base_dir: /ci/ktietz/artifacts\n')
-            fd.write('    disable_version_path: true\n')
-            fd.write('    private_key: ((common.intermediate-private-key))\n')
-            fd.write('    server: bremen.corp.continuum.io\n')
-            fd.write('    user: ci\n')
 
+def write_out_resosx64(fd, name):
+    fd.write('- name: rsync_{}-on-osx\n'.format(name))
+    fd.write('  type: rsync-resource\n')
+    fd.write('  source:\n')
+    fd.write('    base_dir: /ci/ktietz/artifacts\n')
+    fd.write('    disable_version_path: true\n')
+    fd.write('    private_key: ((common.intermediate-private-key))\n')
+    fd.write('    server: bremen.corp.continuum.io\n')
+    fd.write('    user: ci\n')
+
+def write_out_reswin64(fd, name):
+    fd.write('- name: rsync_{}-on-winbuilder\n'.format(name))
+    fd.write('  type: rsync-resource\n')
+    fd.write('  source:\n')
+    fd.write('    base_dir: /ci/ktietz/artifacts\n')
+    fd.write('    disable_version_path: true\n')
+    fd.write('    private_key: ((common.intermediate-private-key))\n')
+    fd.write('    server: bremen.corp.continuum.io\n')
+    fd.write('    user: ci\n')
+
+def write_out_reswin32(fd, name):
+    fd.write('- name: rsync_{}-target_win-32-on-winbuilder\n'.format(name))
+    fd.write('  type: rsync-resource\n')
+    fd.write('  source:\n')
+    fd.write('    base_dir: /ci/ktietz/artifacts\n')
+    fd.write('    disable_version_path: true\n')
+    fd.write('    private_key: ((common.intermediate-private-key))\n')
+    fd.write('    server: bremen.corp.continuum.io\n')
+    fd.write('    user: ci\n')
+
+def write_out_resfooter(fd):
     fd.write('resource_types:\n')
     fd.write('- name: rsync-resource\n')
     fd.write('  type: docker-image\n')
     fd.write('  source:\n')
     fd.write('    repository: conda/concourse-rsync-resource\n')
     fd.write('    tag: latest\n')
+
+def write_out_pipeline_res(fd, j_comp, j_noa):
+    write_out_resheader(fd, j_comp > 0)
+    for x in range(0, j_comp):
+        name = 'build_r_script{}'.format(x)
+        write_out_reslinux64(fd, name)
+        write_out_resosx64(fd, name)
+        write_out_reswin64(fd, name)
+        if enabled_win32 == True:
+            write_out_reswin32(fd, name)
+    for x in range(0, j_noa):
+        name = 'build_r_script{}'.format(x+j_comp)
+        write_out_reslinux64(fd, name)
+    write_out_resfooter(fd)
 
 def write_out_onwin32(fd, feedstocks, name):
     # job for windows
@@ -332,23 +360,6 @@ def write_out_onlinux64(fd, feedstocks, name):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
-def bld_feedstocks_lines(stages, no):
-    rslt = ''
-    cnt = do_max_pkg_cnt
-    for i, stage in enumerate(stages):
-        scount = len(stage)
-        j = 0
-        elno = no * do_max_pkg_cnt
-        while elno < scount and cnt > 0:
-            p = stage[elno]
-            rslt += '         {}/r-{}-feedstock\n'.format(RrepositoryName, p.lower())
-            elno += 1
-            cnt -= 1
-        if cnt == 0 or elno >= scount:
-            break
-    # end for
-    return rslt
-
 def write_out_onosx64(fd, feedstocks, name):
     # job for linux 64
     fd.write('- name: {}-on-osx\n'.format(name))
@@ -414,101 +425,113 @@ def write_out_onosx64(fd, feedstocks, name):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
-def write_out_bld_job_fly_trigger(cnt_jobs):
-    # write out 
-    with open(f'./pipeline-build-stage.sh', 'w') as fd:
-        fd.write('#!/bin/bash\n\n')
-        fd.write('# put pileline upstream via:\n')
-        fd.write('#  fly -t conda-concourse-server sp -p kais_test_r\n')
-        fd.write('#     -c pipeline-build-stage.yaml -l ...anaconda_public/config.yml\n')
-        fd.write('fly -t conda-concourse-server up -p kais_test_r\n')
-        fd.write('\n')
-        for x in range(0, cnt_jobs):
+def write_fly_pipelines(p_noarch, p_comp):
+    ip = 0
+    i = 0
+    inoa = 0
+    inoa_max = len(p_noarch)
+    icom = 0
+    icom_max = len(p_comp)
+    lmax = inoa_max + icom_max
+    while i < lmax:
+        bld_icom = icom_max - icom
+        bld_inoa = inoa_max - inoa
+        inoa_jobs = math.floor((bld_inoa + 49) / 50)
+        icom_jobs = math.floor((bld_icom + 9) / 10)
+        bld_icom = min(bld_icom, icom_jobs * 10)
+        bld_inoa = min(bld_inoa, inoa_jobs * 50)
+        if inoa_jobs > 27:
+            icom_jobs = 0
+            if inoa_jobs > 30:
+                inoa_jobs = 30
+        max_cjobs = math.floor((30 - inoa_jobs + 2) / 3)
+        if icom_jobs > max_cjobs:
+            icom_jobs = max_cjobs
+        bld_icom = min(bld_icom, icom_jobs * 10)
+        bld_inoa = min(bld_inoa, inoa_jobs * 50)
+        write_out_one_pipeline(ip, icom, bld_icom, inoa, bld_inoa, icom_jobs, inoa_jobs, p_noarch, p_comp)
+        i += bld_icom + bld_inoa
+        icom += bld_icom
+        inoa += bld_inoa
+        ip += 1
+
+def get_one_job_feedstocks(names, idx, sec, num, secmax):
+    ret = ''
+    idx += sec * secmax
+    num -= sec * secmax
+    num = min(num, secmax)
+    idxmax = num + idx
+    while idx < idxmax:
+        p = names[idx]
+        ret += '          {}/r-{}-feedstock\n'.format(RrepositoryName, p.lower())
+        idx += 1
+    return ret
+
+def get_one_job_cran_names(names, idx, sec, num, secmax):
+    ret = ''
+    idx += sec * secmax
+    num -= sec * secmax
+    num = min(num, secmax)
+    idxmax = num + idx
+    while idx < idxmax:
+        p = names[idx]
+        ret += ' {}'.format(p)
+        idx += 1
+    return ret
+
+def write_out_one_pipeline(num, idx_comp, num_comp, idx_noa, num_noa, j_comp, j_noa, p_noarch, p_comp):
+    if not os.path.exists('./stages'):
+        os.mkdir('./stages')
+    with open(f'./stages/p{num}.sh', 'w') as pd:
+        pd.write('#/bash/bin\n\n')
+        pd.write('# put pileline upstream via:\n')
+        pd.write('#  fly -t conda-concourse-server sp -p kais_test_r\n')
+        pd.write('#     -c ./pipeline{}.yaml -l ...anaconda_public/config.yml\n'.format(num))
+        pd.write('fly -t conda-concourse-server up -p kais_test_r\n')
+        pd.write('\n')
+        for x in range(0, j_comp):
             name = 'build_r_script{}'.format(x)
-            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-osx\n'.format(name))
-            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-linux_64\n'.format(name))
-            fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-winbuilder\n'.format(name))
+            pd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-osx\n'.format(name))
+            pd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-linux_64\n'.format(name))
+            pd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-winbuilder\n'.format(name))
             if enabled_win32 == True:
                 # windows 32-bit
-                fd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-target_win-32-on_winbuilder\n'.format(name))
-        fd.write('echo "{} jobs triggered"\n'.format(cnt_jobs))
-
-def write_out_bld_job(stages, cnt_jobs):
-    # write out 
-    with open(f'./pipeline-build-stage.yaml', 'w') as fd:
+                pd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-target_win-32-on_winbuilder\n'.format(name))
+        for x in range(0, j_noa):
+            name = 'build_r_script{}'.format(x + j_comp)
+            pd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-linux_64\n'.format(name))
+        pd.write('echo "{} jobs triggered"\n'.format(j_comp + j_noa))
+    
+    with open(f'./stages/pipeline{num}.yaml', 'w') as fd:
         fd.write('groups: []\n')
-        write_out_resources(fd, cnt_jobs)
-        # write out the jobs
+        write_out_pipeline_res(fd, j_comp, j_noa)
+        # write out the jobs ... first the compiled ones ...
         fd.write('jobs:\n')
-        for x in range(0, cnt_jobs):
+        for x in range(0, j_comp):
             name = 'build_r_script{}'.format(x)
-            feedstocks = bld_feedstocks_lines(stages, no = x)
+            cnames = get_one_job_cran_names(p_comp, idx_comp, x, num_comp, 10)
+            call_skeleton_for(cnames, name)
+            feedstocks = get_one_job_feedstocks(p_comp, idx_comp, x, num_comp, 10)
             write_out_onlinux64(fd, feedstocks, name)
             write_out_onosx64(fd, feedstocks, name)
             write_out_onwin64(fd, feedstocks, name)
             if enabled_win32 == True:
                 write_out_onwin32(fd, feedstocks, name)
+        for x in range(0, j_noa):
+            name = 'build_r_script{}'.format(x + j_comp)
+            cnames = get_one_job_cran_names(p_noarch, idx_noa, x, num_noa, 50)
+            call_skeleton_for(cnames, name)
+            feedstocks = get_one_job_feedstocks(p_noarch, idx_noa, x, num_noa, 50)
+            write_out_onlinux64(fd, feedstocks, name)
 
-def write_out_bld_script(stages, jcnt, mode = 'sh'):
-    cnt = jcnt
-    comment_line = '#'
-    sep_line = ' \\\n    '
-    if mode != 'sh':
-        comment_line = 'REM'
-        sep_line = ' '
-    with open(f'./build-stage.{mode}', 'w') as bd:
-        if mode == 'sh':
-            bd.write('#!/bin/bash\n\n')
-        for i, stage in enumerate(stages):
-            bd.write('{} stage {}\n'.format(comment_line, i))
-            scount = len(stage)
-            j = 0
-            elno = 0
-            while elno < scount and (cnt == -1 or cnt > 0):
-                # Write out build steps ...
-                bd.write('conda-build --skip-existing -c https://repo.continuum.io/pkgs/main --R={}{}'.format(Rfullver, sep_line))
-                el = 0
-                while elno < scount and el < batch_count_max and (cnt == -1 or cnt > 0):
-                    p = stage[elno]
-                    bd.write(' r-' + p.lower() + '-feedstock{}'.format(sep_line))
-                    elno += 1
-                    el += 1
-                    if cnt != -1:
-                        cnt -= 1
-                j += 1
-                # terminate lines ...
-                bd.write('\n')
-            bd.write('\n')
-            print("State {} is splitted into {} parts".format(i, j))
-            if cnt == 0:
-                break
-        # end for
+def call_skeleton_for(names, ident):
+    print("Generating skeleton files for ,{}': ...".format(ident))
+    s = 'conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe {}'.format(CRAN_BASE, do_recursive)
+    s += ' --add-maintainer={} --update-policy=merge-keep-build-num --r-interp=r-base --use-noarch-generic'.format(RecipeMaintainer)
+    s += names
 
-def call_skeleton_cmds(stages, jcnt):
     os.chdir('./run/aggregateR')
-    cnt = jcnt
-    for i, stage in enumerate(stages):
-        scount = len(stage)
-        j = 0
-        elno = 0
-        while elno < scount and cnt > 0:
-            # Write out skeleton creation ...
-            bsd = 'conda skeleton cran --cran-url={} --output-suffix=-feedstock/recipe {}'.format(CRAN_BASE, do_recursive)
-            bsd += ' --add-maintainer={} --update-policy=merge-keep-build-num --r-interp=r-base --use-noarch-generic'.format(RecipeMaintainer)
-            el = 0
-            while elno < scount and el < batch_count_max and cnt > 0:
-                p = stage[elno]
-                bsd += ' ' + p
-                elno += 1
-                el += 1
-                cnt -= 1
-            print("Call: {}".format(bsd))
-            subprocess.call(bsd.split())
-            j += 1
-        print("State {} is splitted into {} parts".format(i, j))
-        if cnt == 0:
-            break
-    # end for
+    subprocess.call(s.split())
     os.chdir('../..')
 
 def get_stage_out_count(stages):
@@ -561,7 +584,6 @@ summary = pd.DataFrame(summary).T
 summary.index.name = 'name'
 summary.reset_index(inplace=True)
 summary.compiled = summary.compiled.str.lower() != 'no'
-summary
 
 packages = set(summary['name'])
 
@@ -571,6 +593,8 @@ summary[~summary.valid]
 
 all_supers = pd.Series([None] * len(summary), index=summary.name)
 all_deps = pd.Series(summary.depends.values, index=summary.name)
+all_compiled = pd.Series(summary.compiled.values, index=summary.name)
+
 def compute_super(name):
     superdeps = all_supers[name]
     if superdeps is None:
@@ -605,7 +629,6 @@ while len(candidates):
     can_do = candidates.index[can_do]
     if len(can_do) == 0:
         break
-    candidates = candidates.drop(can_do, 'index')
     cds = []
     for x in can_do:
         if is_repo_feedstock('r-' + x.lower() + '-feedstock'):
@@ -613,6 +636,7 @@ while len(candidates):
             print("{} exists already in repo".format(x))
         else:
             cds.append(x)
+    candidates = candidates.drop(can_do, 'index')
     completed.update(a.lower() for a in can_do)
     to_compile.extend(can_do)
     stages.append(cds)
@@ -628,15 +652,20 @@ if cnt_jobs > 10:
     cnt_jobs = 10
     cnt_items = cnt_jobs * do_max_pkg_cnt
 
-#write out pipeline file
-write_out_bld_job(stages, cnt_jobs)
-write_out_bld_job_fly_trigger(cnt_jobs)
+# build pkg list
+p_noarch = []
+p_comp = []
+for i, stage in enumerate(stages):
+    for x in stage:
+        if is_noarch(x, all_compiled):
+            p_noarch.append(x)
+        else:
+            p_comp.append(x)
 
-# write scripts ...
-write_out_bld_script(stages, cnt_items, mode = 'sh')
-write_out_bld_script(stages, cnt_items, mode = 'bat')
+print("Stage contains {} noarch and {} compiled packages".format(len(p_noarch), len(p_comp)))
 
-call_skeleton_cmds(stages, cnt_items)
+# write out pipeline file
+write_fly_pipelines(p_noarch, p_comp)
 
 print("Done.")
 
