@@ -661,7 +661,8 @@ for i, stage in enumerate(stages):
             p_noarch.append(x)
         else:
             p_comp.append(x)
-
+    if len(p_noarch) > 0 or len(p_comp) > 0:
+        break
 print("Stage contains {} noarch and {} compiled packages".format(len(p_noarch), len(p_comp)))
 
 # write out pipeline file
