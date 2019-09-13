@@ -21,6 +21,8 @@ import subprocess
 
 do_max_pkg_cnt = 10
 enabled_win32 = False
+enable_skeleton_for_existing = False
+show_just_unbuilt = False
 
 CRAN_BASE = 'https://cran.r-project.org'
 RrepositoryName = 'aggregateR'
@@ -214,7 +216,7 @@ def write_out_onwin32(fd, feedstocks, name):
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write('          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot C:\\ci --skip-existing --R {} -c local -c r_test -m {}/conda_build_config.yaml\n'.format(Rfullver, RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -279,7 +281,7 @@ def write_out_onwin64(fd, feedstocks, name):
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write('          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot C:\\ci --skip-existing --R {} -c local -c r_test -m {}/conda_build_config.yaml\n'.format(Rfullver, RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -333,7 +335,7 @@ def write_out_onlinux64(fd, feedstocks, name):
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
-    fd.write('          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test\n')
+    fd.write('          conda-build --no-anaconda-upload --error-overlinking --R {} -c local -c r_test\n'.format(Rfullver))
     fd.write('          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/{}-on-linux_64_1564756033.json\n'.format(name))
     fd.write('          --skip-existing --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
@@ -398,7 +400,7 @@ def write_out_onosx64(fd, feedstocks, name):
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}-on-osx_1564756033.json\n'.format(name))
-    fd.write('          --skip-existing -c local -c r_test --R 3.6.1 --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --skip-existing -c local -c r_test --R {} --croot . -m ./{}/conda_build_config.yaml\n'.format(Rfullver, RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -425,7 +427,7 @@ def write_out_onosx64(fd, feedstocks, name):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
-def write_fly_pipelines(p_noarch, p_comp):
+def write_fly_pipelines_exist(p_noarch, p_comp):
     ip = 0
     i = 0
     inoa = 0
@@ -449,7 +451,7 @@ def write_fly_pipelines(p_noarch, p_comp):
             icom_jobs = max_cjobs
         bld_icom = min(bld_icom, icom_jobs * 10)
         bld_inoa = min(bld_inoa, inoa_jobs * 50)
-        write_out_one_pipeline(ip, icom, bld_icom, inoa, bld_inoa, icom_jobs, inoa_jobs, p_noarch, p_comp)
+        write_out_one_pipeline_exist(ip, icom, bld_icom, inoa, bld_inoa, icom_jobs, inoa_jobs, p_noarch, p_comp)
         i += bld_icom + bld_inoa
         icom += bld_icom
         inoa += bld_inoa
@@ -479,10 +481,10 @@ def get_one_job_cran_names(names, idx, sec, num, secmax):
         idx += 1
     return ret
 
-def write_out_one_pipeline(num, idx_comp, num_comp, idx_noa, num_noa, j_comp, j_noa, p_noarch, p_comp):
-    if not os.path.exists('./stages'):
-        os.mkdir('./stages')
-    with open(f'./stages/p{num}.sh', 'w') as pd:
+def write_out_one_pipeline_exist(num, idx_comp, num_comp, idx_noa, num_noa, j_comp, j_noa, p_noarch, p_comp):
+    if not os.path.exists('./exists'):
+        os.mkdir('./exists')
+    with open(f'./exists/p{num}.sh', 'w') as pd:
         pd.write('#/bash/bin\n\n')
         pd.write('# put pileline upstream via:\n')
         pd.write('fly -t conda-concourse-server sp -p kais_test_r \\\n')
@@ -502,7 +504,7 @@ def write_out_one_pipeline(num, idx_comp, num_comp, idx_noa, num_noa, j_comp, j_
             pd.write('fly -t conda-concourse-server trigger-job -j kais_test_r/{}-on-linux_64\n'.format(name))
         pd.write('echo "{} jobs triggered"\n'.format(j_comp + j_noa))
     
-    with open(f'./stages/pipeline{num}.yaml', 'w') as fd:
+    with open(f'./exists/pipeline{num}.yaml', 'w') as fd:
         fd.write('groups: []\n')
         write_out_pipeline_res(fd, j_comp, j_noa)
         # write out the jobs ... first the compiled ones ...
@@ -510,7 +512,8 @@ def write_out_one_pipeline(num, idx_comp, num_comp, idx_noa, num_noa, j_comp, j_
         for x in range(0, j_comp):
             name = 'build_r_script{}'.format(x)
             cnames = get_one_job_cran_names(p_comp, idx_comp, x, num_comp, 10)
-            call_skeleton_for(cnames, name)
+            if enable_skeleton_for_existing:
+                call_skeleton_for(cnames, name)
             feedstocks = get_one_job_feedstocks(p_comp, idx_comp, x, num_comp, 10)
             write_out_onlinux64(fd, feedstocks, name)
             write_out_onosx64(fd, feedstocks, name)
@@ -520,7 +523,8 @@ def write_out_one_pipeline(num, idx_comp, num_comp, idx_noa, num_noa, j_comp, j_
         for x in range(0, j_noa):
             name = 'build_r_script{}'.format(x + j_comp)
             cnames = get_one_job_cran_names(p_noarch, idx_noa, x, num_noa, 50)
-            call_skeleton_for(cnames, name)
+            if enable_skeleton_for_existing:
+                call_skeleton_for(cnames, name)
             feedstocks = get_one_job_feedstocks(p_noarch, idx_noa, x, num_noa, 50)
             write_out_onlinux64(fd, feedstocks, name)
 
@@ -534,15 +538,6 @@ def call_skeleton_for(names, ident):
     subprocess.call(s.split())
     os.chdir('../..')
 
-def get_stage_out_count(stages):
-    rslt = 0
-    for i, stage in enumerate(stages):
-       cnt = len(stage)
-       rslt += cnt
-       if cnt != 0:
-            break
-    return rslt
-       
 pandas2ri.activate()
 readRDS = robjects.r['readRDS']
 session = requests.Session()
@@ -615,7 +610,11 @@ summary
 summary['valid'] = summary.superdepends.apply(lambda x: x.issubset(packages))
 summary[~summary.valid]
 
-completed = built_pkgs | anaconda_pkgs
+if show_just_unbuilt:
+    completed = built_pkgs | anaconda_pkgs
+else:
+    completed = built_pkgs
+
 candidates = summary[summary.valid & ~summary.name.str.lower().isin(completed)].set_index('name')
 
 # We need to checkout aggregateR repository and make sure paths are created
@@ -630,32 +629,24 @@ while len(candidates):
     if len(can_do) == 0:
         break
     cds = []
+    eds = []
     for x in can_do:
         if is_repo_feedstock('r-' + x.lower() + '-feedstock'):
-            existings.append(x)
-            print("{} exists already in repo".format(x))
+            eds.append(x)
         else:
             cds.append(x)
     candidates = candidates.drop(can_do, 'index')
     completed.update(a.lower() for a in can_do)
     to_compile.extend(can_do)
     stages.append(cds)
+    existings.append(eds)
     if len(candidates) != 0:
         print("Remaining candidates {}".format(len(candidates)))
-
-print("{} element(s) are already present in repo".format(len(existings)))
-cnt_items = get_stage_out_count(stages)
-cnt_jobs = math.floor((cnt_items / do_max_pkg_cnt))+1
-print('In total there are {} feedstocks found to be built in {} job(s)\n'.format(cnt_items, cnt_jobs))
-if cnt_jobs > 10:
-    print('too much jobs!!!!! lowered to 10\n')
-    cnt_jobs = 10
-    cnt_items = cnt_jobs * do_max_pkg_cnt
 
 # build pkg list
 p_noarch = []
 p_comp = []
-for i, stage in enumerate(stages):
+for i, stage in enumerate(existings):
     for x in stage:
         if is_noarch(x, all_compiled):
             p_noarch.append(x)
@@ -663,10 +654,10 @@ for i, stage in enumerate(stages):
             p_comp.append(x)
     if len(p_noarch) > 0 or len(p_comp) > 0:
         break
-print("Stage contains {} noarch and {} compiled packages".format(len(p_noarch), len(p_comp)))
+print("Existing stage contains {} noarch and {} compiled packages".format(len(p_noarch), len(p_comp)))
 
 # write out pipeline file
-write_fly_pipelines(p_noarch, p_comp)
+write_fly_pipelines_exist(p_noarch, p_comp)
 
 print("Done.")
 
