@@ -214,7 +214,7 @@ def write_out_onwin32(fd, feedstocks, name):
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write('          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot C:\\ci --skip-existing --R {} -c local -c r_test -m {}/conda_build_config.yaml\n'.format(Rfullver, RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -279,7 +279,7 @@ def write_out_onwin64(fd, feedstocks, name):
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write('          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\\ci --skip-existing --R 3.6.1 -c local -c r_test -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot C:\\ci --skip-existing --R {} -c local -c r_test -m {}/conda_build_config.yaml\n'.format(Rfullver, RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -333,7 +333,7 @@ def write_out_onlinux64(fd, feedstocks, name):
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
     fd.write('          cd aggregateR && git checkout latest_update && cd .. &&\n')
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
-    fd.write('          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test\n')
+    fd.write('          conda-build --no-anaconda-upload --error-overlinking --R {} -c local -c r_test\n'.format(Rfullver))
     fd.write('          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/{}-on-linux_64_1564756033.json\n'.format(name))
     fd.write('          --skip-existing --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
@@ -398,7 +398,7 @@ def write_out_onosx64(fd, feedstocks, name):
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write('          conda-build --no-anaconda-upload --error-overlinking --output-folder=output-artifacts\n')
     fd.write('          --cache-dir=output-source --stats-file=stats/{}-on-osx_1564756033.json\n'.format(name))
-    fd.write('          --skip-existing -c local -c r_test --R 3.6.1 --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --skip-existing -c local -c r_test --R {} --croot . -m ./{}/conda_build_config.yaml\n'.format(Rfullver, RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
