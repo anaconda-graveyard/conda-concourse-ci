@@ -569,7 +569,15 @@ def deps_set(dep):
 # We're only looking for the tarballs in the `/src/contrib` directory, so the easiest way to do that is to scrape the index page.
 
 packages = set(item['package'] for item in items)
-print('{} CRAN R packages found, {} not found in defaults.'.format(len(packages), len(packages-anaconda_pkgs)))
+count_packages = len(packages)
+for x in packages:
+  for xx in anaconda_pkgs:
+     s = x.lower()
+     if s in xx.lower():
+        count_packages -= 1
+        break
+
+print('{} CRAN R packages found, {} not found in defaults.'.format(len(packages), count_packages))
 
 emptyset = set()
 BASE_PACKAGES = {'R', 'base', 'compiler', 'datasets', 'graphics', 'grDevices', 'grid', 'methods',
