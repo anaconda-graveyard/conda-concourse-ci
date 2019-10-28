@@ -35,7 +35,7 @@ PYver = '38'
 
 batch_count_max=100
 do_recursive = '' # '--dirty --recursive'
-do_python = '--python=38'
+do_python = '--python=3.8'
 
 def is_noarch(name, acompiled):
     return acompiled[name] == False
