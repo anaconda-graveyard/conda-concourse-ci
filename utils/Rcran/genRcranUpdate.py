@@ -64,6 +64,11 @@ def get_aggregateR_repo(rpath = './run', branch = 'latest_update'):
             g.checkout(branch)
         except:
             print("{} already on branch".format(branch))
+        try:
+            o = repo.remotes.origin
+            o.pull()
+        except:
+            print("pull failed")
     else:
         print("Repo not found at {}".format(rpath))
 
