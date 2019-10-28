@@ -99,12 +99,23 @@ def build_anaconda_pkglist(rver, rchannel = 'main'):
         pystr = 'py' + rver
         for v in rdata['packages'].values():
             bn = v['build']
-            if bn.find(pystr) >= 0 and not v in deps:
-               deps.append(v)
-
+            if bn.find(pystr) >= 0:
+                nn = v['name']
+                if is_feedstock_exists(nn + '-feedstock'):
+                    if not find_in_deps(nn, deps):
+                       deps.append(v)
+                else:
+                    print("{} does not exists in repository".format(nn))
     print('{} Total Anaconda packages found in {}.'.format(len(pkgs), rchannel))
     # print(deps)
     return pkgs, deps
+
+def find_in_deps(bn, deps):
+    for v in deps:
+       n = v['name']
+       if n == bn:
+         return True
+    return False
 
 def write_out_resheader(fd, has_wbuildpack):
     fd.write('resources:\n')
@@ -182,7 +193,7 @@ def write_out_pipeline_res(fd, j_comp, j_noa):
         write_out_reslinux64(fd, name)
     write_out_resfooter(fd)
 
-def write_out_onwin32(fd, feedstocks, name):
+def write_out_onwin32(fd, feedstocks, name, feedstocks_git):
     # job for windows
     fd.write('- name: {}-target_win-32-on-winbuilder\n'.format(name))
     fd.write('  plan:\n')
@@ -216,7 +227,7 @@ def write_out_onwin32(fd, feedstocks, name):
     fd.write('          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%\n')
     fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&& (set CONDA_SUBDIR=win-32 ) &&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
-    fd.write(do_submodul)
+    write_submodule(fd, feedstocks_git)
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
@@ -248,7 +259,13 @@ def write_out_onwin32(fd, feedstocks, name):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
-def write_out_onwin64(fd, feedstocks, name):
+def write_submodule(fd, feedstocks_git):
+    if feedstocks_git != '':
+        fd.write('          cd aggregate && git submodule update --init \n')
+        fd.write(feedstocks_git)
+        fd.write('          && cd .. &&\n')
+
+def write_out_onwin64(fd, feedstocks, name, feedstocks_git):
     # job for windows
     fd.write('- name: {}-on-winbuilder\n'.format(name))
     fd.write('  plan:\n')
@@ -282,7 +299,7 @@ def write_out_onwin64(fd, feedstocks, name):
     fd.write('          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%\n')
     fd.write('          protocol https > %USERPROFILE%\_netrc || exit 0)&&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
-    fd.write(do_submodul)
+    write_submodule(fd, feedstocks_git)
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
@@ -314,7 +331,7 @@ def write_out_onwin64(fd, feedstocks, name):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
     
-def write_out_onlinux64(fd, feedstocks, name):
+def write_out_onlinux64(fd, feedstocks, name, feedstocks_git):
     # job for linux 64
     fd.write('- name: {}-on-linux_64\n'.format(name))
     fd.write('  plan:\n')
@@ -339,7 +356,7 @@ def write_out_onlinux64(fd, feedstocks, name):
     fd.write('          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN\n')
     fd.write('          protocol https > ~/.netrc&& set -x &&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
-    fd.write(do_submodul)
+    write_submodule(fd, feedstocks_git)
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
@@ -369,7 +386,7 @@ def write_out_onlinux64(fd, feedstocks, name):
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
-def write_out_onosx64(fd, feedstocks, name):
+def write_out_onosx64(fd, feedstocks, name, feedstocks_git):
     # job for linux 64
     fd.write('- name: {}-on-osx\n'.format(name))
     fd.write('  plan:\n')
@@ -403,7 +420,7 @@ def write_out_onosx64(fd, feedstocks, name):
     fd.write('          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login\n')
     fd.write('          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&\n')
     fd.write('          git clone {} &&\n'.format(RrepositoryURL2))
-    fd.write(do_submodul)
+    write_submodule(fd, feedstocks_git)
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
@@ -467,6 +484,7 @@ def write_fly_pipelines(p_noarch, p_comp, stageno):
 
 def get_one_job_feedstocks(names, idx, sec, num, secmax):
     ret = ''
+    ret_git = ''
     idx += sec * secmax
     num -= sec * secmax
     num = min(num, secmax)
@@ -474,8 +492,18 @@ def get_one_job_feedstocks(names, idx, sec, num, secmax):
     while idx < idxmax:
         p = names[idx]
         ret += '          {}/{}-feedstock\n'.format(RrepositoryName, p.lower())
+        if is_feedstock_submodule(p.lower() + '-feedstock'):
+          ret_git += '          {}-feedstock\n'.format(p.lower())
         idx += 1
-    return ret
+    return ret, ret_git
+
+def is_feedstock_submodule(feedstock):
+    p = './run/aggregate/{}/.git'.format(feedstock)
+    return os.path.exists(p)
+
+def is_feedstock_exists(feedstock):
+    p = './run/aggregate/{}'.format(feedstock)
+    return os.path.exists(p)
 
 def write_out_one_pipeline_exist(num, idx_comp, num_comp, idx_noa, num_noa, j_comp, j_noa, p_noarch, p_comp, stageno):
     if not os.path.exists('./pybld'):
@@ -507,16 +535,16 @@ def write_out_one_pipeline_exist(num, idx_comp, num_comp, idx_noa, num_noa, j_co
         fd.write('jobs:\n')
         for x in range(0, j_comp):
             name = 'build_py_script{}'.format(x)
-            feedstocks = get_one_job_feedstocks(p_comp, idx_comp, x, num_comp, 10)
-            write_out_onlinux64(fd, feedstocks, name)
-            write_out_onosx64(fd, feedstocks, name)
-            write_out_onwin64(fd, feedstocks, name)
+            feedstocks, feedstocks_git = get_one_job_feedstocks(p_comp, idx_comp, x, num_comp, 10)
+            write_out_onlinux64(fd, feedstocks, name, feedstocks_git)
+            write_out_onosx64(fd, feedstocks, name, feedstocks_git)
+            write_out_onwin64(fd, feedstocks, name, feedstocks_git)
             if enabled_win32 == True:
-                write_out_onwin32(fd, feedstocks, name)
+                write_out_onwin32(fd, feedstocks, name, feedstocks_git)
         for x in range(0, j_noa):
             name = 'build_py_script{}'.format(x + j_comp)
-            feedstocks = get_one_job_feedstocks(p_noarch, idx_noa, x, num_noa, 50)
-            write_out_onlinux64(fd, feedstocks, name)
+            feedstocks, feedstocks_git = get_one_job_feedstocks(p_noarch, idx_noa, x, num_noa, 50)
+            write_out_onlinux64(fd, feedstocks, name, feedstocks_git)
 
 def in_stages(stages, n):
   for s in stages:
@@ -530,7 +558,9 @@ session = requests.Session()
 
 get_ipython().run_line_magic('matplotlib', 'auto')
 
-# get_aggregate_repo()
+# Fetch repro for further analyzis required!!
+get_aggregate_repo()
+
 anaconda_pkgs,deps37 = build_anaconda_pkglist(rver = '37', rchannel = 'main')
 pkg38, deps38 = build_anaconda_pkglist(rver = '38', rchannel = 'main')
 
