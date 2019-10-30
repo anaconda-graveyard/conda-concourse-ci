@@ -68,13 +68,11 @@ def is_repo_feedstock(feed, rpath = './run/aggregate'):
     epath = rpath + '/' + feed
     return os.path.isdir(epath)
 
-# The Microsoft CRAN time machine allows us to select a snapshot of CRAN at any day in time. For instance, 2018-01-01 is (in Microsoft's determination) the "official" snapshot date for R 3.4.3.
-
 def get_anaconda_pkglist(rdata, arch, rchannel, ver, start_with = 'py'):
     """ Read from r channel architecture specific package list with specific version """
     pystr = start_with + ver
     pkgs = set(v['name'] for v in rdata['packages'].values() if v['build'].find(pystr) >= 0)
-    print('{} Anaconda R {} packages in {} found.'.format(len(pkgs), arch, rchannel))
+    print('{} Anaconda {}-packages in {} found.'.format(len(pkgs), arch, rchannel))
     return pkgs
 
 def build_anaconda_pkglist(rver, rchannel = 'main'):
@@ -97,6 +95,7 @@ def build_anaconda_pkglist(rver, rchannel = 'main'):
             pkgs.update(pkgs2)
             # we don't look at mro packages
         pystr = 'py' + rver
+        print(' {} {}:\n'.format(arch, pystr))
         for v in rdata['packages'].values():
             bn = v['build']
             if bn.find(pystr) >= 0:
@@ -104,6 +103,9 @@ def build_anaconda_pkglist(rver, rchannel = 'main'):
                 if is_feedstock_exists(nn + '-feedstock'):
                     if not find_in_deps(nn, deps):
                        deps.append(v)
+                       print(' {} # {}'.format(nn, bn))
+                    else:
+                       print(' {}* # {}'.format(nn, bn))
                 else:
                     print("{} does not exists in repository".format(nn))
     print('{} Total Anaconda packages found in {}.'.format(len(pkgs), rchannel))
@@ -491,7 +493,7 @@ def get_one_job_feedstocks(names, idx, sec, num, secmax):
     idxmax = num + idx
     while idx < idxmax:
         p = names[idx]
-        ret += '          {}/{}-feedstock\n'.format(RrepositoryName, p.lower())
+        ret += '          {}/{}-feedstock/recipe/meta.yaml\n'.format(RrepositoryName, p.lower())
         if is_feedstock_submodule(p.lower() + '-feedstock'):
           ret_git += '          {}-feedstock\n'.format(p.lower())
         idx += 1
