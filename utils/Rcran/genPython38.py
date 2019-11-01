@@ -24,8 +24,7 @@ enabled_win32 = False
 enable_skeleton_for_existing = False
 show_just_unbuilt = False
 
-do_submodul='          cd aggregate && git submodule update --init && cd .. &&\n'
-do_cb1='          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-artifacts\n'
+do_cb1='          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts\n'
 
 RrepositoryName = 'aggregate'
 RrepositoryURL = 'git@github.com:AnacondaRecipes/aggregate.git'
@@ -71,7 +70,7 @@ def is_repo_feedstock(feed, rpath = './run/aggregate'):
 def get_anaconda_pkglist(rdata, arch, rchannel, ver, start_with = 'py'):
     """ Read from r channel architecture specific package list with specific version """
     pystr = start_with + ver
-    pkgs = set(v['name'] for v in rdata['packages'].values() if v['build'].find(pystr) >= 0)
+    pkgs = set(v['name'] for v in rdata['packages'].values() if (v['build'].find(pystr) >= 0 or v['build'].find('py_') >= 0))
     print('{} Anaconda {}-packages in {} found.'.format(len(pkgs), arch, rchannel))
     return pkgs
 
@@ -95,17 +94,17 @@ def build_anaconda_pkglist(rver, rchannel = 'main'):
             pkgs.update(pkgs2)
             # we don't look at mro packages
         pystr = 'py' + rver
-        print(' {} {}:\n'.format(arch, pystr))
+        # print(' {} {}:\n'.format(arch, pystr))
         for v in rdata['packages'].values():
             bn = v['build']
-            if bn.find(pystr) >= 0:
+            if bn.find(pystr) >= 0 or bn.find('py_') >= 0:
                 nn = v['name']
                 if is_feedstock_exists(nn + '-feedstock'):
                     if not find_in_deps(nn, deps):
                        deps.append(v)
-                       print(' {} # {}'.format(nn, bn))
-                    else:
-                       print(' {}* # {}'.format(nn, bn))
+                       # print(' {} # {}'.format(nn, bn))
+                    # else:
+                    #   print(' {}* # {}'.format(nn, bn))
                 else:
                     print("{} does not exists in repository".format(nn))
     print('{} Total Anaconda packages found in {}.'.format(len(pkgs), rchannel))
@@ -241,7 +240,7 @@ def write_out_onwin32(fd, feedstocks, name, feedstocks_git):
     fd.write('      inputs:\n')
     fd.write('      - name: rsync-build-pack\n')
     fd.write('      outputs:\n')
-    fd.write('      - name: output-artifacts\n')
+    fd.write('      - name: output-py_artifacts\n')
     fd.write('      - name: output-source\n')
     fd.write('      - name: stats\n')
     fd.write('  - put: rsync_{}-target_win-32-on-winbuilder\n'.format(name))
@@ -257,7 +256,7 @@ def write_out_onwin32(fd, feedstocks, name, feedstocks_git):
     fd.write('      - \'"**/*.*ml"\'\n')
     fd.write('      - --exclude\n')
     fd.write('      - \'"**/.cache"\'\n')
-    fd.write('      sync_dir: output-artifacts\n')
+    fd.write('      sync_dir: output-py_artifacts\n')
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
@@ -313,7 +312,7 @@ def write_out_onwin64(fd, feedstocks, name, feedstocks_git):
     fd.write('      inputs:\n')
     fd.write('      - name: rsync-build-pack\n')
     fd.write('      outputs:\n')
-    fd.write('      - name: output-artifacts\n')
+    fd.write('      - name: output-py_artifacts\n')
     fd.write('      - name: output-source\n')
     fd.write('      - name: stats\n')
     fd.write('  - put: rsync_{}-on-winbuilder\n'.format(name))
@@ -329,7 +328,7 @@ def write_out_onwin64(fd, feedstocks, name, feedstocks_git):
     fd.write('      - \'"**/*.*ml"\'\n')
     fd.write('      - --exclude\n')
     fd.write('      - \'"**/.cache"\'\n')
-    fd.write('      sync_dir: output-artifacts\n')
+    fd.write('      sync_dir: output-py_artifacts\n')
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
     
@@ -362,13 +361,13 @@ def write_out_onlinux64(fd, feedstocks, name, feedstocks_git):
     fd.write('          conda update -y -n base conda && conda update -y --all &&\n')
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
-    fd.write('          -c local --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/{}-on-linux_64_1564756033.json\n'.format(name))
+    fd.write('          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/{}-on-linux_64_1564756033.json\n'.format(name))
     fd.write('          --skip-existing --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
     fd.write('      outputs:\n')
-    fd.write('      - name: output-artifacts\n')
+    fd.write('      - name: output-py_artifacts\n')
     fd.write('      - name: output-source\n')
     fd.write('      - name: stats\n')
     fd.write('  - put: rsync_{}-on-linux_64\n'.format(name))
@@ -384,7 +383,7 @@ def write_out_onlinux64(fd, feedstocks, name, feedstocks_git):
     fd.write('      - \'"**/*.*ml"\'\n')
     fd.write('      - --exclude\n')
     fd.write('      - \'"**/.cache"\'\n')
-    fd.write('      sync_dir: output-artifacts\n')
+    fd.write('      sync_dir: output-py_artifacts\n')
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
@@ -434,7 +433,7 @@ def write_out_onosx64(fd, feedstocks, name, feedstocks_git):
     fd.write('      inputs:\n')
     fd.write('      - name: rsync-build-pack\n')
     fd.write('      outputs:\n')
-    fd.write('      - name: output-artifacts\n')
+    fd.write('      - name: output-py_artifacts\n')
     fd.write('      - name: output-source\n')
     fd.write('      - name: stats\n')
     fd.write('  - put: rsync_{}-on-osx\n'.format(name))
@@ -450,7 +449,7 @@ def write_out_onosx64(fd, feedstocks, name, feedstocks_git):
     fd.write('      - \'"**/*.*ml"\'\n')
     fd.write('      - --exclude\n')
     fd.write('      - \'"**/.cache"\'\n')
-    fd.write('      sync_dir: output-artifacts\n')
+    fd.write('      sync_dir: output-py_artifacts\n')
     fd.write('    get_params:\n')
     fd.write('      skip_download: true\n')
 
@@ -494,8 +493,9 @@ def get_one_job_feedstocks(names, idx, sec, num, secmax):
     while idx < idxmax:
         p = names[idx]
         ret += '          {}/{}-feedstock/recipe/meta.yaml\n'.format(RrepositoryName, p.lower())
-        if is_feedstock_submodule(p.lower() + '-feedstock'):
-          ret_git += '          {}-feedstock\n'.format(p.lower())
+        fn = p.lower() + '-feedstock'
+        if is_feedstock_submodule(fn):
+          ret_git += '          {}\n'.format(fn)
         idx += 1
     return ret, ret_git
 
