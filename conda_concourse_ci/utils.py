@@ -22,5 +22,5 @@ def load_yaml_config_dir(platforms_dir, platform_filters):
     for f in os.listdir(platforms_dir):
         if f.endswith('.yml') and any(fnmatch.fnmatch(f, pat) for pat in platform_filters):
             with open(os.path.join(platforms_dir, f)) as buff:
-                platforms.append(yaml.load(buff))
+                platforms.append(yaml.load(buff, Loader=yaml.BaseLoader))
     return platforms
