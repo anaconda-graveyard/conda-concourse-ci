@@ -643,6 +643,28 @@ def graph_to_plan_with_jobs(
                       'source': {
                       'token': config_vars['anaconda-upload-token'],
                   }})
+    if config_vars.get('repo-username'):
+        remapped_jobs.append({'name': 'repo_v6_upload',
+                              'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
+                                       for node in order if (not node.startswith('test-') and
+                                        (graph.node[node]['worker'].get("rsync") is None or
+                                         graph.node[node]['worker'].get("rsync") is True))] +
+                                       [{'put': 'repo_resource'}]})
+        resource_types.append({'name': 'repo-resource-type',
+                       'type': 'docker-image',
+                       'source': {
+                           'repository': 'condatest/repo_cli',
+                           'tag': 'latest'
+                           }
+                       })
+        resources.append({'name': 'repo_resource',
+                  'type': 'repo-resource-type',
+                      'source': {
+                      'token': config_vars['repo-token'],
+                      'user': config_vars['repo-username'],
+                      'password': config_vars['repo-password'],
+                      'channel': config_vars['repo-channel'],
+                  }})
 
     if config_vars.get('sourceclear_token'):
         remapped_jobs.append({
