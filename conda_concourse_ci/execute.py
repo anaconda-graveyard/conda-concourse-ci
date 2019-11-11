@@ -518,7 +518,7 @@ def graph_to_plan_with_jobs(
             {'get': 'rsync-build-pack',
             'params': {
                 'rsync_opts': [
-                    '--include', 'windows_build_env_latest.zip',
+                    '--include', 'loner_conda_windows.exe',
                     '--exclude', '*',
                     '-v'
             ]}})
@@ -527,7 +527,7 @@ def graph_to_plan_with_jobs(
             {'get': 'rsync-build-pack',
             'params': {
                 'rsync_opts': [
-                '--include', 'osx_build_env_latest.zip',
+                '--include', 'loner_conda_osx.exe',
                 '--exclude', '*',
                 '-v'
             ]}})
@@ -583,8 +583,8 @@ def graph_to_plan_with_jobs(
                         'get_params': {'skip_download': True}})
 
         # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
-        if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
-            tasks.append(sourceclear_task(meta, node, config_vars))
+        # if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
+        #     tasks.append(sourceclear_task(meta, node, config_vars))
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
