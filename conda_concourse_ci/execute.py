@@ -207,9 +207,16 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
                    release_lock_step=None, use_repo_access=False):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
-    build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
-                  '--cache-dir=output-source', '--stats-file={}'.format(
-                      os.path.join('stats', stats_filename))]
+
+    if graph.node[node]['worker']['platform'] not in ['win']:
+        build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
+                    '--cache-dir=output-source', '--stats-file={}'.format(
+                        os.path.join('stats', stats_filename))]
+    else:
+        build_args = ['--no-anaconda-upload', '--output-folder=output-artifacts',
+                    '--cache-dir=output-source', '--stats-file={}'.format(
+                        os.path.join('stats', stats_filename))]
+
     if test_only:
         build_args.append('--test')
     inputs = [{'name': 'rsync-recipes'}]
