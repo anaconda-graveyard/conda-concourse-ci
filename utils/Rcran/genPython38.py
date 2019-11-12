@@ -24,7 +24,7 @@ enabled_win32 = False
 enable_skeleton_for_existing = False
 show_just_unbuilt = False
 
-do_cb1='          conda-build --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts\n'
+do_cb1='          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts\n'
 
 RrepositoryName = 'aggregate'
 RrepositoryURL = 'git@github.com:AnacondaRecipes/aggregate.git'
@@ -105,8 +105,8 @@ def build_anaconda_pkglist(rver, rchannel = 'main'):
                        # print(' {} # {}'.format(nn, bn))
                     # else:
                     #   print(' {}* # {}'.format(nn, bn))
-                else:
-                    print("{} does not exists in repository".format(nn))
+                # else:
+                #    print("{} does not exists in repository".format(nn))
     print('{} Total Anaconda packages found in {}.'.format(len(pkgs), rchannel))
     # print(deps)
     return pkgs, deps
@@ -233,7 +233,7 @@ def write_out_onwin32(fd, feedstocks, name, feedstocks_git):
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\\ci --skip-existing -c local -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot C:\\ci -c local -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -305,7 +305,7 @@ def write_out_onwin64(fd, feedstocks, name, feedstocks_git):
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
     fd.write('          --cache-dir=output-source --stats-file=stats/{}8-on-winbuilder_1564756033.json\n'.format(name))
-    fd.write('          --croot C:\\ci --skip-existing -c local -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot C:\\ci -c local -m {}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -362,7 +362,7 @@ def write_out_onlinux64(fd, feedstocks, name, feedstocks_git):
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
     fd.write('          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/{}-on-linux_64_1564756033.json\n'.format(name))
-    fd.write('          --skip-existing --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -426,7 +426,7 @@ def write_out_onosx64(fd, feedstocks, name, feedstocks_git):
     fd.write(do_cb1)
     fd.write('          {}\n'.format(do_python))
     fd.write('          --cache-dir=output-source --stats-file=stats/{}-on-osx_1564756033.json\n'.format(name))
-    fd.write('          --skip-existing -c local --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
+    fd.write('          -c local --croot . -m ./{}/conda_build_config.yaml\n'.format(RrepositoryName))
     # write the list of feedstocks ...
     fd.write(feedstocks)
     fd.write('          \n')
@@ -492,7 +492,7 @@ def get_one_job_feedstocks(names, idx, sec, num, secmax):
     idxmax = num + idx
     while idx < idxmax:
         p = names[idx]
-        ret += '          {}/{}-feedstock/recipe/meta.yaml\n'.format(RrepositoryName, p.lower())
+        ret += '          {}/{}-feedstock\n'.format(RrepositoryName, p.lower())
         fn = p.lower() + '-feedstock'
         if is_feedstock_submodule(fn):
           ret_git += '          {}\n'.format(fn)
@@ -599,11 +599,11 @@ while changed == True:
 p_noarch = []
 i = 1
 for st in stages:
-  print("stage {}\n====\n".format(i))
+  print("stage # {}\n====\n".format(i))
   print(*st)
   write_fly_pipelines(p_noarch, st, i)
   i += 1
 
-print("{} stage".format(len(stages)))
+print("{} stage(s)".format(len(stages)))
 print("Done.")
 
