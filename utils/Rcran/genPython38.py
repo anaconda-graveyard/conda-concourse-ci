@@ -581,6 +581,9 @@ while changed == True:
        hasdep = False
        for d in dep:
           dn = d.split()[0]
+          if dn in stage:
+            hasdep = True
+            break
           if not in_stages(stages,dn):
             for vv in deps37:
               na = vv['name']
