@@ -1,0 +1,99 @@
+# Based on recipes from birdhouse and anaconda channel.
+
+{% set name = "openjdk" %}
+{% set version = "11.0.4" %}
+{% set ver_parts = version.split('.') %}
+{% set uversion = version.replace('.', '_') %}
+{% set intellij_build = "546.1" %}
+{% set build_number = 1 %}
+{% set sha256_osx = "bd3204630138066bc31fb61b77c96581637fba11d6dde7ed50cf9b76b32e51c9" %}
+{% set sha256_jbrex_osx = "343384e329ac6679a003d6f63f050ae7fe037ed25bc11f6c760d04591231e264" %}
+{% set sha256_linux_64 = "5e6e80086f1fedd12fd8447c35cde2d55f498c57e8975f2fc66f189aea58a710" %}
+{% set sha256_jbrex_linux_64 = "3856a1850476fe523e479474363b72c2b5faedace14ba57b7d71d36fcdd1d4d8" %}
+{% set sha256_linux_32 = "0000000000000000000000000000000000000000000000000000000000000000" %}
+{% set sha256_jbrex_linux_32 = "0000000000000000000000000000000000000000000000000000000000000000" %}
+{% set sha256_dejagnu_fonts = "f12d7e7f7adedcda09cc3d2281645ac72504aaa0949690233418867adb50fa6e" %}
+{% set sha256_win_64 = "efcd4ba6ef43696d84dbe587e1147dd8b5b56b32eb498fdf696e501e2520e629" %}
+{% set sha256_jbrex_win_64 = "5fcd994bf19111e91373fa0c4723f31feaf77c016f7f2485f8b4602b14df2614" %}
+{% set sha256_win_32 = "0000000000000000000000000000000000000000000000000000000000000000" %}
+{% set sha256_jbrex_win_32 = "0000000000000000000000000000000000000000000000000000000000000000" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbsdk-{{ uversion }}-osx-x64-b{{ intellij_build }}.tar.gz      # [osx]
+    fn: jbsdk-{{ uversion }}-osx-x64-b{{ intellij_build }}.tar.gz                                                                          # [osx]
+    sha256: {{ sha256_osx }}                                                                                                                                    # [osx]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbr-{{ uversion }}-osx-x64-b{{ intellij_build }}.tar.gz      # [osx]
+    fn: jbr-{{ uversion }}-osx-x64-b{{ intellij_build }}.tar.gz                                                                          # [osx]
+    sha256: {{ sha256_jbrex_osx }}                                                                                                                              # [osx]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbsdk-{{ uversion }}-linux-x64-b{{ intellij_build }}.tar.gz    # [linux64]
+    fn: jbsdk-{{ uversion }}-linux-x64-b{{ intellij_build }}.tar.gz                                                                        # [linux64]
+    sha256: {{ sha256_linux_64 }}                                                                                                                               # [linux64]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbr-{{ uversion }}-linux-x64-b{{ intellij_build }}.tar.gz    # [linux64]
+    fn: jbr-{{ uversion }}-linux-x64-b{{ intellij_build }}.tar.gz                                                                        # [linux64]
+    sha256: {{ sha256_jbrex_linux_64 }}                                                                                                                         # [linux64]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbsdk-{{ uversion }}-linux-x86-b{{ intellij_build }}.tar.gz    # [linux32]
+    fn: jbsdk-{{ uversion }}-linux-x86-b{{ intellij_build }}.tar.gz                                                                        # [linux32]
+    sha256: {{ sha256_linux_32 }}                                                                                                                               # [linux32]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbr-{{ uversion }}-linux-x86-b{{ intellij_build }}.tar.gz    # [linux32]
+    fn: jbr-{{ uversion }}-linux-x86-b{{ intellij_build }}.tar.gz                                                                        # [linux32]
+    sha256: {{ sha256_jbrex_linux_32 }}                                                                                                                         # [linux32]
+  - url: http://sourceforge.net/projects/dejavu/files/dejavu/2.36/dejavu-fonts-ttf-2.36.tar.bz2                                                                 # [linux]
+    sha256: {{ sha256_dejagnu_fonts }}                                                                                                                          # [linux]
+    folder: jre/lib/fonts                                                                                                                                       # [linux]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbrsdk-{{ uversion }}-windows-x64-b{{ intellij_build }}.tar.gz  # [win64]
+    fn: jbsdk-{{ uversion }}-windows-x64-b{{ intellij_build }}.tar.gz                                                                      # [win64]
+    sha256: {{ sha256_win_64 }}                                                                                                                                 # [win64]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbr-{{ uversion }}-windows-x64-b{{ intellij_build }}.tar.gz  # [win64]
+    fn: jbr-{{ uversion }}-windows-x64-b{{ intellij_build }}.tar.gz                                                                      # [win64]
+    sha256: {{ sha256_jbrex_win_64 }}                                                                                                                           # [win64]
+    folder: jbrex/jre                                                                                                                                            # [win64]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbrsdk-{{ uversion }}-windows-x86-b{{ intellij_build }}.tar.gz  # [win32]
+    fn: jbsdk-{{ uversion }}-windows-x86-b{{ intellij_build }}.tar.gz                                                                      # [win32]
+    sha256: {{ sha256_win_32 }}                                                                                                                                 # [win32]
+  - url: https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbr-{{ uversion }}-windows-x86-b{{ intellij_build }}.tar.gz  # [win32]
+    fn: jbr-{{ uversion }}-windows-x86-b{{ intellij_build }}.tar.gz                                                                      # [win32]
+    sha256: {{ sha256_jbrex_win_32 }}                                                                                                                           # [win32]
+    folder: jbrex/jre                                                                                                                                           # [win32]
+
+build:
+  number: {{ build_number }}
+  # JDK 11 is not available for linux 32-bit, nor right now for windows 32-bit.
+  skip: True  # [linux32 or win32]
+  track_features:
+    - openjdk
+  rpath:
+    - lib
+    - jre/lib
+
+test:
+  requires:
+    - {{ compiler('c') }}
+  files:
+    - test-jni     # [not win]
+    - test-jni.sh  # [not win]
+    - test-nio
+  commands:
+    - java -version
+    - ./test-jni.sh                                # [not win]
+    - conda inspect linkages -p ${PREFIX} openjdk  # [linux]
+    - conda inspect objects -p ${PREFIX} openjdk   # [osx]
+
+about:
+  home: https://bintray.com/jetbrains/intellij-jdk
+  license: GPLv2
+  license_family: GPL
+  summary: The JetBrains Runtime OpenJDK build.
+  description: |
+    JetBrains Runtime is a runtime environment for running
+    IntelliJ Platform based products on Windows, Mac OS X, and Linux
+  dev_url: https://github.com/JetBrains/jdk8u
+
+extra:
+  recipe-maintainers:
+    - johanneskoester
+    - mingwandroid
+    - sodre
