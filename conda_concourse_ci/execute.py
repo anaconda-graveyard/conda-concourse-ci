@@ -727,7 +727,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders):
                 }
             }
     # need to modify jobs
-    import pdb; pdb.set_trace()
     pass
 
 
@@ -967,8 +966,6 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     if config_overrides:
         data.update(config_overrides)
     
-    import pdb; pdb.set_trace()
-
     plan = graph_to_plan_with_jobs(
         os.path.abspath(path),
         task_graph,
