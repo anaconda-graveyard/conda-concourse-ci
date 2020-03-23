@@ -421,7 +421,7 @@ def sourceclear_task(meta, node, config_vars):
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None, use_lock_pool=False,
-        use_repo_access=False):
+        use_repo_access=False, automated_pipeline=False, folders=None):
     used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
@@ -679,8 +679,56 @@ def graph_to_plan_with_jobs(
                            }
                        })
     _add_lock_pool_resources(resources, used_pools, config_vars)
+
+    if automated_pipeline:
+        # build the automated pipeline
+        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders)
+
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
+
+
+def build_automated_pipeline(resource_types, resources, remapped_jobs, folders):
+    # resources to add
+    # need to pass something that isn't hard coded here
+    deployment_approval = {
+            'name': 'deployment-approval', 
+            'type': 'git', 
+            'source': {
+                'branch': 'master', 
+                'paths': ['recipe/metadata.yaml'], 
+                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+                }
+            }
+    pull_recipes = {
+            'name': 'pull-recipes', 
+            'type': 'git', 
+            'source': {
+                'branch': 'fw_autobot', 
+                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+                }
+            }
+    pull_request = {
+            'name': 'pul-request', 
+            'type': 'pull-request', 
+            'check_every': '2m', 
+            'source': {
+                'repository': 'AnacondaRecipes/{}'.format(folders[0]), 
+                'access_token': '((common.github_access_token))', 
+                'base_branch': 'master'
+                }
+            }
+    # resource types to add
+    pull_request_type = {
+            'name': 'pull-request', 
+            'type': 'docker-image', 
+            'source': {
+                'repository': 'teliaoss/github-pr-resource'
+                }
+            }
+    # need to modify jobs
+    import pdb; pdb.set_trace()
+    pass
 
 
 def _add_lock_pool_resources(resources, used_pools, config_vars):
@@ -918,6 +966,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
 
     if config_overrides:
         data.update(config_overrides)
+    
+    import pdb; pdb.set_trace()
 
     plan = graph_to_plan_with_jobs(
         os.path.abspath(path),
@@ -929,7 +979,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         worker_tags=worker_tags,
         pass_throughs=pass_throughs,
         use_lock_pool=use_lock_pool,
-        use_repo_access=use_repo_access
+        use_repo_access=use_repo_access,
+        automated_pipeline=kw.get("automated_pipeline", False,
+        folders=folders)
     )
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
