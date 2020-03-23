@@ -94,6 +94,11 @@ def parse_args(parse_this=None):
     one_off_parser.add_argument('folders', nargs="+",
                                 help=("Specify folders, relative to --recipe-root-dir, to upload "
                                       "and build"))
+    one_off_parser.add_argument('--automated-pipeline',
+                                action='store_true',
+                                default=False,
+                                help="Flag to run this one_off command as an automated pipeline. Default is False",
+                                )
     one_off_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
                                 help="path containing recipe folders to upload")
     one_off_parser.add_argument('--config-root-dir',
