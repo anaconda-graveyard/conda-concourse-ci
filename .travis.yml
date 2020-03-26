@@ -17,7 +17,7 @@ install:
   - hash -r
   - conda config --set always_yes yes
   - conda config --set auto_update_conda False
-  - conda install -q requests python=$TRAVIS_PYTHON_VERSION pyflakes flake8 mock six psutil pytest-cov pytest-mock pytest-xdist networkx git conda-build
+  - conda install -q requests python=$TRAVIS_PYTHON_VERSION pyflakes flake8 mock six psutil pytest-cov pytest-mock pytest-xdist "networkx<2" git conda-build
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install -q scandir;
     fi
