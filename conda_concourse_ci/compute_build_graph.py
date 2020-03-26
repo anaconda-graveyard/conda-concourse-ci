@@ -263,6 +263,11 @@ def add_intradependencies(graph):
             continue
         # get build dependencies
         m = graph.node[node]['meta']
+
+        if hasattr(m, 'other_outputs'):
+            internal_deps = tuple(i[0] for i in m.other_outputs)
+        else:
+            internal_deps = ()
         # this is pretty hard. Realistically, we would want to know
         # what the build and host platforms are on the build machine.
         # However, all we know right now is what machine we're actually
@@ -272,6 +277,12 @@ def add_intradependencies(graph):
                     ensure_list((m.meta.get('test') or {}).get('requires'))])
 
         for dep in deps:
+            # Ignore all dependecies that are outputs of the current recipe.
+            # These may not always match because of version differents but
+            # without this recipe with outputs which depend on each other
+            # cannot be submitted
+            if dep.name in internal_deps:
+                continue
             name_matches = (n for n in graph.nodes() if graph.node[n]['meta'].name() == dep.name)
             for matching_node in name_matches:
                 # are any of these build dependencies also nodes in our graph?
