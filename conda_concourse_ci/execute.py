@@ -691,23 +691,26 @@ def graph_to_plan_with_jobs(
 def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order):
     # resources to add
     # need to pass something that isn't hard coded here
-    deployment_approval = {
+    deployment_approval = OrderedDict({
             'name': 'deployment-approval',
             'type': 'git',
             'source': {
                 'branch': 'master',
-                'paths': ['recipe/metadata.yaml'],
-                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+                'paths': ['recipe/meta.yaml'],
+                'uri': 'https://github.com/cjmartian/{}.git'.format(folders[0])
+#               'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
                 }
-            }
-    pull_recipes = {
+            })
+    pull_recipes = OrderedDict({
             'name': 'pull-recipes',
             'type': 'git',
-            'source': {
-                'branch': 'automated-build',
-                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
-                }
-            }
+            'source': OrderedDict({
+                'branch': 'ci-updates',
+#               'branch': 'automated-build',
+                'uri': 'https://github.com/cjmartian/{}.git'.format(folders[0])
+#               'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+                })
+            })
 #   pull_request = {
 #           'name': 'pull-request',
 #           'type': 'pull-request',
@@ -742,45 +745,44 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     rsyncs = ['rsync_{}'.format(i) for i in order]
     inputs = []
 
-    sync_after_pr_merge_plan = [{'get': 'deployment-approval', 'trigger': True}]
+    sync_after_pr_merge_plan = [OrderedDict({'get': 'deployment-approval', 'trigger': True})]
     for i in rsyncs:
         sync_after_pr_merge_plan.append({'get': i})
         inputs.append({'name': i})
 
-    sync_the_thing_task = {
+    sync_the_thing_task = OrderedDict({
         'task': 'sync_the_thing',
-        'config': {
+        'config': OrderedDict({
             'platform': 'linux',
-            'image_resource': {
+            'image_resource': OrderedDict({
                 'type': 'docker-image',
-                'source': {
+                'source': OrderedDict({
                     'repository': 'conda/c3i-linux-64',
                     'tag': 'latest'
-                    }
-                },
-            'run': {
+                    })
+                }),
+            'run': OrderedDict({
                 'path': 'sh',
                 'args': [
                     '-exc',
-                    '''|
-          if ls */*/*.tar.bz2 1> /dev/null 2>&1; then
-              echo "PR has been merged, we should probably do something huh?"
-          else
-              echo "first run skipping"
-          fi'''
-                    ]
-                },
+                    ('if ls */*/*.tar.bz2 1> /dev/null 2>&1; then\n'
+                     'echo "PR has been merged, we should probably do something huh?"\n'
+                     'else\n'
+                     'echo "first run skipping"\n'
+                     'fi'
+                     )]
+                }),
             'inputs': inputs
-            }
-        }
+            })
+        })
 
     sync_after_pr_merge_plan.append(sync_the_thing_task)
 
-    sync_after_pr_merge = {
+    sync_after_pr_merge = OrderedDict({
         'name': 'sync-after-PR-merge',
         'disable_manual_trigger': True,
         'plan': sync_after_pr_merge_plan
-        }
+        })
 
     remapped_jobs.insert(0, sync_after_pr_merge)
 
