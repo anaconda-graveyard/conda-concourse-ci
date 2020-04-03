@@ -690,65 +690,40 @@ def graph_to_plan_with_jobs(
 
 def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order):
     # resources to add
-    # need to pass something that isn't hard coded here
     deployment_approval = OrderedDict({
             'name': 'deployment-approval',
             'type': 'git',
             'source': {
                 'branch': 'master',
                 'paths': ['recipe/meta.yaml'],
-                'uri': 'https://github.com/cjmartian/{}.git'.format(folders[0])
-#               'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
                 }
             })
     pull_recipes = OrderedDict({
             'name': 'pull-recipes',
             'type': 'git',
             'source': OrderedDict({
-                'branch': 'ci-updates',
-#               'branch': 'automated-build',
-                'uri': 'https://github.com/cjmartian/{}.git'.format(folders[0])
-#               'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+                'branch': 'automated-build',
+                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
                 })
             })
-#   pull_request = {
-#           'name': 'pull-request',
-#           'type': 'pull-request',
-#           'check_every': '2m',
-#           'source': {
-#               'repository': 'AnacondaRecipes/{}'.format(folders[0]),
-#               'access_token': '((common.github_access_token))',
-#               'base_branch': 'master'
-#               }
-#           }
-
     resources.append(deployment_approval)
     resources.append(pull_recipes)
-#   resources.append(pull_request)
 
     for n, resource in enumerate(resources):
-        if resource.get('name') == 'rsync-recipes':
+        if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
             del(resources[n])
 
-    # resource types to add
-#   pull_request_type = {
-#           'name': 'pull-request',
-#           'type': 'docker-image',
-#           'source': {
-#               'repository': 'teliaoss/github-pr-resource'
-#               }
-#           }
-
-#   resource_types.append(pull_request_type)
 
     # need to modify jobs
-    rsyncs = ['rsync_{}'.format(i) for i in order]
+    rsyncs = ['rsync_{}'.format(i) for i in order if i.startswith(folders[0].split('-')[0])]
     inputs = []
 
     sync_after_pr_merge_plan = [OrderedDict({'get': 'deployment-approval', 'trigger': True})]
     for i in rsyncs:
-        sync_after_pr_merge_plan.append({'get': i})
-        inputs.append({'name': i})
+        if not i.startswith('test-'):
+            sync_after_pr_merge_plan.append({'get': i})
+            inputs.append({'name': i})
 
     sync_the_thing_task = OrderedDict({
         'task': 'sync_the_thing',
@@ -786,15 +761,11 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
 
     remapped_jobs.insert(0, sync_after_pr_merge)
 
-    # I think this is proabbly a bad way to do this
-    # We should probably just find out where this task is being created
-    # and just alter it there. In the interest of time, we are just altering
-    # it in place
     for job in remapped_jobs:
         if job.get('name') in order:
             for plan in job.get('plan'):
-                if plan.get('get') == 'rsync-recipes':
-                    plan['get'] = 'pull-recipes'
+                if plan.get('get') == 'rsync-recipes' and not job.get('name').startswith('test-'):
+                    plan.update({'get': 'pull-recipes'})
                 if plan.get('task', '') == 'build':
                     command = plan.get('config').get('run').get('args')[-1]
                     import re
@@ -804,6 +775,10 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     for i in plan.get('config').get('inputs'):
                         if i.get('name') == 'rsync-recipes':
                             i.update({'name': 'pull-recipes'})
+                if plan.get('task', '') == 'test':
+                    for resource in resources:
+                        if resource.get('name').startswith('rsync_{}'.format(folders[0].split('-')[0])) and 'canary' not in resource.get('name'):
+                            plan.get('config').get('inputs').append({'name': resource.get('name')})
 
     return resource_types, resources, remapped_jobs
 
