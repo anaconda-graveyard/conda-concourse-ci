@@ -690,7 +690,7 @@ def graph_to_plan_with_jobs(
 
 def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order):
     # resources to add
-    deployment_approval = OrderedDict({
+    deployment_approval = {
             'name': 'deployment-approval',
             'type': 'git',
             'source': {
@@ -698,15 +698,15 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 'paths': ['recipe/meta.yaml'],
                 'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
                 }
-            })
-    pull_recipes = OrderedDict({
+            }
+    pull_recipes = {
             'name': 'pull-recipes',
             'type': 'git',
-            'source': OrderedDict({
+            'source': {
                 'branch': 'automated-build',
                 'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
-                })
-            })
+                }
+            }
     resources.append(deployment_approval)
     resources.append(pull_recipes)
 
@@ -719,24 +719,24 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     rsyncs = ['rsync_{}'.format(i) for i in order if i.startswith(folders[0].split('-')[0])]
     inputs = []
 
-    sync_after_pr_merge_plan = [OrderedDict({'get': 'deployment-approval', 'trigger': True})]
+    sync_after_pr_merge_plan = [{'get': 'deployment-approval', 'trigger': True}]
     for i in rsyncs:
         if not i.startswith('test-'):
             sync_after_pr_merge_plan.append({'get': i})
             inputs.append({'name': i})
 
-    sync_the_thing_task = OrderedDict({
+    sync_the_thing_task = {
         'task': 'sync_the_thing',
-        'config': OrderedDict({
+        'config': {
             'platform': 'linux',
-            'image_resource': OrderedDict({
+            'image_resource': {
                 'type': 'docker-image',
-                'source': OrderedDict({
+                'source': {
                     'repository': 'conda/c3i-linux-64',
                     'tag': 'latest'
-                    })
-                }),
-            'run': OrderedDict({
+                    }
+                },
+            'run': {
                 'path': 'sh',
                 'args': [
                     '-exc',
@@ -746,18 +746,18 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                      'echo "first run skipping"\n'
                      'fi'
                      )]
-                }),
+                },
             'inputs': inputs
-            })
-        })
+            }
+        }
 
     sync_after_pr_merge_plan.append(sync_the_thing_task)
 
-    sync_after_pr_merge = OrderedDict({
+    sync_after_pr_merge = {
         'name': 'sync-after-PR-merge',
         'disable_manual_trigger': True,
         'plan': sync_after_pr_merge_plan
-        })
+        }
 
     remapped_jobs.insert(0, sync_after_pr_merge)
 
