@@ -755,7 +755,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
 
     sync_after_pr_merge = {
         'name': 'sync-after-PR-merge',
-        'disable_manual_trigger': True,
         'plan': sync_after_pr_merge_plan
         }
 
