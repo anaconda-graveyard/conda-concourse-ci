@@ -66,7 +66,7 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     # get_upload.return_value = []
 
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
+        config_vars = yaml.safe_load(f)
     plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
                                                 test_config_dir, config_vars)
     # rsync-recipes, rsync-source, rsync-stats, and one artifact resource per build
@@ -81,7 +81,7 @@ def test_graph_to_plan_with_jobs_with_lock_pool(mocker, testing_graph):
     # get_upload.return_value = []
 
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
+        config_vars = yaml.safe_load(f)
     plan_dict = execute.graph_to_plan_with_jobs(
         graph_data_dir, testing_graph, 'abc123', test_config_dir, config_vars,
         use_lock_pool=True)
@@ -233,7 +233,7 @@ def test_compute_builds_intradependencies(testing_workdir, monkeypatch, mocker):
     files = os.listdir(output_dir)
     assert 'plan.yml' in files
     with open(os.path.join(output_dir, 'plan.yml')) as f:
-        plan = yaml.load(f)
+        plan = yaml.safe_load(f)
 
     uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'uses_zlib-1.0-on-centos5-64'][0]
     assert any(task.get('passed') == ['zlib_wannabe-1.2.8-on-centos5-64']

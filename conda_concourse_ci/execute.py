@@ -845,7 +845,7 @@ def _ensure_login_and_sync(config_root_dir):
 
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
-        data = yaml.load(src)
+        data = yaml.safe_load(src)
 
     # make sure we are logged in to the configured server
     login_args = ['fly', '-t', 'conda-concourse-server', 'login',
@@ -897,7 +897,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
 
     config_path = os.path.join(config_root_dir, 'config.yml')
     with open(config_path) as src:
-        data = yaml.load(src)
+        data = yaml.safe_load(src)
 
     if config_overrides:
         data.update(config_overrides)
@@ -1011,7 +1011,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                    pass_throughs=pass_throughs, skip_existing=skip_existing)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
-        data = yaml.load(src)
+        data = yaml.safe_load(src)
     data['recipe-repo-commit'] = repo_commit
 
     if config_overrides:
@@ -1129,7 +1129,7 @@ def bootstrap(base_name, pass_throughs=None, **kw):
     _copy_yaml_if_not_there('{0}/config.yml'.format(base_name), base_name)
     # this is one that we add the base_name to for future purposes
     with open('{0}/config.yml'.format(base_name)) as f:
-        config = yaml.load(f)
+        config = yaml.safe_load(f)
     config['base-name'] = base_name
     config['intermediate-base-folder'] = '/ci'
     config['execute-job-name'] = 'execute-' + base_name
@@ -1206,7 +1206,7 @@ def submit_batch(
 
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
-        data = yaml.load(src)
+        data = yaml.safe_load(src)
 
     concourse_url = data['concourse-url']
 
