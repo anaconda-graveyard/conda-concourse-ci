@@ -46,6 +46,7 @@ def test_submit_one_off(mocker):
         skip_existing=True,
         use_lock_pool=False,
         use_repo_access=False,
+        automated_pipeline=False,
     )
 
 

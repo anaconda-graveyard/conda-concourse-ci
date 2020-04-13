@@ -41,7 +41,7 @@ def test_upload_anaconda_with_user_and_label():
 
 def test_upload_scp():
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
+        config_vars = yaml.safe_load(f)
     tasks = uploads.upload_scp(package_path='steve', server='someserver',
                                destination_path='abc/123', auth_dict={'user': 'llama',
                                                                       'key_file': 'my_key'},
@@ -60,7 +60,7 @@ def test_upload_scp():
 
 def test_upload_scp_with_port():
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
+        config_vars = yaml.safe_load(f)
     tasks = uploads.upload_scp(package_path='steve', server='someserver',
                                destination_path='abc/123', auth_dict={'user': 'llama',
                                                                       'key_file': 'my_key'},
@@ -73,7 +73,7 @@ def test_upload_scp_with_port():
 
 def test_upload_command_string():
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
+        config_vars = yaml.safe_load(f)
     tasks = uploads.upload_commands(package_path='steve', commands='abc {package}',
                                     config_vars=config_vars)
 
@@ -83,7 +83,7 @@ def test_upload_command_string():
 
 def test_upload_command_list():
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
+        config_vars = yaml.safe_load(f)
     tasks = uploads.upload_commands(package_path='steve', commands=['abc {package}', 'wee'],
                                     config_vars=config_vars)
     assert tasks[0]['config']['run']['path'] == 'abc'
@@ -93,7 +93,7 @@ def test_upload_command_list():
 
 def test_get_upload_tasks(mocker, testing_graph):
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
-        config_vars = yaml.load(f)
+        config_vars = yaml.safe_load(f)
     mocker.patch.object(uploads, 'load_yaml_config_dir')
     uploads.load_yaml_config_dir.return_value = [{'token': 'abc'},
                                                  {'server': 'localhost'},

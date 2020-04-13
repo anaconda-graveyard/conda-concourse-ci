@@ -1,26 +1,19 @@
 language: python
 matrix:
   include:
-    - python: '2.7'
-      os: linux
     - python: '3.6'
+      os: linux
+    - python: '3.7'
       os: linux
 
 install:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
+  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes
   - conda config --set auto_update_conda False
   - conda install -q requests python=$TRAVIS_PYTHON_VERSION pyflakes flake8 mock six psutil pytest-cov pytest-mock pytest-xdist "networkx<2" git conda-build
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      conda install -q scandir;
-    fi
   - pip install --no-deps .
   - conda info -a
 
@@ -32,9 +25,6 @@ script:
   - $HOME/miniconda/bin/py.test -v --cov conda_concourse_ci --cov-report xml tests -n 4 -m "not serial"
   - $HOME/miniconda/bin/py.test -v --cov conda_concourse_ci --cov-report xml --cov-append tests -m "serial"
   - flake8
-
-notifications:
-    flowdock: ef3821a08a791106512ccfc04c92eccb
 
 git:
   depth: 10000
