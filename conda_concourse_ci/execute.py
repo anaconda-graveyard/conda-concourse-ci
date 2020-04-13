@@ -714,7 +714,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
             del(resources[n])
 
-
     # need to modify jobs
     rsyncs = ['rsync_{}'.format(i) for i in order if i.startswith(folders[0].split('-')[0])]
     inputs = []
