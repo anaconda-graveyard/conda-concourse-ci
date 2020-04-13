@@ -264,7 +264,7 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
                 creds_cmd = ['(echo machine github.com '
                                   'login %GITHUB_USER% '
                                   'password %GITHUB_TOKEN% '
-                                  'protocol https > %USERPROFILE%\_netrc || exit 0)']
+                                  'protocol https > %USERPROFILE%\\_netrc || exit 0)']
             else:
                 creds_cmd = ['set +x',
                             'echo machine github.com '
@@ -768,7 +768,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     command = plan.get('config').get('run').get('args')[-1]
                     import re
                     # replace the old rsync dir with the new one
-                    command = re.sub('rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes/ ', command)
+                    command = re.sub(r'rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes/ ', command)
                     plan.get('config').get('run').get('args')[-1] = command
                     for i in plan.get('config').get('inputs'):
                         if i.get('name') == 'rsync-recipes':
