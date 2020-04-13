@@ -42,6 +42,7 @@ def test_submit_one_off(mocker):
         worker_tags=None,
         clobber_sections_file=None,
         append_sections_file=None,
+        automated_pipeline=False,
         pass_throughs=[],
         skip_existing=True,
         use_lock_pool=False,
