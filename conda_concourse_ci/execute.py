@@ -766,9 +766,11 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     plan.update({'get': 'pull-recipes'})
                 if plan.get('task', '') == 'build':
                     command = plan.get('config').get('run').get('args')[-1]
+                    clean_feedstock = 'for i in `ls pull-recipes`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
                     import re
                     # replace the old rsync dir with the new one
                     command = re.sub(r'rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes/ ', command)
+                    command = clean_feedstock + command
                     plan.get('config').get('run').get('args')[-1] = command
                     for i in plan.get('config').get('inputs'):
                         if i.get('name') == 'rsync-recipes':
