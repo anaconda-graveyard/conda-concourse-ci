@@ -421,7 +421,7 @@ def sourceclear_task(meta, node, config_vars):
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None, use_lock_pool=False,
-        use_repo_access=False, automated_pipeline=False, folders=None):
+        use_repo_access=False, automated_pipeline=False, branches=[], folders=None):
     used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
@@ -682,33 +682,43 @@ def graph_to_plan_with_jobs(
 
     if automated_pipeline:
         # build the automated pipeline
-        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order)
+        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches)
 
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
 
 
-def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order):
+def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches):
     # resources to add
-    deployment_approval = {
-            'name': 'deployment-approval',
-            'type': 'git',
-            'source': {
-                'branch': 'master',
-                'paths': ['recipe/meta.yaml'],
-                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+    if not branches:
+        branches = ['automated-build']
+    for n, folder in enumerate(folders):
+        if len(branches) == 1:
+            branch = branches[0]
+        elif len(folders) == len(branches):
+            branch = branches[n]
+        else:
+            raise Exception("The number of branches either needs to be exactly one or equal to the number of feedstocks submitted. Exiting.")
+
+        deployment_approval = {
+                'name': 'deployment-approval',
+                'type': 'git',
+                'source': {
+                    'branch': 'master',
+                    'paths': ['recipe/meta.yaml'],
+                    'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
+                    }
                 }
-            }
-    pull_recipes = {
-            'name': 'pull-recipes',
-            'type': 'git',
-            'source': {
-                'branch': 'automated-build',
-                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+        pull_recipes = {
+                'name': 'pull-recipes',
+                'type': 'git',
+                'source': {
+                    'branch': branch,
+                    'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
+                    }
                 }
-            }
-    resources.append(deployment_approval)
-    resources.append(pull_recipes)
+        resources.append(deployment_approval)
+        resources.append(pull_recipes)
 
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
@@ -1029,6 +1039,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         use_lock_pool=use_lock_pool,
         use_repo_access=use_repo_access,
         automated_pipeline=kw.get("automated_pipeline", False),
+        branches=kw.get("branches", None),
         folders=folders
     )
 

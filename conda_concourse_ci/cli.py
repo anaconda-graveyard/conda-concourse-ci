@@ -99,6 +99,11 @@ def parse_args(parse_this=None):
                                 default=False,
                                 help="Flag to run this one_off command as an automated pipeline. Default is False",
                                 )
+    one_off_parser.add_argument('--branches',
+                                nargs='+',
+                                default=None,
+                                help="List of branches that will be pulled from. You should either pass in one branch or n number of branches where n is equal to the number of recipes you are building.",
+                                )
     one_off_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
                                 help="path containing recipe folders to upload")
     one_off_parser.add_argument('--config-root-dir',
