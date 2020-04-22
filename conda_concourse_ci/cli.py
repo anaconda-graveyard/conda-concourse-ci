@@ -112,7 +112,7 @@ def parse_args(parse_this=None):
             "Specific this option after the list of folders to avoid "
             "confusing which arguments are folders and which are branches, "
             "for example: "
-            "c3i one-off folder1 folder2 --branches branch1 branch2"
+            "c3i one-off pipeline_label folder1 folder2 --branches branch1 branch2"
         )
     )
     one_off_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
