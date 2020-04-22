@@ -792,7 +792,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     plan['config']['inputs'] = inputs
                     for n, i in enumerate(plan.get('config').get('inputs')):
                         if i.get('name') == 'rsync-recipes':
-                                del(plan['config']['inputs'][n])
+                            del(plan['config']['inputs'][n])
                 if plan.get('task', '') == 'test':
                     for resource in resources:
                         if resource.get('name').startswith('rsync_{}'.format(folders[0].split('-')[0])) and 'canary' not in resource.get('name'):
