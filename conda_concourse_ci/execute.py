@@ -421,7 +421,7 @@ def sourceclear_task(meta, node, config_vars):
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None, use_lock_pool=False,
-        use_repo_access=False, automated_pipeline=False, branches=[], folders=None):
+        use_repo_access=False, automated_pipeline=False, branches=None, folders=None):
     used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
@@ -690,7 +690,7 @@ def graph_to_plan_with_jobs(
 
 def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches):
     # resources to add
-    if not branches:
+    if branches is None:
         branches = ['automated-build']
     for n, folder in enumerate(folders):
         if len(branches) == 1:
