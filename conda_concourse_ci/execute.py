@@ -421,7 +421,7 @@ def sourceclear_task(meta, node, config_vars):
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None, use_lock_pool=False,
-        use_repo_access=False, automated_pipeline=False, folders=None):
+        use_repo_access=False, automated_pipeline=False, branches=None, folders=None):
     used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
@@ -682,99 +682,117 @@ def graph_to_plan_with_jobs(
 
     if automated_pipeline:
         # build the automated pipeline
-        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order)
+        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches)
 
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
 
 
-def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order):
+def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches):
     # resources to add
-    deployment_approval = {
-            'name': 'deployment-approval',
-            'type': 'git',
-            'source': {
-                'branch': 'master',
-                'paths': ['recipe/meta.yaml'],
-                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+    if branches is None:
+        branches = ['automated-build']
+    for n, folder in enumerate(folders):
+        if len(branches) == 1:
+            branch = branches[0]
+        elif len(folders) == len(branches):
+            branch = branches[n]
+        else:
+            raise Exception("The number of branches either needs to be exactly one or equal to the number of feedstocks submitted. Exiting.")
+
+        deployment_approval = {
+                'name': 'deployment-approval-{0}'.format(folder.rsplit('-', 1)[0]),
+                'type': 'git',
+                'source': {
+                    'branch': 'master',
+                    'paths': ['recipe/meta.yaml'],
+                    'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
+                    }
                 }
-            }
-    pull_recipes = {
-            'name': 'pull-recipes',
-            'type': 'git',
-            'source': {
-                'branch': 'automated-build',
-                'uri': 'https://github.com/AnacondaRecipes/{}.git'.format(folders[0])
+        pull_recipes = {
+                'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0]),
+                'type': 'git',
+                'source': {
+                    'branch': branch,
+                    'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
+                    }
                 }
-            }
-    resources.append(deployment_approval)
-    resources.append(pull_recipes)
+        resources.append(deployment_approval)
+        resources.append(pull_recipes)
 
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
             del(resources[n])
 
     # need to modify jobs
-    rsyncs = ['rsync_{}'.format(i) for i in order if i.startswith(folders[0].split('-')[0])]
-    inputs = []
 
-    sync_after_pr_merge_plan = [{'get': 'deployment-approval', 'trigger': True}]
-    for i in rsyncs:
-        if not i.startswith('test-'):
-            sync_after_pr_merge_plan.append({'get': i})
-            inputs.append({'name': i})
+    for folder in folders:
+        rsyncs = ['rsync_{}'.format(i) for i in order if i.startswith(folder.split('-')[0])]
+        inputs = []
+        sync_after_pr_merge_plan = [{'get': 'deployment-approval-{0}'.format(folder.rsplit('-', 1)[0]), 'trigger': True}]
+        for rsync in rsyncs:
+            if not folder.startswith('test-'):
+                sync_after_pr_merge_plan.append({'get': rsync})
+                inputs.append({'name': rsync})
 
-    sync_the_thing_task = {
-        'task': 'sync_the_thing',
-        'config': {
-            'platform': 'linux',
-            'image_resource': {
-                'type': 'docker-image',
-                'source': {
-                    'repository': 'conda/c3i-linux-64',
-                    'tag': 'latest'
-                    }
-                },
-            'run': {
-                'path': 'sh',
-                'args': [
-                    '-exc',
-                    ('if ls */*/*.tar.bz2 1> /dev/null 2>&1; then\n'
-                     'echo "PR has been merged, we should probably do something huh?"\n'
-                     'else\n'
-                     'echo "first run skipping"\n'
-                     'fi'
-                     )]
-                },
-            'inputs': inputs
+        sync_the_thing_task = {
+            'task': 'sync_the_thing',
+            'config': {
+                'platform': 'linux',
+                'image_resource': {
+                    'type': 'docker-image',
+                    'source': {
+                        'repository': 'conda/c3i-linux-64',
+                        'tag': 'latest'
+                        }
+                    },
+                'run': {
+                    'path': 'sh',
+                    'args': [
+                        '-exc',
+                        ('if ls */*/*.tar.bz2 1> /dev/null 2>&1; then\n'
+                         'echo "PR has been merged, we should probably do something huh?"\n'
+                         'else\n'
+                         'echo "first run skipping"\n'
+                         'fi'
+                         )]
+                    },
+                'inputs': inputs
+                }
             }
-        }
 
-    sync_after_pr_merge_plan.append(sync_the_thing_task)
+        sync_after_pr_merge_plan.append(sync_the_thing_task)
 
-    sync_after_pr_merge = {
-        'name': 'sync-after-PR-merge',
-        'plan': sync_after_pr_merge_plan
-        }
+        sync_after_pr_merge = {
+            'name': 'sync-{0}-after-PR-merge'.format(folder.rsplit('-', 1)[0]),
+            'plan': sync_after_pr_merge_plan
+            }
 
-    remapped_jobs.insert(0, sync_after_pr_merge)
+        remapped_jobs.insert(0, sync_after_pr_merge)
 
     for job in remapped_jobs:
         if job.get('name') in order:
-            for plan in job.get('plan'):
+            for num, plan in enumerate(job.get('plan')):
                 if plan.get('get') == 'rsync-recipes' and not job.get('name').startswith('test-'):
-                    plan.update({'get': 'pull-recipes'})
+                    for folder in folders:
+                        if job.get('name').startswith(folder.rsplit('-', 1)[0]):
+                            plan.update({'get': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0])})
                 if plan.get('task', '') == 'build':
                     command = plan.get('config').get('run').get('args')[-1]
                     clean_feedstock = 'for i in `ls pull-recipes`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
                     import re
                     # replace the old rsync dir with the new one
-                    command = re.sub(r'rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes/ ', command)
+                    command = re.sub(r'rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes*/ ', command)
                     command = clean_feedstock + command
                     plan.get('config').get('run').get('args')[-1] = command
-                    for i in plan.get('config').get('inputs'):
+                    inputs = plan.get('config').get('inputs')
+                    for folder in folders:
+                        if job.get('name').startswith(folder.rsplit('-', 1)[0]):
+                            inputs.append({'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0])})
+                    plan['config']['inputs'] = inputs
+                    for n, i in enumerate(plan.get('config').get('inputs')):
                         if i.get('name') == 'rsync-recipes':
-                            i.update({'name': 'pull-recipes'})
+                            del(plan['config']['inputs'][n])
                 if plan.get('task', '') == 'test':
                     for resource in resources:
                         if resource.get('name').startswith('rsync_{}'.format(folders[0].split('-')[0])) and 'canary' not in resource.get('name'):
@@ -1031,6 +1049,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         use_lock_pool=use_lock_pool,
         use_repo_access=use_repo_access,
         automated_pipeline=kw.get("automated_pipeline", False),
+        branches=kw.get("branches", None),
         folders=folders
     )
 

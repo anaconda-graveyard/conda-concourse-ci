@@ -99,6 +99,22 @@ def parse_args(parse_this=None):
                                 default=False,
                                 help="Flag to run this one_off command as an automated pipeline. Default is False",
                                 )
+    one_off_parser.add_argument(
+        '--branches',
+        nargs='+',
+        default=None,
+        help=(
+            "Only used when --automated_pipeline is specified. "
+            "List of repository branches that recipes will be pulled from. "
+            "Either pass in one branch or n number of branches where "
+            "n is equal to the number of recipes you are building. "
+            "The default is to use the 'automated-build' branch. "
+            "Specific this option after the list of folders to avoid "
+            "confusing which arguments are folders and which are branches, "
+            "for example: "
+            "c3i one-off pipeline_label folder1 folder2 --branches branch1 branch2"
+        )
+    )
     one_off_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
                                 help="path containing recipe folders to upload")
     one_off_parser.add_argument('--config-root-dir',
