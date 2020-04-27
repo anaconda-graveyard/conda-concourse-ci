@@ -978,6 +978,28 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
+def create_stage_for_upload_job(data, kw):
+    """ Return an jobs which stages packages for upload """
+    config = data.get('stage_for_upload_config')
+    params = config.get('params', {})
+    artifact_dir = os.path.join(
+        data['intermediate-base-folder'], data['base-name'], 'artifacts')
+    params['ARTIFACT_DIR'] = artifact_dir
+    commit_msg = kw.get('commit_msg')
+    if commit_msg is not None:
+        params['GIT_COMMIT_MSG'] = commit_msg
+    config['params'] = params
+    job = {
+        'name': 'stage_for_upload',
+        'plan': [{
+            'task': 'stage-packages',
+            'trigger': False,
+            'config': config,
+        },]
+    }
+    return job
+
+
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
@@ -1052,6 +1074,9 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         branches=kw.get("branches", None),
         folders=folders
     )
+    if kw.get('stage_for_upload', False):
+        job = create_stage_for_upload_job(data, kw)
+        plan['jobs'].append(job)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 

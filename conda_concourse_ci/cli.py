@@ -115,6 +115,12 @@ def parse_args(parse_this=None):
             "c3i one-off pipeline_label folder1 folder2 --branches branch1 branch2"
         )
     )
+    one_off_parser.add_argument(
+        '--stage-for-upload', action='store_true',
+        help="create job that stages package for upload as part of the pipeline")
+    one_off_parser.add_argument(
+        '--commit-msg', action='store',
+        help="git commit message to record when packages are uploaded")
     one_off_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
                                 help="path containing recipe folders to upload")
     one_off_parser.add_argument('--config-root-dir',
