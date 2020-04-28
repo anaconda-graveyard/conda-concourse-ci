@@ -48,6 +48,8 @@ def test_submit_one_off(mocker):
         use_repo_access=False,
         automated_pipeline=False,
         branches=None,
+        stage_for_upload=False,
+        commit_msg=None,
     )
 
 
