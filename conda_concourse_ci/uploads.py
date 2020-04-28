@@ -36,8 +36,8 @@ def upload_staging_channel(user, package_path):
     """
     Upload to anaconda.org using user.
     """
-    cmd = 'upload --skip-existing --force -u {} {}'.format(user, package_path)]
-    return "&& anaconda " + cmd
+    cmd = 'upload --skip-existing --force -u {} {}'.format(user, package_path)
+    return "anaconda " + cmd
 
 def upload_anaconda(package_path, token, user=None, label=None):
     """
