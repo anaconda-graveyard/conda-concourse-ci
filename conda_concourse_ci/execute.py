@@ -978,26 +978,46 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
-def create_stage_for_upload_job(data, kw):
-    """ Return an jobs which stages packages for upload """
-    config = data.get('stage_for_upload_config')
+def add_upload_job(plan, data, commit_msg):
+    """ Adds the upload job and a resource (if needed) to the plan. """
+    if 'stage-for-upload-config' not in data:
+        raise Exception(
+            ("--stage-for-upload specified but configuration file contains "
+            "to 'stage-for-upload-config entry"))
+
+    job_plan = []
+    # add a git resource if specified in the configuration file
+    # this resource should be added as an input to the stage-for-upload-config
+    # if it is needed in the upload job
+    if "stage-for-upload-repo" in data:
+        resource = {
+            "name": "stage-packages-scripts",
+            "type": "git",
+            "source": {
+                "uri": data["stage-for-upload-repo"],
+                "branch": data.get("stage-for-upload-branch", "master"),
+            },
+        }
+        plan['resources'].append(resource)
+        job_plan.append({'get': 'stage-packages-scripts', 'trigger': False})
+
+    config = data.get('stage-for-upload-config')
+    # add ARTIFACT_DIR and GIT_COMMIT_MSG (when defined) to params
     params = config.get('params', {})
     artifact_dir = os.path.join(
         data['intermediate-base-folder'], data['base-name'], 'artifacts')
     params['ARTIFACT_DIR'] = artifact_dir
-    commit_msg = kw.get('commit_msg')
     if commit_msg is not None:
         params['GIT_COMMIT_MSG'] = commit_msg
     config['params'] = params
-    job = {
-        'name': 'stage_for_upload',
-        'plan': [{
-            'task': 'stage-packages',
-            'trigger': False,
-            'config': config,
-        },]
-    }
-    return job
+
+    job_plan.append({
+        'task': 'stage-packages',
+        'trigger': False,
+        'config': config,
+    })
+    plan['jobs'].append({'name': 'stage_for_upload', 'plan': job_plan})
+    return
 
 
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
@@ -1075,8 +1095,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         folders=folders
     )
     if kw.get('stage_for_upload', False):
-        job = create_stage_for_upload_job(data, kw)
-        plan['jobs'].append(job)
+        add_upload_job(plan, data, kw.get('commit_msg'))
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
