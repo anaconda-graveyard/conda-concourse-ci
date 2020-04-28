@@ -144,8 +144,8 @@ def upload_commands(package_path, commands, config_vars, **file_contents):
 
 def get_upload_tasks(graph, node, upload_config_path, config_vars, commit_id, public=True):
     upload_tasks = []
-    meta = graph.node[node]['meta']
-    worker = graph.node[node]['worker']
+    meta = graph.nodes[node]['meta']
+    worker = graph.nodes[node]['worker']
     configurations = load_yaml_config_dir(upload_config_path)
     for package in api.get_output_file_paths(meta):
         filename = os.path.basename(package)
