@@ -35,7 +35,7 @@ boilerplate_test_vars = {'base-name': 'steve',
 
 def test_get_build_task(testing_graph):
     # ensure that our channels make it into the args
-    meta = testing_graph.node['b-on-linux']['meta']
+    meta = testing_graph.nodes['b-on-linux']['meta']
     meta.config.channel_urls = ['conda_build_test']
     task = execute.get_build_task(base_path=graph_data_dir, graph=testing_graph,
                                 node='b-on-linux', commit_id='abc123')
@@ -47,7 +47,7 @@ def test_get_build_task(testing_graph):
 
 def test_get_build_task_with_release_lock_step(testing_graph):
     # ensure that our channels make it into the args
-    meta = testing_graph.node['b-on-linux']['meta']
+    meta = testing_graph.nodes['b-on-linux']['meta']
     meta.config.channel_urls = ['conda_build_test']
     task = execute.get_build_task(
         base_path=graph_data_dir, graph=testing_graph, node='b-on-linux',
@@ -326,8 +326,8 @@ def test_collapse_noarch_python():
     assert 'pkg_b-1.0.0-python_3.6-on-centos5-64' in tasks.nodes()
     assert 'pkg_b-1.0.0-python_2.7-on-centos5-64' in tasks.nodes()
     # test nodes should be labeled as such
-    assert tasks.node['test-pkg_a-1.0.0-on-osx-109']['test_only'] == True
-    assert tasks.node['test-pkg_a-1.0.0-on-win-32']['test_only'] == True
+    assert tasks.nodes['test-pkg_a-1.0.0-on-osx-109']['test_only'] == True
+    assert tasks.nodes['test-pkg_a-1.0.0-on-win-32']['test_only'] == True
     # 8 edges
     # * 6 pkg_b nodes have an edge to the pkg_a build node
     # * 2 pkg_a tests nodes with edges to the pkg_a build_node
