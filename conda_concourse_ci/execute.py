@@ -29,6 +29,8 @@ from .compute_build_graph import (construct_graph, expand_run, git_changed_recip
                                   package_key)
 from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
+from .uploads import upload_staging_channel
+
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
 
@@ -136,8 +138,8 @@ def collapse_noarch_python_nodes(graph):
     # find all noarch python builds, group by package name
     noarch_groups = defaultdict(list)
     for node in graph.nodes():
-        if graph.node[node].get('noarch_pkg', False):
-            pkg_name = graph.node[node]['meta'].name()
+        if graph.nodes[node].get('noarch_pkg', False):
+            pkg_name = graph.nodes[node]['meta'].name()
             noarch_groups[pkg_name].append(node)
 
     for pkg_name, nodes in noarch_groups.items():
@@ -145,7 +147,7 @@ def collapse_noarch_python_nodes(graph):
         build_nodes = []
         test_nodes = []
         for node in nodes:
-            if graph.node[node]['meta'].config.subdir == build_subdir:
+            if graph.nodes[node]['meta'].config.subdir == build_subdir:
                 build_nodes.append(node)
             else:
                 test_nodes.append(node)
@@ -166,8 +168,8 @@ def collapse_noarch_python_nodes(graph):
             for edge in tuple(graph.out_edges(test_node)):
                 graph.remove_edge(*edge)
             # add a test only node
-            metadata = graph.node[test_node]['meta']
-            worker = graph.node[test_node]['worker']
+            metadata = graph.nodes[test_node]['meta']
+            worker = graph.nodes[test_node]['worker']
             name = 'test-' + test_node
             graph.add_node(name, meta=metadata, worker=worker, test_only=True)
             graph.add_edge(name, build_node)
@@ -205,10 +207,10 @@ def consolidate_task(inputs, subdir):
 def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
                    worker_tags=None, config_vars={}, pass_throughs=None, test_only=False,
                    release_lock_step=None, use_repo_access=False, use_staging_channel=False):
-    meta = graph.node[node]['meta']
+    meta = graph.nodes[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
 
-    if graph.node[node]['worker']['platform'] not in ['win']:
+    if graph.nodes[node]['worker']['platform'] not in ['win']:
         build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
                     '--cache-dir=output-source', '--stats-file={}'.format(
                         os.path.join('stats', stats_filename))]
@@ -220,7 +222,7 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     if test_only:
         build_args.append('--test')
     inputs = [{'name': 'rsync-recipes'}]
-    worker = graph.node[node]['worker']
+    worker = graph.nodes[node]['worker']
 
     if worker['platform'] in ['win', 'osx']:
         inputs.append({'name': 'rsync-build-pack'})
@@ -298,7 +300,7 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
-    task_dict.update(graph.node[node]['worker'].get('connector', {}))
+    task_dict.update(graph.nodes[node]['worker'].get('connector', {}))
 
     task_dict = {'task': 'build', 'config': task_dict}
     if test_only:
@@ -480,7 +482,7 @@ def graph_to_plan_with_jobs(
                       'disable_version_path': True,
                   }}
                  ]
-    if any(graph.node[node]['worker']['platform'] in ["win", "osx"]
+    if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"]
            for node in order):
         resources += [
                  {'name': 'rsync-build-pack',
@@ -496,9 +498,9 @@ def graph_to_plan_with_jobs(
     rsync_resources = []
 
     for node in order:
-        test_only = graph.node[node].get('test_only', False)
-        meta = graph.node[node]['meta']
-        worker = graph.node[node]['worker']
+        test_only = graph.nodes[node].get('test_only', False)
+        meta = graph.nodes[node]['meta']
+        worker = graph.nodes[node]['worker']
         rsync_artifacts = True if worker.get("rsync") is None or worker.get("rsync") is True else False
         resource_name = 'rsync_' + node
         key = (meta.name(), worker['label'], meta.config.host_subdir,
@@ -520,7 +522,7 @@ def graph_to_plan_with_jobs(
         tasks = jobs.get(key, {}).get('tasks',
                                 [{'get': 'rsync-recipes', 'trigger': True}])
 
-        if graph.node[node]['worker']['platform'] == "win":
+        if graph.nodes[node]['worker']['platform'] == "win":
             tasks.append(
             {'get': 'rsync-build-pack',
             'params': {
@@ -529,7 +531,7 @@ def graph_to_plan_with_jobs(
                     '--exclude', '*',
                     '-v'
             ]}})
-        elif graph.node[node]['worker']['platform'] == "osx":
+        elif graph.nodes[node]['worker']['platform'] == "osx":
             tasks.append(
             {'get': 'rsync-build-pack',
             'params': {
@@ -636,8 +638,8 @@ def graph_to_plan_with_jobs(
         remapped_jobs.append({'name': 'anaconda_upload',
                               'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
                                        for node in order if
-                                        graph.node[node]['worker'].get("rsync") is None or
-                                        graph.node[node]['worker'].get("rsync") is True] +
+                                        graph.nodes[node]['worker'].get("rsync") is None or
+                                        graph.nodes[node]['worker'].get("rsync") is True] +
                                        [{'put': 'anaconda_upload_resource'}]})
         resource_types.append({'name': 'anacondaorg-resource',
                        'type': 'docker-image',
@@ -655,8 +657,8 @@ def graph_to_plan_with_jobs(
         remapped_jobs.append({'name': 'repo_v6_upload',
                               'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
                                        for node in order if (not node.startswith('test-') and
-                                        (graph.node[node]['worker'].get("rsync") is None or
-                                         graph.node[node]['worker'].get("rsync") is True))] +
+                                        (graph.nodes[node]['worker'].get("rsync") is None or
+                                         graph.nodes[node]['worker'].get("rsync") is True))] +
                                        [{'put': 'repo_resource'}]})
         resource_types.append({'name': 'repo-resource-type',
                        'type': 'docker-image',
@@ -1078,7 +1080,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     nodes = list(nx.topological_sort(task_graph))
     nodes.reverse()
     for node in nodes:
-        meta = task_graph.node[node]['meta']
+        meta = task_graph.nodes[node]['meta']
         if meta.meta_path:
             recipe = os.path.dirname(meta.meta_path)
         else:
@@ -1105,19 +1107,19 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         if append_sections_file:
             shutil.copyfile(append_sections_file, os.path.join(out_folder, 'recipe_append.yaml'))
 
-        order_fn = 'output_order_' + task_graph.node[node]['worker']['label']
+        order_fn = 'output_order_' + task_graph.nodes[node]['worker']['label']
         with open(os.path.join(output_dir, order_fn), 'a') as f:
             f.write(node + '\n')
         recipe_dir = os.path.dirname(recipe) if os.sep in recipe else recipe
         if not last_recipe_dir or last_recipe_dir != recipe_dir:
-            order_recipes_fn = 'output_order_recipes_' + task_graph.node[node]['worker']['label']
+            order_recipes_fn = 'output_order_recipes_' + task_graph.nodes[node]['worker']['label']
             with open(os.path.join(output_dir, order_recipes_fn), 'a') as f:
                 f.write(recipe_dir + '\n')
             last_recipe_dir = recipe_dir
 
     # clean up recipe_log.txt so that we don't leave a dirty git state
     for node in nodes:
-        meta = task_graph.node[node]['meta']
+        meta = task_graph.nodes[node]['meta']
         if meta.meta_path:
             recipe = os.path.dirname(meta.meta_path)
         else:
