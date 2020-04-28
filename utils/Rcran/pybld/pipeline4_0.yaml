@@ -1,0 +1,2261 @@
+groups: []
+resources:
+- name: rsync-build-pack
+  type: rsync-resource
+  source:
+    base_dir: /ci/build_pack
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script0-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script0-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script0-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script1-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script1-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script1-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script2-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script2-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script2-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script3-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script3-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script3-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script4-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script4-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script4-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script5-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script5-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script5-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script6-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script6-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script6-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script7-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script7-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script7-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script8-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script8-on-osx
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_py_script8-on-winbuilder
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts_py
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+resource_types:
+- name: rsync-resource
+  type: docker-image
+  source:
+    repository: conda/concourse-rsync-resource
+    tag: latest
+jobs:
+- name: build_py_script0-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          agate-dbf-feedstock
+          agate-excel-feedstock
+          agate-sql-feedstock
+          cheroot-feedstock
+          conda-verify-feedstock
+          descartes-feedstock
+          flask-feedstock
+          jupyter_client-feedstock
+          mapclassify-feedstock
+          mpl-scatter-density-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script0-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/agate-dbf-feedstock
+          aggregate/agate-excel-feedstock
+          aggregate/agate-sql-feedstock
+          aggregate/cheroot-feedstock
+          aggregate/conda-verify-feedstock
+          aggregate/descartes-feedstock
+          aggregate/flask-feedstock
+          aggregate/jupyter_client-feedstock
+          aggregate/mapclassify-feedstock
+          aggregate/mpl-scatter-density-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script0-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script0-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          agate-dbf-feedstock
+          agate-excel-feedstock
+          agate-sql-feedstock
+          cheroot-feedstock
+          conda-verify-feedstock
+          descartes-feedstock
+          flask-feedstock
+          jupyter_client-feedstock
+          mapclassify-feedstock
+          mpl-scatter-density-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script0-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/agate-dbf-feedstock
+          aggregate/agate-excel-feedstock
+          aggregate/agate-sql-feedstock
+          aggregate/cheroot-feedstock
+          aggregate/conda-verify-feedstock
+          aggregate/descartes-feedstock
+          aggregate/flask-feedstock
+          aggregate/jupyter_client-feedstock
+          aggregate/mapclassify-feedstock
+          aggregate/mpl-scatter-density-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script0-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script0-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          agate-dbf-feedstock
+          agate-excel-feedstock
+          agate-sql-feedstock
+          cheroot-feedstock
+          conda-verify-feedstock
+          descartes-feedstock
+          flask-feedstock
+          jupyter_client-feedstock
+          mapclassify-feedstock
+          mpl-scatter-density-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script08-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/agate-dbf-feedstock
+          aggregate/agate-excel-feedstock
+          aggregate/agate-sql-feedstock
+          aggregate/cheroot-feedstock
+          aggregate/conda-verify-feedstock
+          aggregate/descartes-feedstock
+          aggregate/flask-feedstock
+          aggregate/jupyter_client-feedstock
+          aggregate/mapclassify-feedstock
+          aggregate/mpl-scatter-density-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script0-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script1-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          nosexcover-feedstock
+          passlib-feedstock
+          portend-feedstock
+          prompt_toolkit-feedstock
+          pynndescent-feedstock
+          pyspark-feedstock
+          pytest-cache-feedstock
+          pytest-cov-feedstock
+          pytest-doctestplus-feedstock
+          pytest-forked-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script1-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/nosexcover-feedstock
+          aggregate/passlib-feedstock
+          aggregate/portend-feedstock
+          aggregate/prompt_toolkit-feedstock
+          aggregate/pynndescent-feedstock
+          aggregate/pyspark-feedstock
+          aggregate/pytest-cache-feedstock
+          aggregate/pytest-cov-feedstock
+          aggregate/pytest-doctestplus-feedstock
+          aggregate/pytest-forked-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script1-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script1-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          nosexcover-feedstock
+          passlib-feedstock
+          portend-feedstock
+          prompt_toolkit-feedstock
+          pynndescent-feedstock
+          pyspark-feedstock
+          pytest-cache-feedstock
+          pytest-cov-feedstock
+          pytest-doctestplus-feedstock
+          pytest-forked-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script1-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/nosexcover-feedstock
+          aggregate/passlib-feedstock
+          aggregate/portend-feedstock
+          aggregate/prompt_toolkit-feedstock
+          aggregate/pynndescent-feedstock
+          aggregate/pyspark-feedstock
+          aggregate/pytest-cache-feedstock
+          aggregate/pytest-cov-feedstock
+          aggregate/pytest-doctestplus-feedstock
+          aggregate/pytest-forked-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script1-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script1-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          nosexcover-feedstock
+          passlib-feedstock
+          portend-feedstock
+          prompt_toolkit-feedstock
+          pynndescent-feedstock
+          pyspark-feedstock
+          pytest-cache-feedstock
+          pytest-cov-feedstock
+          pytest-doctestplus-feedstock
+          pytest-forked-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script18-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/nosexcover-feedstock
+          aggregate/passlib-feedstock
+          aggregate/portend-feedstock
+          aggregate/prompt_toolkit-feedstock
+          aggregate/pynndescent-feedstock
+          aggregate/pyspark-feedstock
+          aggregate/pytest-cache-feedstock
+          aggregate/pytest-cov-feedstock
+          aggregate/pytest-doctestplus-feedstock
+          aggregate/pytest-forked-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script1-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script2-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pytest-json-feedstock
+          pytest-localserver-feedstock
+          pytest-mock-feedstock
+          pytest-openfiles-feedstock
+          pytest-runner-feedstock
+          pytest-tornado-feedstock
+          python-louvain-feedstock
+          xarray-feedstock
+          astropy-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script2-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/pytest-json-feedstock
+          aggregate/pytest-localserver-feedstock
+          aggregate/pytest-mock-feedstock
+          aggregate/pytest-openfiles-feedstock
+          aggregate/pytest-runner-feedstock
+          aggregate/pytest-tornado-feedstock
+          aggregate/python-louvain-feedstock
+          aggregate/vega_datasets-feedstock
+          aggregate/xarray-feedstock
+          aggregate/astropy-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script2-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script2-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pytest-json-feedstock
+          pytest-localserver-feedstock
+          pytest-mock-feedstock
+          pytest-openfiles-feedstock
+          pytest-runner-feedstock
+          pytest-tornado-feedstock
+          python-louvain-feedstock
+          xarray-feedstock
+          astropy-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script2-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/pytest-json-feedstock
+          aggregate/pytest-localserver-feedstock
+          aggregate/pytest-mock-feedstock
+          aggregate/pytest-openfiles-feedstock
+          aggregate/pytest-runner-feedstock
+          aggregate/pytest-tornado-feedstock
+          aggregate/python-louvain-feedstock
+          aggregate/vega_datasets-feedstock
+          aggregate/xarray-feedstock
+          aggregate/astropy-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script2-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script2-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pytest-json-feedstock
+          pytest-localserver-feedstock
+          pytest-mock-feedstock
+          pytest-openfiles-feedstock
+          pytest-runner-feedstock
+          pytest-tornado-feedstock
+          python-louvain-feedstock
+          xarray-feedstock
+          astropy-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script28-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/pytest-json-feedstock
+          aggregate/pytest-localserver-feedstock
+          aggregate/pytest-mock-feedstock
+          aggregate/pytest-openfiles-feedstock
+          aggregate/pytest-runner-feedstock
+          aggregate/pytest-tornado-feedstock
+          aggregate/python-louvain-feedstock
+          aggregate/vega_datasets-feedstock
+          aggregate/xarray-feedstock
+          aggregate/astropy-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script2-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script3-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          basemap-feedstock
+          bkcharts-feedstock
+          bokeh-feedstock
+          factory_boy-feedstock
+          fastparquet-feedstock
+          fiona-feedstock
+          flake8-import-order-feedstock
+          flake8-polyfill-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script3-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/basemap-feedstock
+          aggregate/bkcharts-feedstock
+          aggregate/bokeh-feedstock
+          aggregate/btrees-feedstock
+          aggregate/factory_boy-feedstock
+          aggregate/fastparquet-feedstock
+          aggregate/fiona-feedstock
+          aggregate/flake8-import-order-feedstock
+          aggregate/flake8-polyfill-feedstock
+          aggregate/gevent-websocket-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script3-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script3-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          basemap-feedstock
+          bkcharts-feedstock
+          bokeh-feedstock
+          factory_boy-feedstock
+          fastparquet-feedstock
+          fiona-feedstock
+          flake8-import-order-feedstock
+          flake8-polyfill-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script3-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/basemap-feedstock
+          aggregate/bkcharts-feedstock
+          aggregate/bokeh-feedstock
+          aggregate/btrees-feedstock
+          aggregate/factory_boy-feedstock
+          aggregate/fastparquet-feedstock
+          aggregate/fiona-feedstock
+          aggregate/flake8-import-order-feedstock
+          aggregate/flake8-polyfill-feedstock
+          aggregate/gevent-websocket-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script3-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script3-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          basemap-feedstock
+          bkcharts-feedstock
+          bokeh-feedstock
+          factory_boy-feedstock
+          fastparquet-feedstock
+          fiona-feedstock
+          flake8-import-order-feedstock
+          flake8-polyfill-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script38-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/basemap-feedstock
+          aggregate/bkcharts-feedstock
+          aggregate/bokeh-feedstock
+          aggregate/btrees-feedstock
+          aggregate/factory_boy-feedstock
+          aggregate/fastparquet-feedstock
+          aggregate/fiona-feedstock
+          aggregate/flake8-import-order-feedstock
+          aggregate/flake8-polyfill-feedstock
+          aggregate/gevent-websocket-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script3-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script4-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          ibis-framework-feedstock
+          luigi-feedstock
+          mpld3-feedstock
+          nbformat-feedstock
+          pandas-profiling-feedstock
+          paramiko-feedstock
+          pip-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script4-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/grpcio-tools-feedstock
+          aggregate/ibis-framework-feedstock
+          aggregate/luigi-feedstock
+          aggregate/mpld3-feedstock
+          aggregate/nbformat-feedstock
+          aggregate/pandas-profiling-feedstock
+          aggregate/pandasql-feedstock
+          aggregate/paramiko-feedstock
+          aggregate/pip-feedstock
+          aggregate/plaster_pastedeploy-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script4-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script4-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          ibis-framework-feedstock
+          luigi-feedstock
+          mpld3-feedstock
+          nbformat-feedstock
+          pandas-profiling-feedstock
+          paramiko-feedstock
+          pip-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script4-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/grpcio-tools-feedstock
+          aggregate/ibis-framework-feedstock
+          aggregate/luigi-feedstock
+          aggregate/mpld3-feedstock
+          aggregate/nbformat-feedstock
+          aggregate/pandas-profiling-feedstock
+          aggregate/pandasql-feedstock
+          aggregate/paramiko-feedstock
+          aggregate/pip-feedstock
+          aggregate/plaster_pastedeploy-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script4-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script4-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          ibis-framework-feedstock
+          luigi-feedstock
+          mpld3-feedstock
+          nbformat-feedstock
+          pandas-profiling-feedstock
+          paramiko-feedstock
+          pip-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script48-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/grpcio-tools-feedstock
+          aggregate/ibis-framework-feedstock
+          aggregate/luigi-feedstock
+          aggregate/mpld3-feedstock
+          aggregate/nbformat-feedstock
+          aggregate/pandas-profiling-feedstock
+          aggregate/pandasql-feedstock
+          aggregate/paramiko-feedstock
+          aggregate/pip-feedstock
+          aggregate/plaster_pastedeploy-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script4-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script5-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pomegranate-feedstock
+          pyamg-feedstock
+          pyface-feedstock
+          pyjwt-feedstock
+          pylint-feedstock
+          pymysql-feedstock
+          pyopenssl-feedstock
+          pystan-feedstock
+          pytest-arraydiff-feedstock
+          pytest-asyncio-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script5-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/pomegranate-feedstock
+          aggregate/pyamg-feedstock
+          aggregate/pyface-feedstock
+          aggregate/pyjwt-feedstock
+          aggregate/pylint-feedstock
+          aggregate/pymysql-feedstock
+          aggregate/pyopenssl-feedstock
+          aggregate/pystan-feedstock
+          aggregate/pytest-arraydiff-feedstock
+          aggregate/pytest-asyncio-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script5-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script5-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pomegranate-feedstock
+          pyamg-feedstock
+          pyface-feedstock
+          pyjwt-feedstock
+          pylint-feedstock
+          pymysql-feedstock
+          pyopenssl-feedstock
+          pystan-feedstock
+          pytest-arraydiff-feedstock
+          pytest-asyncio-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script5-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/pomegranate-feedstock
+          aggregate/pyamg-feedstock
+          aggregate/pyface-feedstock
+          aggregate/pyjwt-feedstock
+          aggregate/pylint-feedstock
+          aggregate/pymysql-feedstock
+          aggregate/pyopenssl-feedstock
+          aggregate/pystan-feedstock
+          aggregate/pytest-arraydiff-feedstock
+          aggregate/pytest-asyncio-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script5-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script5-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pomegranate-feedstock
+          pyamg-feedstock
+          pyface-feedstock
+          pyjwt-feedstock
+          pylint-feedstock
+          pymysql-feedstock
+          pyopenssl-feedstock
+          pystan-feedstock
+          pytest-arraydiff-feedstock
+          pytest-asyncio-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script58-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/pomegranate-feedstock
+          aggregate/pyamg-feedstock
+          aggregate/pyface-feedstock
+          aggregate/pyjwt-feedstock
+          aggregate/pylint-feedstock
+          aggregate/pymysql-feedstock
+          aggregate/pyopenssl-feedstock
+          aggregate/pystan-feedstock
+          aggregate/pytest-arraydiff-feedstock
+          aggregate/pytest-asyncio-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script5-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script6-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pytest-benchmark-feedstock
+          pytest-metadata-feedstock
+          pytest-remotedata-feedstock
+          pytest-timeout-feedstock
+          pytest-variables-feedstock
+          pyutilib-feedstock
+          scikit-image-feedstock
+          secretstorage-feedstock
+          setuptools_scm_git_archive-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script6-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/pytest-benchmark-feedstock
+          aggregate/pytest-metadata-feedstock
+          aggregate/pytest-remotedata-feedstock
+          aggregate/pytest-timeout-feedstock
+          aggregate/pytest-variables-feedstock
+          aggregate/pyutilib-feedstock
+          aggregate/readme_renderer-feedstock
+          aggregate/scikit-image-feedstock
+          aggregate/secretstorage-feedstock
+          aggregate/setuptools_scm_git_archive-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script6-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script6-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pytest-benchmark-feedstock
+          pytest-metadata-feedstock
+          pytest-remotedata-feedstock
+          pytest-timeout-feedstock
+          pytest-variables-feedstock
+          pyutilib-feedstock
+          scikit-image-feedstock
+          secretstorage-feedstock
+          setuptools_scm_git_archive-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script6-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/pytest-benchmark-feedstock
+          aggregate/pytest-metadata-feedstock
+          aggregate/pytest-remotedata-feedstock
+          aggregate/pytest-timeout-feedstock
+          aggregate/pytest-variables-feedstock
+          aggregate/pyutilib-feedstock
+          aggregate/readme_renderer-feedstock
+          aggregate/scikit-image-feedstock
+          aggregate/secretstorage-feedstock
+          aggregate/setuptools_scm_git_archive-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script6-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script6-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          pytest-benchmark-feedstock
+          pytest-metadata-feedstock
+          pytest-remotedata-feedstock
+          pytest-timeout-feedstock
+          pytest-variables-feedstock
+          pyutilib-feedstock
+          scikit-image-feedstock
+          secretstorage-feedstock
+          setuptools_scm_git_archive-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script68-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/pytest-benchmark-feedstock
+          aggregate/pytest-metadata-feedstock
+          aggregate/pytest-remotedata-feedstock
+          aggregate/pytest-timeout-feedstock
+          aggregate/pytest-variables-feedstock
+          aggregate/pyutilib-feedstock
+          aggregate/readme_renderer-feedstock
+          aggregate/scikit-image-feedstock
+          aggregate/secretstorage-feedstock
+          aggregate/setuptools_scm_git_archive-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script6-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script7-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          statsmodels-feedstock
+          theano-feedstock
+          fasttsne-feedstock
+          lightgbm-feedstock
+          pyarrow-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script7-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/statsmodels-feedstock
+          aggregate/theano-feedstock
+          aggregate/tornado-json-feedstock
+          aggregate/zope.component-feedstock
+          aggregate/altair-feedstock
+          aggregate/fasttsne-feedstock
+          aggregate/lightgbm-feedstock
+          aggregate/pyarrow-feedstock
+          aggregate/tensorboard-feedstock
+          aggregate/tensorflow-base-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script7-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script7-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          statsmodels-feedstock
+          theano-feedstock
+          fasttsne-feedstock
+          lightgbm-feedstock
+          pyarrow-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script7-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/statsmodels-feedstock
+          aggregate/theano-feedstock
+          aggregate/tornado-json-feedstock
+          aggregate/zope.component-feedstock
+          aggregate/altair-feedstock
+          aggregate/fasttsne-feedstock
+          aggregate/lightgbm-feedstock
+          aggregate/pyarrow-feedstock
+          aggregate/tensorboard-feedstock
+          aggregate/tensorflow-base-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script7-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script7-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          statsmodels-feedstock
+          theano-feedstock
+          fasttsne-feedstock
+          lightgbm-feedstock
+          pyarrow-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script78-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/statsmodels-feedstock
+          aggregate/theano-feedstock
+          aggregate/tornado-json-feedstock
+          aggregate/zope.component-feedstock
+          aggregate/altair-feedstock
+          aggregate/fasttsne-feedstock
+          aggregate/lightgbm-feedstock
+          aggregate/pyarrow-feedstock
+          aggregate/tensorboard-feedstock
+          aggregate/tensorflow-base-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script7-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script8-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          torchvision-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          -c local --output-folder=output-py_artifacts --cache-dir=output-source --stats-file=stats/build_py_script8-on-linux_64_1564756033.json
+          --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/torchvision-feedstock
+          aggregate/zope.sqlalchemy-feedstock
+          
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script8-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script8-on-osx
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - osx_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: darwin
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - hostname&& pwd&& mkdir build_env&& unzip -o -q rsync-build-pack/osx_build_env_latest.zip
+          -d build_env&& source build_env/bin/activate&& conda-unpack&& conda init&&
+          source build_env/etc/profile.d/conda.sh&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x&& set +x&& echo machine github.com login
+          $GITHUB_USER password $GITHUB_TOKEN protocol https > ~/.netrc&& set -x&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          torchvision-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script8-on-osx_1564756033.json
+          -c local --croot . -m ./aggregate/conda_build_config.yaml
+          aggregate/torchvision-feedstock
+          aggregate/zope.sqlalchemy-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script8-on-osx
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
+- name: build_py_script8-on-winbuilder
+  plan:
+  - get: rsync-build-pack
+    params:
+      rsync_opts:
+      - --include
+      - windows_build_env_latest.zip
+      - --exclude
+      - '*'
+      - -v
+  - task: build
+    config:
+      platform: windows
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: cmd.exe
+        args:
+        - /c
+        - hostname&& mkdir build_env&& echo %CD%&& echo Extracting build environment&&
+          7z x ./rsync-build-pack/windows_build_env_latest.zip -o./build_env -y&&
+          echo Activating build environment&& call .\build_env\Scripts\activate&&
+          echo Unpacking environment&& conda-unpack&& conda config --system --set
+          add_pip_as_python_dependency False&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/main&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/r&& conda config --system --add default_channels
+          https://repo.anaconda.com/pkgs/msys2&& conda info&& (echo machine github.com
+          login %GITHUB_USER% password %GITHUB_TOKEN% protocol https > %USERPROFILE%\_netrc
+          || exit 0)&& (echo machine github.com login %GITHUB_USER% password %GITHUB_TOKEN%
+          protocol https > %USERPROFILE%\_netrc || exit 0)&&
+          git clone https://github.com/AnacondaRecipes/aggregate.git &&
+          cd aggregate && git submodule update --init 
+          torchvision-feedstock
+          && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-test --no-anaconda-upload --no-error-overlinking --output-folder=output-py_artifacts
+          --python=3.8
+          --cache-dir=output-source --stats-file=stats/build_py_script88-on-winbuilder_1564756033.json
+          --croot C:\ci -c local -m aggregate/conda_build_config.yaml
+          aggregate/torchvision-feedstock
+          aggregate/zope.sqlalchemy-feedstock
+          
+      inputs:
+      - name: rsync-build-pack
+      outputs:
+      - name: output-py_artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_py_script8-on-winbuilder
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-py_artifacts
+    get_params:
+      skip_download: true
