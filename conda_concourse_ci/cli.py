@@ -169,6 +169,12 @@ def parse_args(parse_this=None):
         action="store_true",
     )
 
+    one_off_parser.add_argument(
+        '--use-staging-channel',
+        help="Uploads built packages to staging channel",
+        action="store_true",
+    )
+
     batch_parser = sp.add_parser('batch', help="submit a batch of one-off jobs.")
     batch_parser.add_argument(
         'batch_file',
@@ -249,7 +255,11 @@ def parse_args(parse_this=None):
         help="Pass the repo access credentials to the workers",
         action="store_true",
     )
-
+    batch_parser.add_argument(
+        '--use-staging-channel',
+        help="Uploads built packages to staging channel",
+        action="store_true",
+    )
     rm_parser = sp.add_parser('rm', help='remove pipelines from server')
     rm_parser.add_argument('pipeline_names', nargs="+",
                            help=("Specify pipeline names on server to remove"))

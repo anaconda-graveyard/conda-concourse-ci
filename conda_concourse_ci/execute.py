@@ -204,7 +204,7 @@ def consolidate_task(inputs, subdir):
 
 def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
                    worker_tags=None, config_vars={}, pass_throughs=None, test_only=False,
-                   release_lock_step=None, use_repo_access=False):
+                   release_lock_step=None, use_repo_access=False, use_staging_channel=False):
     meta = graph.node[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
 
@@ -281,6 +281,13 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
            ' ' + build_suffix_commands
     prefix_commands = "&& ".join(ensure_list(worker.get('prefix_commands')))
     suffix_commands = "&& ".join(ensure_list(worker.get('suffix_commands')))
+    if use_staging_channel:
+        sc_user=config_vars.get('staging-channel-user', None)
+        if not sc_user:
+            sc_user='staging'
+        cmds = cmds + ' -c ' + sc_user
+        # todo: add proper source package path
+        suffix_commands += upload_staging_channel(sc_user, '*.tar.bz2')
     if prefix_commands:
         cmds = prefix_commands + '&& ' + cmds
     if suffix_commands:
@@ -421,7 +428,7 @@ def sourceclear_task(meta, node, config_vars):
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None, use_lock_pool=False,
-        use_repo_access=False, automated_pipeline=False, branches=None, folders=None):
+        use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None):
     used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
@@ -566,7 +573,8 @@ def graph_to_plan_with_jobs(
                                     pass_throughs=pass_throughs,
                                     test_only=test_only,
                                     release_lock_step=release_lock_step,
-                                    use_repo_access=use_repo_access))
+                                    use_repo_access=use_repo_access,
+                                    use_staging_channel=use_staging_channel))
 
         if not test_only:
             tasks.append(convert_task(meta.config.host_subdir))
@@ -983,7 +991,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                    output_folder_label='git', config_overrides=None, platform_filters=None,
                    worker_tags=None, clobber_sections_file=None, append_sections_file=None,
                    pass_throughs=None, skip_existing=True, use_lock_pool=False,
-                   use_repo_access=False, **kw):
+                   use_repo_access=False, use_staging_channel=False, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
     checkout_rev = stop_rev or git_rev
@@ -1048,6 +1056,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         pass_throughs=pass_throughs,
         use_lock_pool=use_lock_pool,
         use_repo_access=use_repo_access,
+        use_staging_channel=use_staging_channel,
         automated_pipeline=kw.get("automated_pipeline", False),
         branches=kw.get("branches", None),
         folders=folders

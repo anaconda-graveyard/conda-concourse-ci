@@ -32,6 +32,14 @@ def _base_task(upload_job_name):
             }}
 
 
+def upload_staging_channel(user, package_path):
+    """
+    Upload to anaconda.org using user.
+    """
+    cmd = ['upload', '--skip-existing', '--force', '-u', user]
+    cmd.append(os.path.join(package_path))
+    return "&& anaconda ".join(cmd)
+
 def upload_anaconda(package_path, token, user=None, label=None):
     """
     Upload to anaconda.org using a token.  Tokens are associated with a channel, so the channel
