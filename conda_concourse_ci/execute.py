@@ -1002,12 +1002,12 @@ def add_upload_job(plan, data, commit_msg):
         job_plan.append({'get': 'stage-packages-scripts', 'trigger': False})
 
     config = data.get('stage-for-upload-config')
-    # add ARTIFACT_DIR and GIT_COMMIT_MSG (when defined) to params
+    # add PIPELINE and GIT_COMMIT_MSG to params
     params = config.get('params', {})
-    artifact_dir = os.path.join(
-        data['intermediate-base-folder'], data['base-name'], 'artifacts')
-    params['ARTIFACT_DIR'] = artifact_dir
-    if commit_msg is not None:
+    params['PIPELINE'] = data['base-name']
+    if commit_msg is None:
+        params['GIT_COMMIT_MSG'] = "NA"
+    else:
         params['GIT_COMMIT_MSG'] = commit_msg
     config['params'] = params
 
