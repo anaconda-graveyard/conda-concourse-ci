@@ -475,7 +475,7 @@ def add_dependency_nodes_and_edges(node, graph, run, worker, conda_resolve, reci
 
     changes graph in place.
     '''
-    metadata = graph.nodes[node]['meta']
+    metadata = graph.nodes()[node]['meta']
     # for plain test runs, ignore build reqs.
     deps = get_run_test_deps(metadata)
     recipes_dir = recipes_dir or os.getcwd()
