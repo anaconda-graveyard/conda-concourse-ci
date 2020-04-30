@@ -46,6 +46,7 @@ def test_submit_one_off(mocker):
         skip_existing=True,
         use_lock_pool=False,
         use_repo_access=False,
+        use_staging_channel=False,
         automated_pipeline=False,
         branches=None,
     )
@@ -75,6 +76,7 @@ def test_submit_batch(mocker):
         append_sections_file=None,
         use_lock_pool=False,
         use_repo_access=False,
+        use_staging_channel=False,
         pass_throughs=[],
         skip_existing=True,
     )
