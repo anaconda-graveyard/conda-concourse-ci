@@ -429,7 +429,7 @@ def sourceclear_task(meta, node, config_vars):
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None, use_lock_pool=False,
-        use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None):
+        use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
     used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
@@ -693,13 +693,13 @@ def graph_to_plan_with_jobs(
 
     if automated_pipeline:
         # build the automated pipeline
-        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, config_vars)
+        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars)
 
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
 
 
-def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, config_vars):
+def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars):
     # resources to add
     if branches is None:
         branches = ['automated-build']
@@ -752,7 +752,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
             "name": "rsync-pr-checks",
             "type": "rsync_resource",
             "source": {
-                "base_dir": os.path.join(config_vars['intermediate-base-folder'], 'status'),
+                "base_dir": os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'], 'status'),
                 "disable_version_path": "true",
                 "private_key": "((common.intermediate-private-key))",
                 "server": "bremen.corp.continuum.io",
@@ -839,7 +839,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     "run": {
                         "args": [
                         "- exc",
-                        "wget https://github.com/concourse/concourse/releases/download/v5.5.10/fly-5.5.10-linux-amd64.tgz && tar zxvf fly-5.5.10-linux-amd64.tgz && echo "${FLYRC}" > ~/.flyrc && ./fly login -t conda-concourse-server --username="$USERNAME" --password="$PASSWORD" && ./fly -t conda-concourse-server jobs -p cm_automated_jupyter_client_pipeline --json > status/`date +"%T"`_fly_status"
+                        'wget https://github.com/concourse/concourse/releases/download/v5.5.10/fly-5.5.10-linux-amd64.tgz && tar zxvf fly-5.5.10-linux-amd64.tgz && echo "${FLYRC}" > ~/.flyrc && ./fly login -t conda-concourse-server --username="$USERNAME" --password="$PASSWORD" && ./fly -t conda-concourse-server jobs -p cm_automated_jupyter_client_pipeline --json > status/`date +"%T"`_fly_status'
                         ],
                         "path": "sh"
                         }
@@ -885,7 +885,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                          "path": "bash",
                          "args": [
                              "-exc",
-                             'mkdir -p /root/.ssh && touch /root/.ssh/server_key && set +x && echo -e "${PRIVATE_KEY}" > "$ID_FILE" &&  set -x && chmod 600 "$ID_FILE" && scp -i "$ID_FILE" -o "StrictHostKeyChecking no" ci@bremen.corp.continuum.io:/ci/cm_automated_jupyter_client_pipeline/rsync-pr-checks/* `pwd`/rsync-pr-checks/ && NEW=`ls -Art rsync-pr-checks/ | tail -1` && OLD=`ls -Art rsync-pr-checks/ | tail -2 | head -1` && chmod 700 pbs-scripts/concourse_status.sh && ./pbs-scripts/concourse_status.sh "$OLD" "$NEW" 10 cjmartian/jupyter_client-feedstock cm_automated_jupyter_client_pipeline "$ID_FILE"'
+                             'mkdir -p /root/.ssh && touch /root/.ssh/server_key && set +x && echo -e "${PRIVATE_KEY}" > "$ID_FILE" &&  set -x && chmod 600 "$ID_FILE" && scp -i "$ID_FILE" -o "StrictHostKeyChecking no" ci@bremen.corp.continuum.io:/ci/cm_automated_jupyter_client_pipeline/rsync-pr-checks/* `pwd`/rsync-pr-checks/ && NEW=`ls -Art rsync-pr-checks/ | tail -1` && OLD=`ls -Art rsync-pr-checks/ | tail -2 | head -1` && chmod 700 pbs-scripts/concourse_status.sh && ./pbs-scripts/concourse_status.sh "$OLD" "$NEW" {0} {1} {2} "$ID_FILE"'.format(pr_num, repository, config_vars['base-name'])
                              ]
                          }
                      }}
@@ -1218,6 +1218,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         use_staging_channel=use_staging_channel,
         automated_pipeline=kw.get("automated_pipeline", False),
         branches=kw.get("branches", None),
+        pr_num=kw.get("pr_num", None),
+        repository=kw.get("repository", None),
         folders=folders
     )
     if kw.get('stage_for_upload', False):
