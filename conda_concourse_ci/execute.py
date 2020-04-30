@@ -449,9 +449,11 @@ def graph_to_plan_with_jobs(
     base_folder = os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'])
     recipe_folder = os.path.join(base_folder, 'plan_and_recipes')
     artifact_folder = os.path.join(base_folder, 'artifacts')
+    status_folder = os.path.join(base_folder, 'status')
     if commit_id:
         recipe_folder = os.path.join(recipe_folder, commit_id)
         artifact_folder = os.path.join(artifact_folder, commit_id)
+        status_folder = os.path.join(status_folder, commit_id)
 
     resources = [{'name': 'rsync-recipes',
                   'type': 'rsync-resource',
@@ -691,13 +693,13 @@ def graph_to_plan_with_jobs(
 
     if automated_pipeline:
         # build the automated pipeline
-        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches)
+        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, config_vars)
 
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
 
 
-def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches):
+def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, config_vars):
     # resources to add
     if branches is None:
         branches = ['automated-build']
@@ -728,6 +730,39 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 }
         resources.append(deployment_approval)
         resources.append(pull_recipes)
+
+    time_10m = {
+             "name": "time-10m",
+             "type": "time",
+             "source": {
+                "interval": "10m"
+                 }
+            }
+    pbs_scripts = {
+                "name": "pbs-scripts",
+                "type": "git",
+                "source": {
+                    "branch": "concoursestatus",
+                    "uri": "https://github.com/jjhelmus/pbs-scripts-test.git",
+                    "username": "cjmartian",
+                    "password": "((common.pbs-token))"
+                    }
+            }
+    rsync_pr_checks = {
+            "name": "rsync-pr-checks",
+            "type": "rsync_resource",
+            "source": {
+                "base_dir": os.path.join(config_vars['intermediate-base-folder'], 'status'),
+                "disable_version_path": "true",
+                "private_key": "((common.intermediate-private-key))",
+                "server": "bremen.corp.continuum.io",
+                "user": "ci"
+                }
+            }
+
+    resources.append(time_10m)
+    resources.append(pbs_scripts)
+    resources.append(rsync_pr_checks)
 
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
@@ -778,6 +813,86 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
             }
 
         remapped_jobs.insert(0, sync_after_pr_merge)
+
+    post_pr_status = {
+            "name": "post-pr-status",
+            "plan": [
+                {"get": "rsync-pr-check"},
+                {"get": "pbs-scripts"},
+                {"get": "time-10m", "trigger": "true"},
+                {"config": {
+                    "container_limits": {},
+                    "image_resource": {
+                        "source": {
+                            "repository": "conda/c3i-linux-64",
+                            "tag": "latest"
+                            }
+                        "type": "docker-image"
+                        },
+                    "outputs": [{"name": "status"}],
+                    "platform": "linux",
+                    "params": {
+                        "USERNAME": "((common.concourse_username))",
+                        "PASSWORD": "((common.concourse_password))",
+                        "FLYRC": "((common.flyrc))"
+                        },
+                    "run": {
+                        "args": [
+                        "- exc",
+                        "wget https://github.com/concourse/concourse/releases/download/v5.5.10/fly-5.5.10-linux-amd64.tgz && tar zxvf fly-5.5.10-linux-amd64.tgz && echo "${FLYRC}" > ~/.flyrc && ./fly login -t conda-concourse-server --username="$USERNAME" --password="$PASSWORD" && ./fly -t conda-concourse-server jobs -p cm_automated_jupyter_client_pipeline --json > status/`date +"%T"`_fly_status"
+                        ],
+                        "path": "sh"
+                        }
+                    }
+                    "task": "get-current-status"
+                    },
+                "ensure": {
+                    "get_params": {
+                        "skip_download": "true"
+                        }
+                    "params": {
+                        "rsync_opts": [
+                            "--archive",
+                            "--no-perms",
+                            "--omit-dir-times",
+                            "--verbose"
+                            ],
+                        "sync_dir": "status"
+                        },
+                    "put": "rsync-pr-checks"
+                    },
+                {"task": "post-concourse-status",
+                 "config": {
+                     "container_limits":{},
+                     "image_resource": {
+                         "source": {
+                             "repository": "conda/c3i-linux-64",
+                             "tag": "latest"
+                             },
+                         "type": "docker-image"
+                         },
+                     "inputs": [
+                         {"name": "pbs-scripts"},
+                         {"name": "rsync-pr-checks"}
+                         ],
+                     "platform": "linux",
+                     "params": {
+                         "PRIVATE_KEY": "((common.itermediate-private-key))",
+                         "ID_FILE": "/root/.ssh/server_key",
+                         "GH_TOKEN": "((common.pbs-token))"
+                         },
+                     "run": {
+                         "path": "bash",
+                         "args": [
+                             "-exc",
+                             'mkdir -p /root/.ssh && touch /root/.ssh/server_key && set +x && echo -e "${PRIVATE_KEY}" > "$ID_FILE" &&  set -x && chmod 600 "$ID_FILE" && scp -i "$ID_FILE" -o "StrictHostKeyChecking no" ci@bremen.corp.continuum.io:/ci/cm_automated_jupyter_client_pipeline/rsync-pr-checks/* `pwd`/rsync-pr-checks/ && NEW=`ls -Art rsync-pr-checks/ | tail -1` && OLD=`ls -Art rsync-pr-checks/ | tail -2 | head -1` && chmod 700 pbs-scripts/concourse_status.sh && ./pbs-scripts/concourse_status.sh "$OLD" "$NEW" 10 cjmartian/jupyter_client-feedstock cm_automated_jupyter_client_pipeline "$ID_FILE"'
+                             ]
+                         }
+                     }}
+                ]
+            }
+
+    remapped_jobs.append(post_pr_status)
 
     for job in remapped_jobs:
         if job.get('name') in order:
