@@ -49,6 +49,8 @@ def test_submit_one_off(mocker):
         use_staging_channel=False,
         automated_pipeline=False,
         branches=None,
+        stage_for_upload=False,
+        commit_msg=None,
     )
 
 

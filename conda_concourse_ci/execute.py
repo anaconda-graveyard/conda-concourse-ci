@@ -987,6 +987,45 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
+def add_upload_job(plan, data, commit_msg):
+    """ Adds the upload job and a resource (if needed) to the plan. """
+    if 'stage-for-upload-config' not in data:
+        raise Exception(
+            ("--stage-for-upload specified but configuration file contains "
+            "to 'stage-for-upload-config entry"))
+
+    job_plan = []
+    # add a git resource if specified in the configuration file
+    # this resource should be added as an input to the stage-for-upload-config
+    # if it is needed in the upload job
+    if "stage-for-upload-repo" in data:
+        resource = {
+            "name": "stage-packages-scripts",
+            "type": "git",
+            "source": {
+                "uri": data["stage-for-upload-repo"],
+                "branch": data.get("stage-for-upload-branch", "master"),
+            },
+        }
+        plan['resources'].append(resource)
+        job_plan.append({'get': 'stage-packages-scripts', 'trigger': False})
+
+    config = data.get('stage-for-upload-config')
+    # add PIPELINE and GIT_COMMIT_MSG to params
+    params = config.get('params', {})
+    params['PIPELINE'] = data['base-name']
+    params['GIT_COMMIT_MSG'] = commit_msg
+    config['params'] = params
+
+    job_plan.append({
+        'task': 'stage-packages',
+        'trigger': False,
+        'config': config,
+    })
+    plan['jobs'].append({'name': 'stage_for_upload', 'plan': job_plan})
+    return
+
+
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
@@ -995,6 +1034,10 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                    use_repo_access=False, use_staging_channel=False, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
+    if kw.get('stage_for_upload', False):
+        if kw.get('commit_msg') is None:
+            raise ValueError(
+                "--stage-for-upload requires --commit-msg to be specified")
     checkout_rev = stop_rev or git_rev
     folders = folders
     path = path.replace('"', '')
@@ -1062,6 +1105,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         branches=kw.get("branches", None),
         folders=folders
     )
+    if kw.get('stage_for_upload', False):
+        add_upload_job(plan, data, kw['commit_msg'])
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
