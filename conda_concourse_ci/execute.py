@@ -1005,10 +1005,7 @@ def add_upload_job(plan, data, commit_msg):
     # add PIPELINE and GIT_COMMIT_MSG to params
     params = config.get('params', {})
     params['PIPELINE'] = data['base-name']
-    if commit_msg is None:
-        params['GIT_COMMIT_MSG'] = "NA"
-    else:
-        params['GIT_COMMIT_MSG'] = commit_msg
+    params['GIT_COMMIT_MSG'] = commit_msg
     config['params'] = params
 
     job_plan.append({
@@ -1028,6 +1025,10 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                    use_repo_access=False, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
+    if kw.get('stage_for_upload', False):
+        if kw.get('commit_msg') is None:
+            raise ValueError(
+                "--stage-for-upload requires --commit-msg to be specified")
     checkout_rev = stop_rev or git_rev
     folders = folders
     path = path.replace('"', '')
@@ -1095,7 +1096,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         folders=folders
     )
     if kw.get('stage_for_upload', False):
-        add_upload_job(plan, data, kw.get('commit_msg'))
+        add_upload_job(plan, data, kw['commit_msg'])
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 

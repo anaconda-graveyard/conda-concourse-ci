@@ -120,7 +120,8 @@ def parse_args(parse_this=None):
         help="create job that stages package for upload as part of the pipeline")
     one_off_parser.add_argument(
         '--commit-msg', action='store',
-        help="git commit message to record when packages are uploaded")
+        help=("git commit message to record when packages are uploaded, "
+              "required when --stage-for-upload specified"))
     one_off_parser.add_argument('--recipe-root-dir', default=os.getcwd(),
                                 help="path containing recipe folders to upload")
     one_off_parser.add_argument('--config-root-dir',
