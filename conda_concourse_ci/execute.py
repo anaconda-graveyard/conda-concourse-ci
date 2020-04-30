@@ -39,7 +39,6 @@ try:
 except NameError:
     pass
 
-
 # get rid of the special object notation in the yaml file for HashableDict instances that we dump
 yaml.add_representer(HashableDict, yaml.representer.SafeRepresenter.represent_dict)
 yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
@@ -284,9 +283,9 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
     prefix_commands = "&& ".join(ensure_list(worker.get('prefix_commands')))
     suffix_commands = "&& ".join(ensure_list(worker.get('suffix_commands')))
     if use_staging_channel:
-        sc_user=config_vars.get('staging-channel-user', None)
+        sc_user = config_vars.get('staging-channel-user', None)
         if not sc_user:
-            sc_user='staging'
+            sc_user = 'staging'
         cmds = cmds + ' -c ' + sc_user
         # todo: add proper source package path
         suffix_commands += upload_staging_channel(sc_user, '*.tar.bz2')

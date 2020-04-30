@@ -39,6 +39,7 @@ def upload_staging_channel(user, package_path):
     cmd = 'upload --skip-existing --force -u {} {}'.format(user, package_path)
     return "anaconda " + cmd
 
+
 def upload_anaconda(package_path, token, user=None, label=None):
     """
     Upload to anaconda.org using a token.  Tokens are associated with a channel, so the channel
