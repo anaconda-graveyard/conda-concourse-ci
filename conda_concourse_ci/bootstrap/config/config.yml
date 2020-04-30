@@ -12,3 +12,4 @@ intermediate-user: your-intermediate-user
 intermediate-private-key-job: key-to-upload-to-concourse
 intermediate-private-key: |
   private-key-to-use-for-connecting-to-intermediate-server
+staging-channel-user: your-intermediate-user-channel 

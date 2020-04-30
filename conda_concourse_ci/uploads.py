@@ -32,6 +32,14 @@ def _base_task(upload_job_name):
             }}
 
 
+def upload_staging_channel(user, package_path):
+    """
+    Upload to anaconda.org using user.
+    """
+    cmd = 'upload --skip-existing --force -u {} {}'.format(user, package_path)
+    return "anaconda " + cmd
+
+
 def upload_anaconda(package_path, token, user=None, label=None):
     """
     Upload to anaconda.org using a token.  Tokens are associated with a channel, so the channel
@@ -137,8 +145,8 @@ def upload_commands(package_path, commands, config_vars, **file_contents):
 
 def get_upload_tasks(graph, node, upload_config_path, config_vars, commit_id, public=True):
     upload_tasks = []
-    meta = graph.node[node]['meta']
-    worker = graph.node[node]['worker']
+    meta = graph.nodes[node]['meta']
+    worker = graph.nodes[node]['worker']
     configurations = load_yaml_config_dir(upload_config_path)
     for package in api.get_output_file_paths(meta):
         filename = os.path.basename(package)
