@@ -742,7 +742,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 "name": "pbs-scripts",
                 "type": "git",
                 "source": {
-                    "branch": "concourse-status",
+                    "branch": "master",
                     "uri": "https://github.com/jjhelmus/pbs-scripts-test.git",
                     "username": "cjmartian",
                     "password": "((common.pbs-token))"
@@ -885,7 +885,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                          "path": "bash",
                          "args": [
                              "-exc",
-                             'mkdir -p /root/.ssh && touch /root/.ssh/server_key && set +x && echo -e "$PRIVATE_KEY" > "$ID_FILE" &&  set -x && chmod 600 "$ID_FILE" && scp -i "$ID_FILE" -o "StrictHostKeyChecking no" ci@bremen.corp.continuum.io:/ci/{2}/status/* `pwd`/rsync-pr-checks/ && NEW=`ls -Art rsync-pr-checks/ | tail -2 | head -1` && OLD=`ls -Art rsync-pr-checks/ | tail -3 | head -1` && chmod 700 pbs-scripts/concourse_status.sh && ./pbs-scripts/concourse_status.sh "$OLD" "$NEW" {0} {1} {2} "$ID_FILE"'.format(pr_num, repository, config_vars['base-name'])
+                             'mkdir -p /root/.ssh && touch /root/.ssh/server_key && set +x && echo -e "$PRIVATE_KEY" > "$ID_FILE" &&  set -x && chmod 600 "$ID_FILE" && scp -i "$ID_FILE" -o "StrictHostKeyChecking no" ci@bremen.corp.continuum.io:/ci/{2}/status/* `pwd`/rsync-pr-checks/ && NEW=`ls -Art rsync-pr-checks/ | tail -3 | tail -1` && OLD=`ls -Art rsync-pr-checks/ | tail -3 | head -1` && chmod 700 pbs-scripts/concourse_status.sh && ./pbs-scripts/concourse_status.sh "$OLD" "$NEW" {0} {1} {2} "$ID_FILE"'.format(pr_num, repository, config_vars['base-name'])
                              ]
                          }
                      }}
