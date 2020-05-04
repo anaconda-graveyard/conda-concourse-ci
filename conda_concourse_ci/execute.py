@@ -735,7 +735,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
              "name": "time-10m",
              "type": "time",
              "source": {
-                "interval": "10m"
+                 "interval": "10m"
                  }
             }
     pbs_scripts = {
@@ -863,7 +863,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     },
                 {"task": "post-concourse-status",
                  "config": {
-                     "container_limits":{},
+                     "container_limits": {},
                      "image_resource": {
                          "source": {
                              "repository": "conda/c3i-linux-64",
