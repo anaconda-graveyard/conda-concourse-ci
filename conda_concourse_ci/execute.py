@@ -700,8 +700,6 @@ def graph_to_plan_with_jobs(
 
 
 def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars):
-    print(config_vars)
-    assert False
     # resources to add
     if branches is None:
         branches = ['automated-build']
