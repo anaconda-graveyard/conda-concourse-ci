@@ -700,6 +700,8 @@ def graph_to_plan_with_jobs(
 
 
 def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars):
+    print(config_vars)
+    assert False
     # resources to add
     if branches is None:
         branches = ['automated-build']
@@ -743,7 +745,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 "type": "git",
                 "source": {
                     "branch": "master",
-                    "uri": "https://github.com/jjhelmus/pbs-scripts-test.git",
+                    "uri": config_vars["script-repo"],
                     "username": "cjmartian",
                     "password": "((common.pbs-token))"
                     }
@@ -755,8 +757,8 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 "base_dir": os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'], 'status'),
                 "disable_version_path": True,
                 "private_key": "((common.intermediate-private-key))",
-                "server": "bremen.corp.continuum.io",
-                "user": "ci"
+                "server": config_vars["intermediate-server"],
+                "user": config_vars["intermediate-user"]
                 }
             }
 
@@ -879,13 +881,15 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                      "params": {
                          "PRIVATE_KEY": "((common.intermediate-private-key))",
                          "ID_FILE": "/root/.ssh/server_key",
-                         "GH_TOKEN": "((common.pbs-token))"
+                         "GH_TOKEN": "((common.pbs-token))",
+                         "INTERMEDIATE_SERVER": config_vars["intermediate-server"],
+                         "INTERMEDIATE_USER": config_vars["intermediate-user"],
                          },
                      "run": {
                          "path": "bash",
                          "args": [
                              "-exc",
-                             'mkdir -p /root/.ssh && touch /root/.ssh/server_key && set +x && echo -e "$PRIVATE_KEY" > "$ID_FILE" &&  set -x && chmod 600 "$ID_FILE" && scp -i "$ID_FILE" -o "StrictHostKeyChecking no" ci@bremen.corp.continuum.io:/ci/{2}/status/* `pwd`/rsync-pr-checks/ && NEW=`ls -Art rsync-pr-checks/ | tail -3 | tail -1` && OLD=`ls -Art rsync-pr-checks/ | tail -3 | head -1` && chmod 700 pbs-scripts/concourse_status.sh && ./pbs-scripts/concourse_status.sh "$OLD" "$NEW" {0} {1} {2} "$ID_FILE"'.format(pr_num, repository, config_vars['base-name'])
+                             'mkdir -p /root/.ssh && touch /root/.ssh/server_key && set +x && echo -e "$PRIVATE_KEY" > "$ID_FILE" &&  set -x && chmod 600 "$ID_FILE" && scp -i "$ID_FILE" -o "StrictHostKeyChecking no" $INTERMEDIATE_USER@$INTERMEDIATE_SERVER:/ci/{2}/status/* `pwd`/rsync-pr-checks/ && NEW=`ls -Art rsync-pr-checks/ | tail -3 | tail -1` && OLD=`ls -Art rsync-pr-checks/ | tail -3 | head -1` && chmod 700 pbs-scripts/concourse_status.sh && ./pbs-scripts/concourse_status.sh "$OLD" "$NEW" {0} {1} {2} "$ID_FILE"'.format(pr_num, repository, config_vars['base-name'])
                              ]
                          }
                      }}
