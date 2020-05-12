@@ -742,9 +742,9 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 "name": "pbs-scripts",
                 "type": "git",
                 "source": {
-                    "branch": "master",
-                    "uri": config_vars["script-repo"],
-                    "username": "cjmartian",
+                    "branch": config_vars.get('script-repo-branch', 'master'),
+                    "uri": config_vars.get("script-repo-uri"),
+                    "username": config_vars.get("script-repo-user"),
                     "password": "((common.pbs-token))"
                     }
             }
@@ -814,36 +814,22 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
 
         remapped_jobs.insert(0, sync_after_pr_merge)
 
+    get_current_status_config = config_vars['get-current-status-config']
+    post_concourse_status_config = config_vars['post-concourse-status-config']
+
+    params = post_concourse_status_config.get('params', {})
+    params['PR_NUM'] = pr_num
+    params['REPOSITORY_NAME'] = repository
+    params['PIPELINE_NAME'] = config_vars.get('base-name')
+    post_concourse_status_config['params'] = params
+
     post_pr_status = {
             "name": "post-pr-status",
             "plan": [
                 {"get": "rsync-pr-checks"},
                 {"get": "pbs-scripts"},
                 {"get": "time-10m", "trigger": True},
-                {"config": {
-                    "container_limits": {},
-                    "image_resource": {
-                        "source": {
-                            "repository": "conda/c3i-linux-64",
-                            "tag": "latest"
-                            },
-                        "type": "docker-image"
-                        },
-                    "outputs": [{"name": "status"}],
-                    "platform": "linux",
-                    "params": {
-                        "USERNAME": "((common.concourse_username))",
-                        "PASSWORD": "((common.concourse_password))",
-                        "FLYRC": "((common.flyrc))"
-                        },
-                    "run": {
-                        "args": [
-                        "-exc",
-                        'wget https://github.com/concourse/concourse/releases/download/v5.5.10/fly-5.5.10-linux-amd64.tgz && tar zxvf fly-5.5.10-linux-amd64.tgz && echo "$FLYRC" > ~/.flyrc && ./fly login -t conda-concourse-server --username="$USERNAME" --password="$PASSWORD" && ./fly -t conda-concourse-server jobs -p {0} --json > status/`date +"%T"`_fly_status'.format(config_vars['base-name'])
-                        ],
-                        "path": "sh"
-                        }
-                    },
+                {"config": get_current_status_config,
                     "task": "get-current-status"
                     },
                 {
@@ -862,35 +848,8 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     "put": "rsync-pr-checks"
                     },
                 {"task": "post-concourse-status",
-                 "config": {
-                     "container_limits": {},
-                     "image_resource": {
-                         "source": {
-                             "repository": "conda/c3i-linux-64",
-                             "tag": "latest"
-                             },
-                         "type": "docker-image"
-                         },
-                     "inputs": [
-                         {"name": "pbs-scripts"},
-                         {"name": "rsync-pr-checks"}
-                         ],
-                     "platform": "linux",
-                     "params": {
-                         "PRIVATE_KEY": "((common.intermediate-private-key))",
-                         "ID_FILE": "/root/.ssh/server_key",
-                         "GH_TOKEN": "((common.pbs-token))",
-                         "INTERMEDIATE_SERVER": config_vars["intermediate-server"],
-                         "INTERMEDIATE_USER": config_vars["intermediate-user"],
-                         },
-                     "run": {
-                         "path": "bash",
-                         "args": [
-                             "-exc",
-                             'mkdir -p /root/.ssh && touch /root/.ssh/server_key && set +x && echo -e "$PRIVATE_KEY" > "$ID_FILE" &&  set -x && chmod 600 "$ID_FILE" && scp -i "$ID_FILE" -o "StrictHostKeyChecking no" $INTERMEDIATE_USER@$INTERMEDIATE_SERVER:/ci/{2}/status/* `pwd`/rsync-pr-checks/ && NEW=`ls -Art rsync-pr-checks/ | tail -3 | tail -1` && OLD=`ls -Art rsync-pr-checks/ | tail -3 | head -1` && chmod 700 pbs-scripts/concourse_status.sh && ./pbs-scripts/concourse_status.sh "$OLD" "$NEW" {0} {1} {2} "$ID_FILE"'.format(pr_num, repository, config_vars['base-name'])
-                             ]
-                         }
-                     }}
+                 "config": post_concourse_status_config,
+                 }
                 ]
             }
 
@@ -1091,12 +1050,8 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
         subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
                         '-o', 'StrictHostKeyChecking=no', '-i', key_file,
                         '{intermediate-user}@{intermediate-server}'.format(**data),
-                        'mkdir {intermediate-base-folder}/{base-name}/status'.format(**data)])
-        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
-                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
-                        '{intermediate-user}@{intermediate-server}'.format(**data),
-                        'touch {intermediate-base-folder}/{base-name}/status/0'.format(**data)])
-    os.remove(key_file)
+                        'mkdir -p {intermediate-base-folder}/{base-name}/status'.format(**data)])
+        os.remove(key_file)
 
     _ensure_login_and_sync(config_root_dir)
 
