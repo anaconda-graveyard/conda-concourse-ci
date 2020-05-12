@@ -51,6 +51,8 @@ def test_submit_one_off(mocker):
         branches=None,
         stage_for_upload=False,
         commit_msg=None,
+        pr_num=None,
+        repository=None,
     )
 
 

@@ -429,7 +429,7 @@ def sourceclear_task(meta, node, config_vars):
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None, use_lock_pool=False,
-        use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None):
+        use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
     used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
@@ -449,9 +449,11 @@ def graph_to_plan_with_jobs(
     base_folder = os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'])
     recipe_folder = os.path.join(base_folder, 'plan_and_recipes')
     artifact_folder = os.path.join(base_folder, 'artifacts')
+    status_folder = os.path.join(base_folder, 'status')
     if commit_id:
         recipe_folder = os.path.join(recipe_folder, commit_id)
         artifact_folder = os.path.join(artifact_folder, commit_id)
+        status_folder = os.path.join(status_folder, commit_id)
 
     resources = [{'name': 'rsync-recipes',
                   'type': 'rsync-resource',
@@ -691,13 +693,13 @@ def graph_to_plan_with_jobs(
 
     if automated_pipeline:
         # build the automated pipeline
-        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches)
+        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars)
 
     # convert types for smoother output to yaml
     return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
 
 
-def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches):
+def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars):
     # resources to add
     if branches is None:
         branches = ['automated-build']
@@ -728,6 +730,39 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 }
         resources.append(deployment_approval)
         resources.append(pull_recipes)
+
+    time_10m = {
+             "name": "time-10m",
+             "type": "time",
+             "source": {
+                 "interval": "10m"
+                 }
+            }
+    pbs_scripts = {
+                "name": "pbs-scripts",
+                "type": "git",
+                "source": {
+                    "branch": config_vars.get('script-repo-branch', 'master'),
+                    "uri": config_vars.get("script-repo-uri"),
+                    "username": config_vars.get("script-repo-user"),
+                    "password": "((common.pbs-token))"
+                    }
+            }
+    rsync_pr_checks = {
+            "name": "rsync-pr-checks",
+            "type": "rsync-resource",
+            "source": {
+                "base_dir": os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'], 'status'),
+                "disable_version_path": True,
+                "private_key": "((common.intermediate-private-key))",
+                "server": config_vars["intermediate-server"],
+                "user": config_vars["intermediate-user"]
+                }
+            }
+
+    resources.append(time_10m)
+    resources.append(pbs_scripts)
+    resources.append(rsync_pr_checks)
 
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
@@ -778,6 +813,47 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
             }
 
         remapped_jobs.insert(0, sync_after_pr_merge)
+
+    get_current_status_config = config_vars['get-current-status-config']
+    post_concourse_status_config = config_vars['post-concourse-status-config']
+
+    params = post_concourse_status_config.get('params', {})
+    params['PR_NUM'] = pr_num
+    params['REPOSITORY_NAME'] = repository
+    params['PIPELINE_NAME'] = config_vars.get('base-name')
+    post_concourse_status_config['params'] = params
+
+    post_pr_status = {
+            "name": "post-pr-status",
+            "plan": [
+                {"get": "rsync-pr-checks"},
+                {"get": "pbs-scripts"},
+                {"get": "time-10m", "trigger": True},
+                {"config": get_current_status_config,
+                    "task": "get-current-status"
+                    },
+                {
+                    "get_params": {
+                        "skip_download": True
+                        },
+                    "params": {
+                        "rsync_opts": [
+                            "--archive",
+                            "--no-perms",
+                            "--omit-dir-times",
+                            "--verbose"
+                            ],
+                        "sync_dir": "status"
+                        },
+                    "put": "rsync-pr-checks"
+                    },
+                {"task": "post-concourse-status",
+                 "config": post_concourse_status_config,
+                 }
+                ]
+            }
+
+    remapped_jobs.append(post_pr_status)
 
     for job in remapped_jobs:
         if job.get('name') in order:
@@ -970,6 +1046,11 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                         '-o', 'StrictHostKeyChecking=no', '-i', key_file,
                         '{intermediate-user}@{intermediate-server}'.format(**data),
                         'rm -rf {intermediate-base-folder}/{base-name}/artifacts'.format(**data)])
+        # create the status dir
+        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
+                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
+                        '{intermediate-user}@{intermediate-server}'.format(**data),
+                        'mkdir -p {intermediate-base-folder}/{base-name}/status'.format(**data)])
     os.remove(key_file)
 
     _ensure_login_and_sync(config_root_dir)
@@ -1103,6 +1184,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         use_staging_channel=use_staging_channel,
         automated_pipeline=kw.get("automated_pipeline", False),
         branches=kw.get("branches", None),
+        pr_num=kw.get("pr_num", None),
+        repository=kw.get("repository", None),
         folders=folders
     )
     if kw.get('stage_for_upload', False):
