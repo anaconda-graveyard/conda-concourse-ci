@@ -1051,7 +1051,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                         '-o', 'StrictHostKeyChecking=no', '-i', key_file,
                         '{intermediate-user}@{intermediate-server}'.format(**data),
                         'mkdir -p {intermediate-base-folder}/{base-name}/status'.format(**data)])
-        os.remove(key_file)
+    os.remove(key_file)
 
     _ensure_login_and_sync(config_root_dir)
 
