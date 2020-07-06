@@ -353,12 +353,12 @@ def convert_task(subdir):
             'path': 'sh',
             'args': [
                 '-exc',
-                     'mkdir -p converted-artifacts/{subdir}\n'
-                     'mkdir -p converted-artifacts/noarch\n'
-                     'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
-                     'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
-                'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
-                'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
+                    'mkdir -p converted-artifacts/{subdir}\n'
+                    'mkdir -p converted-artifacts/noarch\n'
+                    'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
+                    'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
+            'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
+            'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
                 .format(subdir=subdir)
                 ],
             }
@@ -1070,7 +1070,6 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
 
 def add_push_branch_job(plan, data, folders, branches):
     """ Adds the push branch job to the plan. """
-    #import pdb; pdb.set_trace()
     if 'push-branch-config' not in data:
         raise Exception(
             ("--push-branch specified but configuration file contains "
