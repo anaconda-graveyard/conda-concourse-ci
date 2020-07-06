@@ -353,12 +353,12 @@ def convert_task(subdir):
             'path': 'sh',
             'args': [
                 '-exc',
-                     'mkdir -p converted-artifacts/{subdir}\n'
-                     'mkdir -p converted-artifacts/noarch\n'
-                     'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
-                     'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
-                'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
-                'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
+                    'mkdir -p converted-artifacts/{subdir}\n'
+                    'mkdir -p converted-artifacts/noarch\n'
+                    'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
+                    'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
+            'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
+            'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
                 .format(subdir=subdir)
                 ],
             }
@@ -1068,6 +1068,42 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
+def add_push_branch_job(plan, data, folders, branches):
+    """ Adds the push branch job to the plan. """
+    if 'push-branch-config' not in data:
+        raise Exception(
+            ("--push-branch specified but configuration file contains "
+            "to 'push-branch-config entry"))
+
+    job_plan = []
+    # resources to add
+    if branches is None:
+        branches = ['automated-build']
+    for n, folder in enumerate(folders):
+        if len(branches) == 1:
+            branch = branches[0]
+        elif len(folders) == len(branches):
+            branch = branches[n]
+        else:
+            raise Exception(
+                "The number of branches either needs to be exactly one or "
+                "equal to the number of feedstocks submitted. Exiting.")
+
+        config = data.get('push-branch-config')
+        # add PIPELINE and GIT_COMMIT_MSG to params
+        params = config.get('params', {})
+        params['BRANCH'] = branch
+        params['FEEDSTOCK'] = folder
+        config['params'] = params
+        job_plan.append({
+            'task': 'push-branch',
+            'trigger': False,
+            'config': config,
+        })
+        plan['jobs'].append({'name': f'push_branch_to_{folder}', 'plan': job_plan})
+    return
+
+
 def add_upload_job(plan, data, commit_msg):
     """ Adds the upload job and a resource (if needed) to the plan. """
     if 'stage-for-upload-config' not in data:
@@ -1190,6 +1226,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     )
     if kw.get('stage_for_upload', False):
         add_upload_job(plan, data, kw['commit_msg'])
+    if kw.get('push_branch', False):
+        add_push_branch_job(plan, data, folders, kw['branches'])
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 

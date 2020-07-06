@@ -129,6 +129,9 @@ def parse_args(parse_this=None):
         '--stage-for-upload', action='store_true',
         help="create job that stages package for upload as part of the pipeline")
     one_off_parser.add_argument(
+        '--push-branch', action='store_true',
+        help="create a job that push the branch(es) used for the build to master")
+    one_off_parser.add_argument(
         '--commit-msg', action='store',
         help=("git commit message to record when packages are uploaded, "
               "required when --stage-for-upload specified"))
