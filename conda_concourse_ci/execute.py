@@ -864,11 +864,16 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                             plan.update({'get': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0])})
                 if plan.get('task', '') == 'build':
                     command = plan.get('config').get('run').get('args')[-1]
-                    clean_feedstock = 'for i in `ls pull-recipes`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
+                    clean_feedstock_linux = 'for i in `ls pull-recipes*`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
+                    clean_feedstock_win = 'pushd %cd%\pull-recipes-beautifulsoup4 for /D %%D in ("*") do (if /I not "%%~nxD"=="recipe") for %%F in ("*") do (del "%%~F") popd'
                     import re
                     # replace the old rsync dir with the new one
                     command = re.sub(r'rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes*/ ', command)
-                    command = clean_feedstock + command
+                    print(job.get("name"))
+                    if "winbuilder" in job.get("name"):
+                        command = command
+                    else:
+                        command = clean_feedstock_linux + command
                     plan.get('config').get('run').get('args')[-1] = command
                     inputs = plan.get('config').get('inputs')
                     for folder in folders:
