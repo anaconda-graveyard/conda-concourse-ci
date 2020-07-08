@@ -711,15 +711,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
         else:
             raise Exception("The number of branches either needs to be exactly one or equal to the number of feedstocks submitted. Exiting.")
 
-        deployment_approval = {
-                'name': 'deployment-approval-{0}'.format(folder.rsplit('-', 1)[0]),
-                'type': 'git',
-                'source': {
-                    'branch': 'master',
-                    'paths': ['recipe/meta.yaml'],
-                    'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
-                    }
-                }
         pull_recipes = {
                 'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0]),
                 'type': 'git',
@@ -728,7 +719,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
                     }
                 }
-        resources.append(deployment_approval)
         resources.append(pull_recipes)
 
     time_10m = {
@@ -769,52 +759,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
             del(resources[n])
 
     # need to modify jobs
-
-    for folder in folders:
-        rsyncs = ['rsync_{}'.format(i) for i in order if i.startswith(folder.split('-')[0])]
-        inputs = []
-        sync_after_pr_merge_plan = [{'get': 'deployment-approval-{0}'.format(folder.rsplit('-', 1)[0]), 'trigger': True}]
-        for rsync in rsyncs:
-            if not folder.startswith('test-'):
-                sync_after_pr_merge_plan.append({'get': rsync})
-                inputs.append({'name': rsync})
-
-        sync_the_thing_task = {
-            'task': 'sync_the_thing',
-            'config': {
-                'platform': 'linux',
-                'image_resource': {
-                    'type': 'docker-image',
-                    'source': {
-                        'repository': 'conda/c3i-linux-64',
-                        'tag': 'latest'
-                        }
-                    },
-                'run': {
-                    'path': 'sh',
-                    'args': [
-                        '-exc',
-                        ('if ls */*/*.tar.bz2 1> /dev/null 2>&1; then\n'
-                         'echo "PR has been merged, we should probably do something huh?"\n'
-                         'else\n'
-                         'echo "first run skipping"\n'
-                         'fi'
-                         )]
-                    },
-                'inputs': inputs
-                }
-            }
-
-        sync_after_pr_merge_plan.append(sync_the_thing_task)
-
-        sync_after_pr_merge = {
-            'name': 'sync-{0}-after-PR-merge'.format(folder.rsplit('-', 1)[0]),
-            'plan': sync_after_pr_merge_plan
-            }
-
-        remapped_jobs.insert(0, sync_after_pr_merge)
-
-    get_current_status_config = config_vars['get-current-status-config']
     post_concourse_status_config = config_vars['post-concourse-status-config']
 
     params = post_concourse_status_config.get('params', {})
