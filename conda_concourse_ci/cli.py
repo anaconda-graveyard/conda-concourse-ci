@@ -126,6 +126,11 @@ def parse_args(parse_this=None):
         help="The git repo where the PR lives. This should look like: Org/Repo"
     )
     one_off_parser.add_argument(
+        "--pr-file",
+        action="store",
+        help="File added to the git repo by the PR"
+    )
+    one_off_parser.add_argument(
         '--stage-for-upload', action='store_true',
         help="create job that stages package for upload as part of the pipeline")
     one_off_parser.add_argument(
