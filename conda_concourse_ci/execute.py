@@ -721,6 +721,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 }
         resources.append(pull_recipes)
 
+    """ TODO: find another way of reporting build status to the PR
     time_10m = {
              "name": "time-10m",
              "type": "time",
@@ -753,6 +754,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     resources.append(time_10m)
     resources.append(pbs_scripts)
     resources.append(rsync_pr_checks)
+    """
 
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
@@ -767,6 +769,8 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     params['PIPELINE_NAME'] = config_vars.get('base-name')
     post_concourse_status_config['params'] = params
 
+    """ TODO: find another way of reporting build status to the PR
+    get_current_status_config = config_vars['get-current-status-config']
     post_pr_status = {
             "name": "post-pr-status",
             "plan": [
@@ -798,6 +802,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
             }
 
     remapped_jobs.append(post_pr_status)
+    """
 
     for job in remapped_jobs:
         if job.get('name') in order:
