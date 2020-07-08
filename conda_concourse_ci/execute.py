@@ -1068,7 +1068,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
-def add_push_branch_job(plan, data, folders, branches):
+def add_push_branch_job(plan, data, folders, branches, pr_merged_resource):
     """ Adds the push branch job to the plan. """
     if 'push-branch-config' not in data:
         raise Exception(
@@ -1076,6 +1076,8 @@ def add_push_branch_job(plan, data, folders, branches):
             "to 'push-branch-config entry"))
 
     job_plan = []
+    if pr_merged_resource:
+        job_plan.append({'get': 'pr-merged', 'trigger': True})
     # resources to add
     if branches is None:
         branches = ['automated-build']
@@ -1104,7 +1106,7 @@ def add_push_branch_job(plan, data, folders, branches):
     return
 
 
-def add_upload_job(plan, data, commit_msg):
+def add_upload_job(plan, data, commit_msg, pr_merged_resource):
     """ Adds the upload job and a resource (if needed) to the plan. """
     if 'stage-for-upload-config' not in data:
         raise Exception(
@@ -1112,6 +1114,8 @@ def add_upload_job(plan, data, commit_msg):
             "to 'stage-for-upload-config entry"))
 
     job_plan = []
+    if pr_merged_resource:
+        job_plan.append({'get': 'pr-merged', 'trigger': True})
     # add a git resource if specified in the configuration file
     # this resource should be added as an input to the stage-for-upload-config
     # if it is needed in the upload job
@@ -1224,10 +1228,24 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         repository=kw.get("repository", None),
         folders=folders
     )
+    if kw.get('pr_file'):
+        pr_merged_resource = {
+            "name": "pr-merged",
+            "type": "git",
+            "source": {
+                "uri": data['pr-repo'],
+                "branch": "master",
+                "paths": [kw.get("pr_file")],
+            }
+        }
+        plan['resources'].append(pr_merged_resource)
+    else:
+        pr_merged_resource = None
+
     if kw.get('stage_for_upload', False):
-        add_upload_job(plan, data, kw['commit_msg'])
+        add_upload_job(plan, data, kw['commit_msg'], pr_merged_resource)
     if kw.get('push_branch', False):
-        add_push_branch_job(plan, data, folders, kw['branches'])
+        add_push_branch_job(plan, data, folders, kw['branches'], pr_merged_resource)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
