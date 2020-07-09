@@ -1017,7 +1017,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
-def add_push_branch_job(plan, data, folders, branches, pr_merged_resource):
+def add_push_branch_job(plan, data, folders, branches, pr_merged_resource, stage_job_name):
     """ Adds the push branch job to the plan. """
     if 'push-branch-config' not in data:
         raise Exception(
@@ -1026,7 +1026,14 @@ def add_push_branch_job(plan, data, folders, branches, pr_merged_resource):
 
     job_plan = []
     if pr_merged_resource:
-        job_plan.append({'get': 'pr-merged', 'trigger': True})
+        # The branch push causes a version change in the pull-recipes-<branch>
+        # resource(s) which causes the artifacts to be removed. To avoid a
+        # race condition between these jobs the packages need to be uploaded
+        # before pushing branch(es).
+        if stage_job_name:
+            job_plan.append({'get': 'pr-merged', 'trigger': True, 'passed': ['stage_for_upload']})
+        else:
+            job_plan.append({'get': 'pr-merged', 'trigger': True})
     # resources to add
     if branches is None:
         branches = ['automated-build']
@@ -1194,7 +1201,12 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     if kw.get('stage_for_upload', False):
         add_upload_job(plan, data, kw['commit_msg'], pr_merged_resource)
     if kw.get('push_branch', False):
-        add_push_branch_job(plan, data, folders, kw['branches'], pr_merged_resource)
+        if kw.get('stage_for_upload', False):
+            stage_job_name = 'stage_for_upload'
+        else:
+            stage_job_name = None
+        add_push_branch_job(
+            plan, data, folders, kw['branches'], pr_merged_resource, stage_job_name)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
