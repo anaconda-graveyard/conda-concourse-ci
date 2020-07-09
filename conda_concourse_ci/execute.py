@@ -721,7 +721,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 }
         resources.append(pull_recipes)
 
-    """ TODO: find another way of reporting build status to the PR
+    """ TODO: find another way of reporting build status to the PR"""
     time_10m = {
              "name": "time-10m",
              "type": "time",
@@ -754,8 +754,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     resources.append(time_10m)
     resources.append(pbs_scripts)
     resources.append(rsync_pr_checks)
-    """
->>>>>>> 5d49ff69ce0912c44d3eca8ba4ceeca5e06975a0
 
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
@@ -856,13 +854,15 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 if plan.get('task', '') == 'build':
                     command = plan.get('config').get('run').get('args')[-1]
                     clean_feedstock_linux = 'for i in `ls pull-recipes*`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
+                    # TODO fix this
                     clean_feedstock_win = 'pushd %cd%\pull-recipes* for /D %%D in ("*") do (if /I not "%%~nxD"=="recipe") for %%F in ("*") do (del "%%~F") popd'
                     import re
                     # replace the old rsync dir with the new one
                     command = re.sub(r'rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes*/ ', command)
                     print(job.get("name"))
                     if "winbuilder" in job.get("name"):
-                        command = clean_feedstock_win + command
+                        # command = clean_feedstock_win + command
+                        command = command
                     else:
                         command = clean_feedstock_linux + command
                     plan.get('config').get('run').get('args')[-1] = command
