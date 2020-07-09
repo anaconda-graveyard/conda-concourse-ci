@@ -353,12 +353,12 @@ def convert_task(subdir):
             'path': 'sh',
             'args': [
                 '-exc',
-                     'mkdir -p converted-artifacts/{subdir}\n'
-                     'mkdir -p converted-artifacts/noarch\n'
-                     'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
-                     'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
-                'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
-                'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
+                    'mkdir -p converted-artifacts/{subdir}\n'
+                    'mkdir -p converted-artifacts/noarch\n'
+                    'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
+                    'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
+            'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
+            'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
                 .format(subdir=subdir)
                 ],
             }
@@ -711,15 +711,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
         else:
             raise Exception("The number of branches either needs to be exactly one or equal to the number of feedstocks submitted. Exiting.")
 
-        deployment_approval = {
-                'name': 'deployment-approval-{0}'.format(folder.rsplit('-', 1)[0]),
-                'type': 'git',
-                'source': {
-                    'branch': 'master',
-                    'paths': ['recipe/meta.yaml'],
-                    'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
-                    }
-                }
         pull_recipes = {
                 'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0]),
                 'type': 'git',
@@ -728,9 +719,9 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                     'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
                     }
                 }
-        resources.append(deployment_approval)
         resources.append(pull_recipes)
 
+    """ TODO: find another way of reporting build status to the PR
     time_10m = {
              "name": "time-10m",
              "type": "time",
@@ -763,56 +754,56 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     resources.append(time_10m)
     resources.append(pbs_scripts)
     resources.append(rsync_pr_checks)
+    """
+>>>>>>> 5d49ff69ce0912c44d3eca8ba4ceeca5e06975a0
 
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
             del(resources[n])
 
     # need to modify jobs
+    post_concourse_status_config = config_vars['post-concourse-status-config']
 
-    for folder in folders:
-        rsyncs = ['rsync_{}'.format(i) for i in order if i.startswith(folder.split('-')[0])]
-        inputs = []
-        sync_after_pr_merge_plan = [{'get': 'deployment-approval-{0}'.format(folder.rsplit('-', 1)[0]), 'trigger': True}]
-        for rsync in rsyncs:
-            if not folder.startswith('test-'):
-                sync_after_pr_merge_plan.append({'get': rsync})
-                inputs.append({'name': rsync})
+    params = post_concourse_status_config.get('params', {})
+    params['PR_NUM'] = pr_num
+    params['REPOSITORY_NAME'] = repository
+    params['PIPELINE_NAME'] = config_vars.get('base-name')
+    post_concourse_status_config['params'] = params
 
-        sync_the_thing_task = {
-            'task': 'sync_the_thing',
-            'config': {
-                'platform': 'linux',
-                'image_resource': {
-                    'type': 'docker-image',
-                    'source': {
-                        'repository': 'conda/c3i-linux-64',
-                        'tag': 'latest'
-                        }
+    """ TODO: find another way of reporting build status to the PR
+    get_current_status_config = config_vars['get-current-status-config']
+    post_pr_status = {
+            "name": "post-pr-status",
+            "plan": [
+                {"get": "rsync-pr-checks"},
+                {"get": "pbs-scripts"},
+                {"get": "time-10m", "trigger": True},
+                {"config": get_current_status_config,
+                    "task": "get-current-status"
                     },
-                'run': {
-                    'path': 'sh',
-                    'args': [
-                        '-exc',
-                        ('if ls */*/*.tar.bz2 1> /dev/null 2>&1; then\n'
-                         'echo "PR has been merged, we should probably do something huh?"\n'
-                         'else\n'
-                         'echo "first run skipping"\n'
-                         'fi'
-                         )]
+                {
+                    "get_params": {
+                        "skip_download": True
+                        },
+                    "params": {
+                        "rsync_opts": [
+                            "--archive",
+                            "--no-perms",
+                            "--omit-dir-times",
+                            "--verbose"
+                            ],
+                        "sync_dir": "status"
+                        },
+                    "put": "rsync-pr-checks"
                     },
-                'inputs': inputs
-                }
+                {"task": "post-concourse-status",
+                 "config": post_concourse_status_config,
+                 }
+                ]
             }
 
-        sync_after_pr_merge_plan.append(sync_the_thing_task)
-
-        sync_after_pr_merge = {
-            'name': 'sync-{0}-after-PR-merge'.format(folder.rsplit('-', 1)[0]),
-            'plan': sync_after_pr_merge_plan
-            }
-
-        remapped_jobs.insert(0, sync_after_pr_merge)
+    remapped_jobs.append(post_pr_status)
+    """
 
     get_current_status_config = config_vars['get-current-status-config']
     post_concourse_status_config = config_vars['post-concourse-status-config']
@@ -1073,7 +1064,45 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
-def add_upload_job(plan, data, commit_msg):
+def add_push_branch_job(plan, data, folders, branches, pr_merged_resource):
+    """ Adds the push branch job to the plan. """
+    if 'push-branch-config' not in data:
+        raise Exception(
+            ("--push-branch specified but configuration file contains "
+            "to 'push-branch-config entry"))
+
+    job_plan = []
+    if pr_merged_resource:
+        job_plan.append({'get': 'pr-merged', 'trigger': True})
+    # resources to add
+    if branches is None:
+        branches = ['automated-build']
+    for n, folder in enumerate(folders):
+        if len(branches) == 1:
+            branch = branches[0]
+        elif len(folders) == len(branches):
+            branch = branches[n]
+        else:
+            raise Exception(
+                "The number of branches either needs to be exactly one or "
+                "equal to the number of feedstocks submitted. Exiting.")
+
+        config = data.get('push-branch-config')
+        # add PIPELINE and GIT_COMMIT_MSG to params
+        params = config.get('params', {})
+        params['BRANCH'] = branch
+        params['FEEDSTOCK'] = folder
+        config['params'] = params
+        job_plan.append({
+            'task': 'push-branch',
+            'trigger': False,
+            'config': config,
+        })
+        plan['jobs'].append({'name': f'push_branch_to_{folder}', 'plan': job_plan})
+    return
+
+
+def add_upload_job(plan, data, commit_msg, pr_merged_resource):
     """ Adds the upload job and a resource (if needed) to the plan. """
     if 'stage-for-upload-config' not in data:
         raise Exception(
@@ -1081,6 +1110,8 @@ def add_upload_job(plan, data, commit_msg):
             "to 'stage-for-upload-config entry"))
 
     job_plan = []
+    if pr_merged_resource:
+        job_plan.append({'get': 'pr-merged', 'trigger': True})
     # add a git resource if specified in the configuration file
     # this resource should be added as an input to the stage-for-upload-config
     # if it is needed in the upload job
@@ -1193,8 +1224,24 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         repository=kw.get("repository", None),
         folders=folders
     )
+    if kw.get('pr_file'):
+        pr_merged_resource = {
+            "name": "pr-merged",
+            "type": "git",
+            "source": {
+                "uri": data['pr-repo'],
+                "branch": "master",
+                "paths": [kw.get("pr_file")],
+            }
+        }
+        plan['resources'].append(pr_merged_resource)
+    else:
+        pr_merged_resource = None
+
     if kw.get('stage_for_upload', False):
-        add_upload_job(plan, data, kw['commit_msg'])
+        add_upload_job(plan, data, kw['commit_msg'], pr_merged_resource)
+    if kw.get('push_branch', False):
+        add_push_branch_job(plan, data, folders, kw['branches'], pr_merged_resource)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
