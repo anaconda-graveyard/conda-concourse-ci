@@ -721,7 +721,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 }
         resources.append(pull_recipes)
 
-    """ TODO: find another way of reporting build status to the PR
+    """ TODO: find another way of reporting build status to the PR"""
     time_10m = {
              "name": "time-10m",
              "type": "time",
@@ -754,7 +754,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     resources.append(time_10m)
     resources.append(pbs_scripts)
     resources.append(rsync_pr_checks)
-    """
 
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
@@ -804,6 +803,47 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     remapped_jobs.append(post_pr_status)
     """
 
+    get_current_status_config = config_vars['get-current-status-config']
+    post_concourse_status_config = config_vars['post-concourse-status-config']
+
+    params = post_concourse_status_config.get('params', {})
+    params['PR_NUM'] = pr_num
+    params['REPOSITORY_NAME'] = repository
+    params['PIPELINE_NAME'] = config_vars.get('base-name')
+    post_concourse_status_config['params'] = params
+
+    post_pr_status = {
+            "name": "post-pr-status",
+            "plan": [
+                {"get": "rsync-pr-checks"},
+                {"get": "pbs-scripts"},
+                {"get": "time-10m", "trigger": True},
+                {"config": get_current_status_config,
+                    "task": "get-current-status"
+                    },
+                {
+                    "get_params": {
+                        "skip_download": True
+                        },
+                    "params": {
+                        "rsync_opts": [
+                            "--archive",
+                            "--no-perms",
+                            "--omit-dir-times",
+                            "--verbose"
+                            ],
+                        "sync_dir": "status"
+                        },
+                    "put": "rsync-pr-checks"
+                    },
+                {"task": "post-concourse-status",
+                 "config": post_concourse_status_config,
+                 }
+                ]
+            }
+
+    remapped_jobs.append(post_pr_status)
+
     for job in remapped_jobs:
         if job.get('name') in order:
             for num, plan in enumerate(job.get('plan')):
@@ -813,11 +853,18 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                             plan.update({'get': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0])})
                 if plan.get('task', '') == 'build':
                     command = plan.get('config').get('run').get('args')[-1]
-                    clean_feedstock = 'for i in `ls pull-recipes`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
+                    clean_feedstock_linux = 'for i in `ls pull-recipes*`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
+                    # TODO fix this
+                    # clean_feedstock_win = 'pushd %cd%\pull-recipes* for /D %%D in ("*") do (if /I not "%%~nxD"=="recipe") for %%F in ("*") do (del "%%~F") popd'
                     import re
                     # replace the old rsync dir with the new one
                     command = re.sub(r'rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes*/ ', command)
-                    command = clean_feedstock + command
+                    print(job.get("name"))
+                    if "winbuilder" in job.get("name"):
+                        # command = clean_feedstock_win + command
+                        command = command
+                    else:
+                        command = clean_feedstock_linux + command
                     plan.get('config').get('run').get('args')[-1] = command
                     inputs = plan.get('config').get('inputs')
                     for folder in folders:
