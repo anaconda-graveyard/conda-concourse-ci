@@ -1123,7 +1123,7 @@ def add_destroy_pipeline_job(plan, data, folders):
     passed_jobs.append('stage_for_upload')
     job_plan.append({'get': 'pr-merged', 'trigger': True, 'passed': passed_jobs})
 
-    config = data.get("destroy-branch-config")
+    config = data.get("destroy-pipeline-config")
     params = config.get("params", {})
     params['PIPELINE'] = data['base-name']
     config['params'] = params
