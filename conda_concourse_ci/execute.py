@@ -1109,6 +1109,33 @@ def add_push_branch_job(plan, data, folders, branches, pr_merged_resource, stage
     return
 
 
+def add_destroy_pipeline_job(plan, data, folders):
+    """
+    Adds destroy pipeline job to the plan.
+    """
+    if 'destroy-pipeline-config' not in data:
+        raise Exception(
+            "--destroy-pipeline specified but configuration file does not "
+            "have that entry."
+                )
+    job_plan = []
+    passed_jobs = [f'push_branch_to_{folder}' for folder in folders]
+    passed_jobs.append('stage_for_upload')
+    job_plan.append({'get': 'pr-merged', 'trigger': True, 'passed': passed_jobs})
+
+    config = data.get("destroy-pipeline-config")
+    params = config.get("params", {})
+    params['PIPELINE'] = data['base-name']
+    config['params'] = params
+    job_plan.append({
+        'task': 'destroy-pipeline',
+        'trigger': False,
+        'config': config
+        })
+    plan['jobs'].append({'name': 'destroy_pipeline', 'plan': job_plan})
+    return
+
+
 def add_upload_job(plan, data, commit_msg, pr_merged_resource):
     """ Adds the upload job and a resource (if needed) to the plan. """
     if 'stage-for-upload-config' not in data:
@@ -1162,6 +1189,11 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         if kw.get('commit_msg') is None:
             raise ValueError(
                 "--stage-for-upload requires --commit-msg to be specified")
+    if kw.get('destroy_pipeline', False):
+        if not kw.get('stage_for_upload', False) or not kw.get('push_branch', False):
+            raise ValueError(
+                    "--destroy-pipeline requires that --push-branch "
+                    "and stage-for-upload be specified as well.")
     checkout_rev = stop_rev or git_rev
     folders = folders
     path = path.replace('"', '')
@@ -1254,6 +1286,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
             stage_job_name = None
         add_push_branch_job(
             plan, data, folders, kw['branches'], pr_merged_resource, stage_job_name)
+    if kw.get('destroy_pipeline', False):
+        add_destroy_pipeline_job(plan, data, folders)
 
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 

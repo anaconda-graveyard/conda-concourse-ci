@@ -137,6 +137,11 @@ def parse_args(parse_this=None):
         '--push-branch', action='store_true',
         help="create a job that push the branch(es) used for the build to master")
     one_off_parser.add_argument(
+        '--destroy-pipeline', action='store_true',
+        help="destroys the pipeline once the review branch has been merged, "
+        "the artifacts have been staged, and the reciepe repo has been updated. "
+        "This requires --stage-for-upload and --push-branch options.")
+    one_off_parser.add_argument(
         '--commit-msg', action='store',
         help=("git commit message to record when packages are uploaded, "
               "required when --stage-for-upload specified"))
