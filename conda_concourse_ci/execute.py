@@ -722,6 +722,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
         resources.append(pull_recipes)
 
     """ TODO: find another way of reporting build status to the PR"""
+    """
     time_10m = {
              "name": "time-10m",
              "type": "time",
@@ -754,7 +755,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     resources.append(time_10m)
     resources.append(pbs_scripts)
     resources.append(rsync_pr_checks)
-
+    """
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
             del(resources[n])
