@@ -761,6 +761,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
             del(resources[n])
 
     # need to modify jobs
+    """
     post_concourse_status_config = config_vars['post-concourse-status-config']
 
     params = post_concourse_status_config.get('params', {})
@@ -768,6 +769,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     params['REPOSITORY_NAME'] = repository
     params['PIPELINE_NAME'] = config_vars.get('base-name')
     post_concourse_status_config['params'] = params
+    """
 
     """ TODO: find another way of reporting build status to the PR
     get_current_status_config = config_vars['get-current-status-config']
@@ -803,7 +805,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
 
     remapped_jobs.append(post_pr_status)
     """
-
+    """
     get_current_status_config = config_vars['get-current-status-config']
     post_concourse_status_config = config_vars['post-concourse-status-config']
 
@@ -812,7 +814,7 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     params['REPOSITORY_NAME'] = repository
     params['PIPELINE_NAME'] = config_vars.get('base-name')
     post_concourse_status_config['params'] = params
-
+    """
     for job in remapped_jobs:
         if job.get('name') in order:
             for num, plan in enumerate(job.get('plan')):
