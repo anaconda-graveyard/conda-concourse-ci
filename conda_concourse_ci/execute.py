@@ -721,100 +721,10 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                 }
         resources.append(pull_recipes)
 
-    """ TODO: find another way of reporting build status to the PR"""
-    """
-    time_10m = {
-             "name": "time-10m",
-             "type": "time",
-             "source": {
-                 "interval": "10m"
-                 }
-            }
-    pbs_scripts = {
-                "name": "pbs-scripts",
-                "type": "git",
-                "source": {
-                    "branch": config_vars.get('script-repo-branch', 'master'),
-                    "uri": config_vars.get("script-repo-uri"),
-                    "username": config_vars.get("script-repo-user"),
-                    "password": "((common.pbs-token))"
-                    }
-            }
-    rsync_pr_checks = {
-            "name": "rsync-pr-checks",
-            "type": "rsync-resource",
-            "source": {
-                "base_dir": os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'], 'status'),
-                "disable_version_path": True,
-                "private_key": "((common.intermediate-private-key))",
-                "server": config_vars["intermediate-server"],
-                "user": config_vars["intermediate-user"]
-                }
-            }
-
-    resources.append(time_10m)
-    resources.append(pbs_scripts)
-    resources.append(rsync_pr_checks)
-    """
     for n, resource in enumerate(resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
             del(resources[n])
 
-    # need to modify jobs
-    """
-    post_concourse_status_config = config_vars['post-concourse-status-config']
-
-    params = post_concourse_status_config.get('params', {})
-    params['PR_NUM'] = pr_num
-    params['REPOSITORY_NAME'] = repository
-    params['PIPELINE_NAME'] = config_vars.get('base-name')
-    post_concourse_status_config['params'] = params
-    """
-
-    """ TODO: find another way of reporting build status to the PR
-    get_current_status_config = config_vars['get-current-status-config']
-    post_pr_status = {
-            "name": "post-pr-status",
-            "plan": [
-                {"get": "rsync-pr-checks"},
-                {"get": "pbs-scripts"},
-                {"get": "time-10m", "trigger": True},
-                {"config": get_current_status_config,
-                    "task": "get-current-status"
-                    },
-                {
-                    "get_params": {
-                        "skip_download": True
-                        },
-                    "params": {
-                        "rsync_opts": [
-                            "--archive",
-                            "--no-perms",
-                            "--omit-dir-times",
-                            "--verbose"
-                            ],
-                        "sync_dir": "status"
-                        },
-                    "put": "rsync-pr-checks"
-                    },
-                {"task": "post-concourse-status",
-                 "config": post_concourse_status_config,
-                 }
-                ]
-            }
-
-    remapped_jobs.append(post_pr_status)
-    """
-    """
-    get_current_status_config = config_vars['get-current-status-config']
-    post_concourse_status_config = config_vars['post-concourse-status-config']
-
-    params = post_concourse_status_config.get('params', {})
-    params['PR_NUM'] = pr_num
-    params['REPOSITORY_NAME'] = repository
-    params['PIPELINE_NAME'] = config_vars.get('base-name')
-    post_concourse_status_config['params'] = params
-    """
     for job in remapped_jobs:
         if job.get('name') in order:
             for num, plan in enumerate(job.get('plan')):
