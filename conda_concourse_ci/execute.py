@@ -812,38 +812,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
     params['PIPELINE_NAME'] = config_vars.get('base-name')
     post_concourse_status_config['params'] = params
 
-    post_pr_status = {
-            "name": "post-pr-status",
-            "plan": [
-                {"get": "rsync-pr-checks"},
-                {"get": "pbs-scripts"},
-                {"get": "time-10m", "trigger": True},
-                {"config": get_current_status_config,
-                    "task": "get-current-status"
-                    },
-                {
-                    "get_params": {
-                        "skip_download": True
-                        },
-                    "params": {
-                        "rsync_opts": [
-                            "--archive",
-                            "--no-perms",
-                            "--omit-dir-times",
-                            "--verbose"
-                            ],
-                        "sync_dir": "status"
-                        },
-                    "put": "rsync-pr-checks"
-                    },
-                {"task": "post-concourse-status",
-                 "config": post_concourse_status_config,
-                 }
-                ]
-            }
-
-    remapped_jobs.append(post_pr_status)
-
     for job in remapped_jobs:
         if job.get('name') in order:
             for num, plan in enumerate(job.get('plan')):
