@@ -928,6 +928,12 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                         '-o', 'StrictHostKeyChecking=no', '-i', key_file,
                         '{intermediate-user}@{intermediate-server}'.format(**data),
                         'mkdir -p {intermediate-base-folder}/{base-name}/status'.format(**data)])
+        # create the PR file
+        if kw.get('pr_num', None):
+            subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
+                            '-o', 'StrictHostKeyChecking=no', '-i', key_file,
+                            '{intermediate-user}@{intermediate-server}'.format(**data),
+                            'echo {0} > {intermediate-base-folder}/{base-name}/pr_num'.format(kw.get('pr_num'), **data)])
     os.remove(key_file)
 
     _ensure_login_and_sync(config_root_dir)
