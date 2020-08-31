@@ -909,6 +909,11 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                         '-o', 'StrictHostKeyChecking=no', '-i', key_file,
                         '{intermediate-user}@{intermediate-server}'.format(**data),
                         'mkdir -p {intermediate-base-folder}/{base-name}'.format(**data)])
+        # create the PR file
+        if kw.get('pr_num', None):
+            with open(f"{src_dir}/pr_num", 'w') as pr_file:
+                pr_file.write(kw.get('pr_num'))
+
         subprocess.check_call(['rsync', '--delete', '-av', '-e',
                                'ssh -o UserKnownHostsFile=/dev/null '
                                '-o StrictHostKeyChecking=no -i ' + key_file,
