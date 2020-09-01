@@ -39,7 +39,7 @@ def test_submit_one_off(mocker):
         variant_config_files=None,
         output_dir=None,
         platform_filters=None,
-        worker_tags=None,
+        worker_tags=['all'],
         push_branch=False,
         destroy_pipeline=False,
         clobber_sections_file=None,
@@ -78,7 +78,7 @@ def test_submit_batch(mocker):
         variant_config_files=None,
         output_dir=None,
         platform_filters=None,
-        worker_tags=None,
+        worker_tags=['all'],
         clobber_sections_file=None,
         append_sections_file=None,
         use_lock_pool=False,
@@ -119,7 +119,7 @@ def test_examine(mocker):
                                                        path='.', steps=0, stop_rev=None,
                                                        subparser_name='examine', test=False,
                                                        channel=None, variant_config_files=None,
-                                                       platform_filters=None, worker_tags=None,
+                                                       platform_filters=None, worker_tags=['all'],
                                                        pass_throughs=[], skip_existing=True)
 
 
