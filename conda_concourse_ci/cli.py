@@ -54,7 +54,7 @@ def parse_args(parse_this=None):
     examine_parser.add_argument('--worker-tag', '-t', action='append',
                                 help="set worker tag(s) to limit where jobs will run.  Applies "
                                 "to all jobs.  For finer control, use extra/worker_tags in "
-                                "meta.yaml with selectors.",
+                                "meta.yaml with selectors. Default is 'all'.",
                                 dest='worker_tags', default='all')
     examine_parser.add_argument(
         '-m', '--variant-config-files',
@@ -162,7 +162,7 @@ def parse_args(parse_this=None):
     one_off_parser.add_argument('--worker-tag', '-t', action='append',
                                 help="set worker tag(s) to limit where jobs will run.  Applies "
                                 "to all jobs.  For finer control, use extra/worker_tags in "
-                                "meta.yaml with selectors.",
+                                "meta.yaml with selectors. Default is 'all'.",
                                 dest='worker_tags', default='all')
     one_off_parser.add_argument(
         '-m', '--variant-config-files',
@@ -250,7 +250,7 @@ def parse_args(parse_this=None):
     batch_parser.add_argument('--worker-tag', '-t', action='append',
                                 help="set worker tag(s) to limit where jobs will run.  Applies "
                                 "to all jobs.  For finer control, use extra/worker_tags in "
-                                "meta.yaml with selectors.",
+                                "meta.yaml with selectors. Default is 'all'.",
                                 dest='worker_tags', default='all')
     batch_parser.add_argument(
         '-m', '--variant-config-files',
