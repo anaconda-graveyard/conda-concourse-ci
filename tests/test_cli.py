@@ -56,6 +56,7 @@ def test_submit_one_off(mocker):
         pr_num=None,
         pr_file=None,
         repository=None,
+        dry_run=False,
     )
 
 
