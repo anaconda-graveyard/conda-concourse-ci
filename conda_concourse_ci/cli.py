@@ -204,6 +204,14 @@ def parse_args(parse_this=None):
         help="Uploads built packages to staging channel",
         action="store_true",
     )
+    one_off_parser.add_argument(
+        '--dry-run',
+        action="store_true",
+        help=(
+            "Dry run, prepare concourse plan and files but do not submit. "
+            "Best used with the --output-dir option so the output can be inspected"
+        ),
+    )
 
     batch_parser = sp.add_parser('batch', help="submit a batch of one-off jobs.")
     batch_parser.add_argument(

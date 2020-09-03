@@ -1327,9 +1327,13 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, pa
         compute_builds(path=recipe_root_dir, base_name=pipeline_label, folders=folders,
                        matrix_base_dir=config_root_dir, config_overrides=config_overrides,
                        pass_throughs=pass_throughs, **kwargs)
-        submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
-               pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
-               config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
+        if kwargs.get("dry_run", False):
+            print("!!! Dry run, pipeline not submitted to concourse")
+            print(f"!!! Prepared plans and recipes stored in {tmpdir}")
+        else:
+            submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
+                pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
+                config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
 
 
 def submit_batch(
