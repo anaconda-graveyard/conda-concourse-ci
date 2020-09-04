@@ -27,6 +27,7 @@ import yaml
 
 from .compute_build_graph import (construct_graph, expand_run, git_changed_recipes, order_build,
                                   package_key)
+from .concourse import Pipeline
 from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
 from .uploads import upload_staging_channel
@@ -368,7 +369,6 @@ def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None,
         use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
-    jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
     if graph.number_of_nodes() == 0:
@@ -376,13 +376,6 @@ def graph_to_plan_with_jobs(
             "Build graph is empty. The default behaviour is to skip existing builds."
         )
 
-    resource_types = [{'name': 'rsync-resource',
-                       'type': 'docker-image',
-                       'source': {
-                           'repository': 'conda/concourse-rsync-resource',
-                           'tag': 'latest'
-                           }
-                       }]
     base_folder = os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'])
     recipe_folder = os.path.join(base_folder, 'plan_and_recipes')
     artifact_folder = os.path.join(base_folder, 'artifacts')
@@ -392,125 +385,156 @@ def graph_to_plan_with_jobs(
         artifact_folder = os.path.join(artifact_folder, commit_id)
         status_folder = os.path.join(status_folder, commit_id)
 
-    resources = [{'name': 'rsync-recipes',
-                  'type': 'rsync-resource',
-                  'source': {
-                      'server': config_vars['intermediate-server'],
-                      'base_dir': recipe_folder,
-                      'user': config_vars['intermediate-user'],
-                      'private_key': config_vars['intermediate-private-key-job'],
-                      'disable_version_path': True,
-                  }},
-                 {'name': 'rsync-source',
-                  'type': 'rsync-resource',
-                      'source': {
-                      'server': config_vars['intermediate-server'],
-                      'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'source'),
-                      'user': config_vars['intermediate-user'],
-                      'private_key': config_vars['intermediate-private-key-job'],
-                      'disable_version_path': True,
-                      }},
-                 {'name': 'rsync-stats',
-                  'type': 'rsync-resource',
-                      'source': {
-                      'server': config_vars['intermediate-server'],
-                      'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'stats'),
-                      'user': config_vars['intermediate-user'],
-                      'private_key': config_vars['intermediate-private-key-job'],
-                      'disable_version_path': True,
-                  }}
-                 ]
-    if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"]
-           for node in order):
-        resources += [
-                 {'name': 'rsync-build-pack',
-                  'type': 'rsync-resource',
-                     'source': {
-                     'server': config_vars['intermediate-server'],
-                     'base_dir': config_vars['build_env_pkgs'],
-                     'user': config_vars['intermediate-user'],
-                     'private_key': config_vars['intermediate-private-key-job'],
-                     'disable_version_path': True,
-                 }}]
+    pipeline = Pipeline()
+    pipeline.add_resource_type(
+        name='rsync-resource',
+        type_='docker-image',
+        source={
+            'repository': 'conda/concourse-rsync-resource',
+            'tag': 'latest'
+        },
+    )
+    pipeline.add_resource(
+        name='rsync-recipes',
+        type_='rsync-resource',
+        source={
+            'server': config_vars['intermediate-server'],
+            'base_dir': recipe_folder,
+            'user': config_vars['intermediate-user'],
+            'private_key': config_vars['intermediate-private-key-job'],
+            'disable_version_path': True,
+        },
+    )
+    pipeline.add_resource(
+        name='rsync-source',
+        type_='rsync-resource',
+        source={
+            'server': config_vars['intermediate-server'],
+            'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'source'),
+            'user': config_vars['intermediate-user'],
+            'private_key': config_vars['intermediate-private-key-job'],
+            'disable_version_path': True,
+        },
+    )
+    pipeline.add_resource(
+        name='rsync-stats',
+        type_='rsync-resource',
+        source={
+            'server': config_vars['intermediate-server'],
+            'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'stats'),
+            'user': config_vars['intermediate-user'],
+            'private_key': config_vars['intermediate-private-key-job'],
+            'disable_version_path': True,
+        },
+    )
+    if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order):
+        pipeline.add_resource(
+            name='rsync-build-pack',
+            type_='rsync-resource',
+            source={
+                'server': config_vars['intermediate-server'],
+                'base_dir': config_vars['build_env_pkgs'],
+                'user': config_vars['intermediate-user'],
+                'private_key': config_vars['intermediate-private-key-job'],
+                'disable_version_path': True,
+            },
+        )
 
-    rsync_resources = []
-
+    jobs = OrderedDict()
     for node in order:
         test_only = graph.nodes[node].get('test_only', False)
         meta = graph.nodes[node]['meta']
         worker = graph.nodes[node]['worker']
-        rsync_artifacts = True if worker.get("rsync") is None or worker.get("rsync") is True else False
+        rsync_artifacts = (
+            True if worker.get("rsync") is None or worker.get("rsync") is True
+            else False)
         resource_name = 'rsync_' + node
         key = (meta.name(), worker['label'], meta.config.host_subdir,
                HashableDict({k: meta.config.variant[k] for k in meta.get_used_vars()}))
         if not test_only:
-            rsync_resources.append(resource_name)
-            resources.append(
-                {'name': resource_name,
-                'type': 'rsync-resource',
-                'source': {
+            pipeline.add_resource(
+                name=resource_name,
+                type_='rsync-resource',
+                source={
                     'server': config_vars['intermediate-server'],
-                    'base_dir': os.path.join(config_vars['intermediate-base-folder'],
-                                            config_vars['base-name'], 'artifacts'),
+                    'base_dir': os.path.join(
+                        config_vars['intermediate-base-folder'],
+                        config_vars['base-name'], 'artifacts'),
                     'user': config_vars['intermediate-user'],
                     'private_key': config_vars['intermediate-private-key-job'],
                     'disable_version_path': True,
-                }})
-
-        tasks = jobs.get(key, {}).get('tasks',
-                                [{'get': 'rsync-recipes', 'trigger': True}])
+                }
+            )
+        tasks = jobs.get(key, {}).get(
+                'tasks', [{'get': 'rsync-recipes', 'trigger': True}])
 
         if graph.nodes[node]['worker']['platform'] == "win":
-            tasks.append(
-            {'get': 'rsync-build-pack',
-            'params': {
-                'rsync_opts': [
-                    '--include', 'loner_conda_windows.exe',
-                    '--exclude', '*',
-                    '-v'
-            ]}})
+            tasks.append({
+                'get': 'rsync-build-pack',
+                'params': {
+                    'rsync_opts': [
+                        '--include',
+                        'loner_conda_windows.exe',
+                        '--exclude', '*',
+                        '-v'
+                    ]
+                },
+            })
         elif graph.nodes[node]['worker']['platform'] == "osx":
-            tasks.append(
-            {'get': 'rsync-build-pack',
-            'params': {
-                'rsync_opts': [
-                '--include', 'loner_conda_osx.exe',
-                '--exclude', '*',
-                '-v'
-            ]}})
-
+            tasks.append({
+                'get': 'rsync-build-pack',
+                'params': {
+                    'rsync_opts': [
+                        '--include',
+                        'loner_conda_osx.exe',
+                        '--exclude',
+                        '*',
+                        '-v'
+                    ]
+                }
+            })
         prereqs = set(graph.successors(node))
         for prereq in prereqs:
             if rsync_artifacts:
-                tasks.append({'get': 'rsync_' + prereq,
-                                'trigger': False,
-                                'passed': [prereq]})
-
+                tasks.append({
+                    'get': 'rsync_' + prereq,
+                    'trigger': False,
+                    'passed': [prereq]}
+                )
         if prereqs:
             tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
-
-        tasks.append(get_build_task(base_path, graph, node, commit_id, public,
-                                    artifact_input=bool(prereqs),
-                                    worker_tags=worker_tags,
-                                    config_vars=config_vars,
-                                    pass_throughs=pass_throughs,
-                                    test_only=test_only,
-                                    use_repo_access=use_repo_access,
-                                    use_staging_channel=use_staging_channel))
+        tasks.append(get_build_task(
+            base_path, graph, node, commit_id, public,
+            artifact_input=bool(prereqs),
+            worker_tags=worker_tags,
+            config_vars=config_vars,
+            pass_throughs=pass_throughs,
+            test_only=test_only,
+            use_repo_access=use_repo_access,
+            use_staging_channel=use_staging_channel
+        ))
 
         if not test_only:
             tasks.append(convert_task(meta.config.host_subdir))
-            tasks.append({'put': resource_name,
-                        'params': {'sync_dir': 'converted-artifacts',
-                                    'rsync_opts': ["--archive", "--no-perms",
-                                                    "--omit-dir-times", "--verbose",
-                                                    "--exclude", '"**/*.json*"',
-                                                    # html and xml files
-                                                    "--exclude", '"**/*.*ml"',
-                                                    # conda index cache
-                                                    "--exclude", '"**/.cache"',
-                                    ]},
-                        'get_params': {'skip_download': True}})
+            tasks.append({
+                'put': resource_name,
+                'params': {
+                    'sync_dir': 'converted-artifacts',
+                    'rsync_opts': [
+                        "--archive",
+                        "--no-perms",
+                        "--omit-dir-times",
+                        "--verbose",
+                        "--exclude", '"**/*.json*"',
+                        # html and xml files
+                        "--exclude", '"**/*.*ml"',
+                        # conda index cache
+                        "--exclude", '"**/.cache"',
+
+                    ]
+                },
+                'get_params': {'skip_download': True}
+            })
 
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
@@ -527,80 +551,103 @@ def graph_to_plan_with_jobs(
         #     raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
         #                                 "start with 'build', 'test', or 'upload'")
         jobs[key] = {'tasks': tasks, 'meta': meta, 'worker': worker}
-    remapped_jobs = []
+
     for plan_dict in jobs.values():
         plan_worker = plan_dict["worker"]
-        plan_rsync_artifacts = True if plan_worker.get("rsync") is None or plan_worker.get("rsync") is True else False
-        # name = _get_successor_condensed_job_name(graph, plan_dict['meta'])
+        plan_rsync_artifacts = (
+            True if plan_worker.get("rsync") is None or
+            plan_worker.get("rsync") is True
+            else False
+        )
         name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
         if any([t.get('task') == 'test' for t in plan_dict['tasks']]):
             name = 'test-' + name
-
         if plan_rsync_artifacts:
-            plan_dict['tasks'].append({'put': 'rsync-source',
-                                       'params': {'sync_dir': 'output-source',
-                                                  'rsync_opts': ["--archive", "--no-perms",
-                                                                 "--omit-dir-times", "--verbose",
-                                                                 "--exclude", '"*.json*"']},
-                                       'get_params': {'skip_download': True}})
-            plan_dict['tasks'].append({'put': 'rsync-stats',
-                                       'params': {'sync_dir': 'stats',
-                                                  'rsync_opts': ["--archive", "--no-perms",
-                                                                 "--omit-dir-times", "--verbose"]},
-                                       'get_params': {'skip_download': True}})
-        remapped_jobs.append({'name': name, 'plan': plan_dict['tasks']})
+            plan_dict['tasks'].append({
+                'put': 'rsync-source',
+                'params': {
+                    'sync_dir': 'output-source',
+                    'rsync_opts': [
+                        "--archive",
+                        "--no-perms",
+                        "--omit-dir-times",
+                        "--verbose",
+                        "--exclude",
+                        '"*.json*"']
+                },
+                'get_params': {'skip_download': True}
+            })
+            plan_dict['tasks'].append({
+                'put': 'rsync-stats',
+                'params': {
+                    'sync_dir': 'stats',
+                    'rsync_opts': [
+                        "--archive",
+                        "--no-perms",
+                        "--omit-dir-times",
+                        "--verbose"]},
+                'get_params': {'skip_download': True}
+            })
+        pipeline.add_job(name, plan_dict['tasks'])
 
     if config_vars.get('anaconda-upload-token'):
-        remapped_jobs.append({'name': 'anaconda_upload',
-                              'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
-                                       for node in order if
-                                        graph.nodes[node]['worker'].get("rsync") is None or
-                                        graph.nodes[node]['worker'].get("rsync") is True] +
-                                       [{'put': 'anaconda_upload_resource'}]})
-        resource_types.append({'name': 'anacondaorg-resource',
-                       'type': 'docker-image',
-                       'source': {
-                           'repository': 'conda/concourse-anaconda_org-resource',
-                           'tag': 'latest'
-                           }
-                       })
-        resources.append({'name': 'anaconda_upload_resource',
-                  'type': 'anacondaorg-resource',
-                      'source': {
-                      'token': config_vars['anaconda-upload-token'],
-                  }})
+        pipeline.add_jobs(
+            name='anaconda_upload',
+            plan=[{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
+                        for node in order if
+                        graph.nodes[node]['worker'].get("rsync") is None or
+                        graph.nodes[node]['worker'].get("rsync") is True] +
+                 [{'put': 'anaconda_upload_resource'}])
+        pipeline.add_resource_type(
+            name='anacondaorg-resource',
+            type_='docker-image',
+            source={
+                'repository': 'conda/concourse-anaconda_org-resource',
+                'tag': 'latest'
+            },
+        )
+        pipeline.add_resource(
+            name='anaconda_upload_resource',
+            type_='anacondaorg-resource',
+            source={'token': config_vars['anaconda-upload-token']}
+        )
+
     if config_vars.get('repo-username'):
-        remapped_jobs.append({'name': 'repo_v6_upload',
-                              'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
-                                       for node in order if (not node.startswith('test-') and
-                                        (graph.nodes[node]['worker'].get("rsync") is None or
-                                         graph.nodes[node]['worker'].get("rsync") is True))] +
-                                       [{'put': 'repo_resource'}]})
-        resource_types.append({'name': 'repo-resource-type',
-                       'type': 'docker-image',
-                       'source': {
-                           'repository': 'condatest/repo_cli',
-                           'tag': 'latest'
-                           }
-                       })
-        resources.append({'name': 'repo_resource',
-                  'type': 'repo-resource-type',
-                      'source': {
-                      'token': config_vars['repo-token'],
-                      'user': config_vars['repo-username'],
-                      'password': config_vars['repo-password'],
-                      'channel': config_vars['repo-channel'],
-                  }})
+        pipeline.add_job(
+            name='repo_v6_upload',
+            plan=[{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
+                        for node in order if (not node.startswith('test-') and
+                        (graph.nodes[node]['worker'].get("rsync") is None or
+                         graph.nodes[node]['worker'].get("rsync") is True))] +
+                 [{'put': 'repo_resource'}])
+        pipeline.add_resource_type(
+            name='repo-resource-type',
+            type_='docker-image',
+            source={
+                'repository': 'condatest/repo_cli',
+                'tag': 'latest'},
+        )
+        pipeline.add_resource(
+            name='repo_resource',
+            type_='repo-resource-type',
+            source={
+                'token': config_vars['repo-token'],
+                'user': config_vars['repo-username'],
+                'password': config_vars['repo-password'],
+                'channel': config_vars['repo-channel'],
+            },
+        )
 
     if automated_pipeline:
         # build the automated pipeline
-        resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars)
+        build_automated_pipeline(pipeline, folders, order, branches, pr_num, repository, config_vars)
 
     # convert types for smoother output to yaml
-    return {'resource_types': resource_types, 'resources': resources, 'jobs': remapped_jobs}
+    return pipeline
 
 
-def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars):
+def build_automated_pipeline(pline, folders, order, branches, pr_num, repository, config_vars):
+    # TODO adjust to use pipeline rather than pline or incorperate into earlier function
     # resources to add
     if branches is None:
         branches = ['automated-build']
@@ -613,20 +660,20 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
             raise Exception("The number of branches either needs to be exactly one or equal to the number of feedstocks submitted. Exiting.")
 
         pull_recipes = {
-                'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0]),
-                'type': 'git',
-                'source': {
-                    'branch': branch,
-                    'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
-                    }
-                }
-        resources.append(pull_recipes)
+            'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0]),
+            'type': 'git',
+            'source': {
+                'branch': branch,
+                'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
+            },
+        }
+        pline.resources.append(pull_recipes)
 
-    for n, resource in enumerate(resources):
+    for n, resource in enumerate(pline.resources):
         if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
-            del(resources[n])
+            del(pline.resources[n])
 
-    for job in remapped_jobs:
+    for job in pline.jobs:
         if job.get('name') in order:
             for num, plan in enumerate(job.get('plan')):
                 if plan.get('get') == 'rsync-recipes' and not job.get('name').startswith('test-'):
@@ -657,11 +704,11 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                         if i.get('name') == 'rsync-recipes':
                             del(plan['config']['inputs'][n])
                 if plan.get('task', '') == 'test':
-                    for resource in resources:
+                    for resource in plan.resources:
                         if resource.get('name').startswith('rsync_{}'.format(folders[0].split('-')[0])) and 'canary' not in resource.get('name'):
                             plan.get('config').get('inputs').append({'name': resource.get('name')})
 
-    return resource_types, resources, remapped_jobs
+    return
 
 
 def _get_current_git_rev(path, branch=False):
@@ -829,23 +876,22 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
-def add_push_branch_job(plan, data, folders, branches, pr_merged_resource, stage_job_name):
-    """ Adds the push branch job to the plan. """
+def add_push_branch_job(pipeline, data, folders, branches, pr_merged_resource, stage_job_name):
+    """ Adds the push branch job to the pipeline. """
     if 'push-branch-config' not in data:
         raise Exception(
             ("--push-branch specified but configuration file contains "
             "to 'push-branch-config entry"))
-
-    job_plan = []
+    plan = []
     if pr_merged_resource:
         # The branch push causes a version change in the pull-recipes-<branch>
         # resource(s) which causes the artifacts to be removed. To avoid a
         # race condition between these jobs the packages need to be uploaded
         # before pushing branch(es).
         if stage_job_name:
-            job_plan.append({'get': 'pr-merged', 'trigger': True, 'passed': ['stage_for_upload']})
+            plan.append({'get': 'pr-merged', 'trigger': True, 'passed': ['stage_for_upload']})
         else:
-            job_plan.append({'get': 'pr-merged', 'trigger': True})
+            plan.append({'get': 'pr-merged', 'trigger': True})
     # resources to add
     if branches is None:
         branches = ['automated-build']
@@ -865,66 +911,67 @@ def add_push_branch_job(plan, data, folders, branches, pr_merged_resource, stage
         params['BRANCH'] = branch
         params['FEEDSTOCK'] = folder
         config['params'] = params
-        job_plan.append({
+        plan.append({
             'task': 'push-branch',
             'trigger': False,
             'config': config,
         })
-        plan['jobs'].append({'name': f'push_branch_to_{folder}', 'plan': job_plan})
+        pipeline.add_job(f'push_branch_to_{folder}', plan)
     return
 
 
-def add_destroy_pipeline_job(plan, data, folders):
+def add_destroy_pipeline_job(pipeline, data, folders):
     """
-    Adds destroy pipeline job to the plan.
+    Adds a destroy pipeline job to the pipeline.
     """
+    # TODO move this elsewhere
     if 'destroy-pipeline-config' not in data:
         raise Exception(
             "--destroy-pipeline specified but configuration file does not "
             "have that entry."
                 )
-    job_plan = []
     passed_jobs = [f'push_branch_to_{folder}' for folder in folders]
     passed_jobs.append('stage_for_upload')
-    job_plan.append({'get': 'pr-merged', 'trigger': True, 'passed': passed_jobs})
-
     config = data.get("destroy-pipeline-config")
     params = config.get("params", {})
     params['PIPELINE'] = data['base-name']
     config['params'] = params
-    job_plan.append({
+    plan = [{
+        'get': 'pr-merged',
+        'trigger': True,
+        'passed': passed_jobs
+    }, {
         'task': 'destroy-pipeline',
         'trigger': False,
         'config': config
-        })
-    plan['jobs'].append({'name': 'destroy_pipeline', 'plan': job_plan})
+    }]
+    pipeline.add_job('destroy_pipeline', plan)
     return
 
 
-def add_upload_job(plan, data, commit_msg, pr_merged_resource):
-    """ Adds the upload job and a resource (if needed) to the plan. """
+def add_upload_job(pipeline, data, commit_msg, pr_merged_resource):
+    """ Adds the upload job and a resource (if needed) to the pipeline. """
     if 'stage-for-upload-config' not in data:
         raise Exception(
             ("--stage-for-upload specified but configuration file contains "
             "to 'stage-for-upload-config entry"))
 
-    job_plan = []
+    plan = []
     if pr_merged_resource:
-        job_plan.append({'get': 'pr-merged', 'trigger': True})
+        plan.append({'get': 'pr-merged', 'trigger': True})
     # add a git resource if specified in the configuration file
     # this resource should be added as an input to the stage-for-upload-config
     # if it is needed in the upload job
     if "stage-for-upload-repo" in data:
-        resource = {
-            "name": "stage-packages-scripts",
-            "type": "git",
-            "source": {
+        pipeline.add_resource(
+            name="stage-packages-scripts",
+            type_="git",
+            source={
                 "uri": data["stage-for-upload-repo"],
                 "branch": data.get("stage-for-upload-branch", "master"),
             },
-        }
-        plan['resources'].append(resource)
-        job_plan.append({'get': 'stage-packages-scripts', 'trigger': False})
+        )
+        plan.append({'get': 'stage-packages-scripts', 'trigger': False})
 
     config = data.get('stage-for-upload-config')
     # add PIPELINE and GIT_COMMIT_MSG to params
@@ -933,12 +980,12 @@ def add_upload_job(plan, data, commit_msg, pr_merged_resource):
     params['GIT_COMMIT_MSG'] = commit_msg
     config['params'] = params
 
-    job_plan.append({
+    plan.append({
         'task': 'stage-packages',
         'trigger': False,
         'config': config,
     })
-    plan['jobs'].append({'name': 'stage_for_upload', 'plan': job_plan})
+    pipeline.add_job('stage_for_upload', plan)
     return
 
 
@@ -1010,7 +1057,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
     if config_overrides:
         data.update(config_overrides)
 
-    plan = graph_to_plan_with_jobs(
+    pipeline = graph_to_plan_with_jobs(
         os.path.abspath(path),
         task_graph,
         commit_id=repo_commit,
@@ -1028,37 +1075,35 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         folders=folders
     )
     if kw.get('pr_file'):
-        pr_merged_resource = {
-            "name": "pr-merged",
-            "type": "git",
-            "source": {
+        pr_merged_resource = "pr-merged"  # TODO actually a name
+        pipeline.add_resource(
+            name="pr-merged",
+            type_="git",
+            source={
                 "uri": data['pr-repo'],
                 "branch": "master",
                 "paths": [kw.get("pr_file")],
-            }
-        }
-        plan['resources'].append(pr_merged_resource)
+            },
+        )
     else:
         pr_merged_resource = None
-
     if kw.get('stage_for_upload', False):
-        add_upload_job(plan, data, kw['commit_msg'], pr_merged_resource)
+        add_upload_job(pipeline, data, kw['commit_msg'], pr_merged_resource)
     if kw.get('push_branch', False):
         if kw.get('stage_for_upload', False):
             stage_job_name = 'stage_for_upload'
         else:
             stage_job_name = None
         add_push_branch_job(
-            plan, data, folders, kw['branches'], pr_merged_resource, stage_job_name)
+            pipeline, data, folders, kw['branches'], pr_merged_resource, stage_job_name)
     if kw.get('destroy_pipeline', False):
-        add_destroy_pipeline_job(plan, data, folders)
-
+        add_destroy_pipeline_job(pipeline, data, folders)
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     with open(os.path.join(output_dir, 'plan.yml'), 'w') as f:
-        yaml.dump(plan, f, default_flow_style=False)
+        yaml.dump(pipeline.to_dict(), f, default_flow_style=False)
 
     # expand folders to include any dependency builds or tests
     if not os.path.isabs(path):
