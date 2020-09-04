@@ -205,7 +205,7 @@ def consolidate_task(inputs, subdir):
 
 def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
                    worker_tags=None, config_vars={}, pass_throughs=None, test_only=False,
-                   release_lock_step=None, use_repo_access=False, use_staging_channel=False):
+                   use_repo_access=False, use_staging_channel=False):
     meta = graph.nodes[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
 
@@ -308,8 +308,6 @@ def get_build_task(base_path, graph, node, commit_id, public=True, artifact_inpu
                    ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
     if worker_tags:
         task_dict['tags'] = worker_tags
-    if release_lock_step is not None:
-        task_dict['ensure'] = release_lock_step
     return task_dict
 
 
@@ -428,9 +426,8 @@ def sourceclear_task(meta, node, config_vars):
 
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
-        worker_tags=None, pass_throughs=None, use_lock_pool=False,
+        worker_tags=None, pass_throughs=None,
         use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
-    used_pools = {}
     jobs = OrderedDict()
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
@@ -552,30 +549,12 @@ def graph_to_plan_with_jobs(
         if prereqs:
             tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
 
-        if use_lock_pool:
-            # pool name is specified in configuration file
-            pool = worker['pool_name']
-            lock_resource_name = pool + '_lock'
-            used_pools[lock_resource_name] = pool
-            aquire_lock_task = {
-                'put': lock_resource_name,
-                'params': {'acquire': True},
-            }
-            release_lock_step = {
-                'put': lock_resource_name,
-                'params': {'release': lock_resource_name}
-            }
-            tasks.append(aquire_lock_task)  # task right before the build task
-        else:
-            release_lock_step = None
-
         tasks.append(get_build_task(base_path, graph, node, commit_id, public,
                                     artifact_input=bool(prereqs),
                                     worker_tags=worker_tags,
                                     config_vars=config_vars,
                                     pass_throughs=pass_throughs,
                                     test_only=test_only,
-                                    release_lock_step=release_lock_step,
                                     use_repo_access=use_repo_access,
                                     use_staging_channel=use_staging_channel))
 
@@ -689,8 +668,6 @@ def graph_to_plan_with_jobs(
                            'tag': 'latest'
                            }
                        })
-    _add_lock_pool_resources(resources, used_pools, config_vars)
-
     if automated_pipeline:
         # build the automated pipeline
         resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars)
@@ -761,28 +738,6 @@ def build_automated_pipeline(resource_types, resources, remapped_jobs, folders, 
                             plan.get('config').get('inputs').append({'name': resource.get('name')})
 
     return resource_types, resources, remapped_jobs
-
-
-def _add_lock_pool_resources(resources, used_pools, config_vars):
-    """ Add lock pool resources to the resources dictionary """
-    for lock_resource_name, pool in used_pools.items():
-        source = {
-            'uri': '((lock-pool-repo))',
-            'branch': '((lock-pool-branch))',
-            'pool': pool,
-        }
-        if 'lock-pool-private-key' in config_vars:
-            source['private_key'] = '((lock-pool-private-key))'
-        elif 'lock-pool-username' in config_vars:
-            source['username'] = '((lock-pool-username))'
-            source['password'] = '((lock-pool-password))'
-        lock_resource = {
-            'name': lock_resource_name,
-            'type': 'pool',
-            'source': source,
-        }
-        resources.append(lock_resource)
-    return
 
 
 def _get_current_git_rev(path, branch=False):
@@ -1067,7 +1022,7 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
                    worker_tags=None, clobber_sections_file=None, append_sections_file=None,
-                   pass_throughs=None, skip_existing=True, use_lock_pool=False,
+                   pass_throughs=None, skip_existing=True,
                    use_repo_access=False, use_staging_channel=False, **kw):
     if not git_rev and not folders:
         raise ValueError("Either git_rev or folders list are required to know what to compute")
@@ -1140,7 +1095,6 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         public=public,
         worker_tags=worker_tags,
         pass_throughs=pass_throughs,
-        use_lock_pool=use_lock_pool,
         use_repo_access=use_repo_access,
         use_staging_channel=use_staging_channel,
         automated_pipeline=kw.get("automated_pipeline", False),
@@ -1349,7 +1303,6 @@ def submit_batch(
         batch_items = [BatchItem(line) for line in batch_lines]
 
     _ensure_login_and_sync(config_root_dir)
-    use_lock_pool = kwargs.get('use_lock_pool', False)
 
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
@@ -1360,11 +1313,7 @@ def submit_batch(
     success = []
     failed = []
     while len(batch_items):
-        if use_lock_pool:
-            print("Using lock pool, not limiting builds via submission")
-            num_activate_builds = max_builds - 1
-        else:
-            num_activate_builds = _get_activate_builds(concourse_url, build_lookback)
+        num_activate_builds = _get_activate_builds(concourse_url, build_lookback)
         if num_activate_builds < max_builds:
             # use a try/except block here so a single failed one-off does not
             # break the batch
