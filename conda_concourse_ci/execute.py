@@ -364,66 +364,6 @@ def convert_task(subdir):
     return {'task': 'convert .tar.bz2 to .conda', 'config': task_dict}
 
 
-def sourceclear_task(meta, node, config_vars):
-    build_args = []
-    inputs = [{'name': 'output-source'},
-              {'name': 'rsync-recipes'},
-              {'name': 'converted-artifacts'}]
-    for channel in meta.config.channel_urls:
-        build_args.extend(['-c', channel])
-    # if artifact_input:
-    #     inputs.append({'name': 'indexed-artifacts'})
-    #     build_args.extend(('-c', os.path.join('indexed-artifacts')))
-    # make our outputs be the exact constraints we install to create the env
-    output_files = conda_build.api.get_output_file_paths(meta)
-    output_files = [os.path.basename(fn) for fn in output_files]
-    output_files = ['='.join(fn.rstrip('.tar.bz2').rsplit('-', 2)) for fn in output_files]
-
-    task_dict = {
-        # we can always do this on linux, so prefer it for speed.
-        'platform': 'linux',
-        'image_resource': {
-            'type': 'docker-image',
-            'source': {
-                'repository': 'conda/c3i-linux-64',
-                'tag': 'latest',
-                }
-            },
-
-        'inputs': inputs,
-        'params': {'SRCCLR_API_TOKEN': config_vars['srcclr_token'],
-                   'SRCCLR_SCM_NAME': meta.name(),
-                   'SRCCLR_SCM_URI': meta.meta.get('about', {}).get('home', '') or meta.name(),
-                   'SRCCLR_SCM_REV': meta.build_number(),
-                   'SRCCLR_SCM_REF': meta.version(),
-                   'SRCCLR_SCM_REF_TYPE': 'tag',
-                   'DEBUG': '1',
-        },
-        'run': {
-            'path': 'sh',
-            'args': [
-                '-exc',
-                # srcclr requires that all dependencies are present.  To accomplish that,
-                #   we create an env for our built package and activate that env.  Next,
-                #   we need to extract our source code and init a git repo there.  The
-                #   git repo is a requirement for sourceclear.  I'm not sure we'll be
-                #   able to bypass that requirement with this hack, but we'll see.
-                ('conda-index converted-artifacts \n '
-                 'export activation_text="$(conda-debug -a -c file://$(pwd)/converted-artifacts rsync-recipes/{node})" && '
-                 'echo ". ~/.bashrc; $activation_text" > ./temp_rcfile && '
-                 'source ./temp_rcfile && '
-                 'echo "system_site_packages: true" > srcclr.yml && '
-                 # "echo \"use_system_pip: true\" >> srcclr.yml && '
-                 # 'set | grep SRCCLR && '
-                 # 'ls -la \n'
-                      'curl -sSL https://download.sourceclear.com/ci.sh -o srcclr_ci.sh && '
-                 'chmod +x srcclr_ci.sh && '
-                 './srcclr_ci.sh || true')  # a sourceclean failure should not fail the job
-                .format(node=node)],
-        }}
-    return {'task': 'sourceclear scan', 'config': task_dict}
-
-
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
         worker_tags=None, pass_throughs=None,
@@ -572,10 +512,6 @@ def graph_to_plan_with_jobs(
                                     ]},
                         'get_params': {'skip_download': True}})
 
-        # srcclr only supports python stuff right now.  Run it if we have a linux-64 py37 build.
-        # if "-on-linux_64" in node and 'python_3.7' in node and 'srcclr_token' in config_vars:
-        #     tasks.append(sourceclear_task(meta, node, config_vars))
-
         # as far as the graph is concerned, there's only one upload job.  However, this job can
         # represent several upload tasks.  This take the job from the graph, and creates tasks
         # appropriately.
@@ -656,18 +592,6 @@ def graph_to_plan_with_jobs(
                       'channel': config_vars['repo-channel'],
                   }})
 
-    if config_vars.get('sourceclear_token'):
-        remapped_jobs.append({
-            'name': 'sourceclear',
-            'plan': [{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
-                     for node in order[:1]] + [{'put': 'anaconda_upload_resource'}]})
-        resource_types.append({'name': 'sourceclear-resource',
-                       'type': 'docker-image',
-                       'source': {
-                           'repository': 'continuumio/concourse-sourceclear-resource',
-                           'tag': 'latest'
-                           }
-                       })
     if automated_pipeline:
         # build the automated pipeline
         resource_types, resources, remapped_jobs = build_automated_pipeline(resource_types, resources, remapped_jobs, folders, order, branches, pr_num, repository, config_vars)
