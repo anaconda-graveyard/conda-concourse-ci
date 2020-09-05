@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 import time
 
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from fnmatch import fnmatch
 
 import conda_build.api
@@ -389,28 +389,23 @@ def graph_to_plan_with_jobs(
     if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order):
         pipeline.add_rsync_build_pack(config_vars)
 
-    jobs = OrderedDict()
     for node in order:
-        test_only = graph.nodes[node].get('test_only', False)
         meta = graph.nodes[node]['meta']
         worker = graph.nodes[node]['worker']
-        resource_name = 'rsync_' + node
-        key = (meta.name(), worker['label'], meta.config.host_subdir,
-               HashableDict({k: meta.config.variant[k] for k in meta.get_used_vars()}))
-        if not test_only:
-            pipeline.add_rsync_packages(resource_name, config_vars)
-        job = jobs.get(
-            key,
-            Job(meta=meta, worker=worker, plan=[{'get': 'rsync-recipes', 'trigger': True}])
-        )
-
-        if graph.nodes[node]['worker']['platform'] == "win":
+        test_only = graph.nodes[node].get('test_only', False)
+        rsync_artifacts = worker.get("rsync") in [None, True]
+        name = package_key(meta, worker['label'])
+        if test_only:
+            name = 'test-' + name
+        job = Job(name=name)
+        job.add_rsync_recipes()
+        if worker['platform'] == "win":
             job.add_rsync_build_pack_win()
-        elif graph.nodes[node]['worker']['platform'] == "osx":
+        elif worker['platform'] == "osx":
             job.add_rsync_build_pack_osx()
         prereqs = set(graph.successors(node))
         for prereq in prereqs:
-            if job.rsync_artifacts:
+            if rsync_artifacts:
                 job.add_rsync_prereq(prereq)
         if prereqs:
             job.plan.append(consolidate_task(prereqs, meta.config.host_subdir))
@@ -424,20 +419,13 @@ def graph_to_plan_with_jobs(
             use_repo_access=use_repo_access,
             use_staging_channel=use_staging_channel
         ))
-
         if not test_only:
             job.plan.append(convert_task(meta.config.host_subdir))
+            resource_name = 'rsync_' + node
             job.add_put_artifacts(resource_name)
+            pipeline.add_rsync_packages(resource_name, config_vars)
 
-        jobs[key] = job
-
-    for foo in jobs.values():
-        job = Job(plan=foo.plan, meta=foo.meta, worker=foo.worker)
-        name = package_key(job.meta, job.worker['label'])
-        if any(step.get('task') == 'test' for step in job.plan):
-            name = 'test-' + name
-        job.name = name
-        if job.rsync_artifacts:
+        if rsync_artifacts:
             job.add_rsync_source()
             job.add_rsync_stats()
         pipeline.add_job(**job.to_dict())

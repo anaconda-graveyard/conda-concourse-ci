@@ -202,23 +202,20 @@ class Job():
     """ configuration for a concourse job. """
     # https://concourse-ci.org/jobs.html
 
-    def __init__(self, name="placeholder", plan=None, meta=None, worker=None):
+    def __init__(self, name="placeholder", plan=None):
         self.name = name
         self.plan = plan
         if plan is None:
             self.plan = []
-        self.meta = meta
-        self.worker = worker
 
     def to_dict(self):
         return {"name": self.name, "plan": self.plan}
 
-    @property
-    def rsync_artifacts(self):
-        worker_rsync = self.worker.get("rsync")
-        if worker_rsync in [None, True]:
-            return True
-        return False
+    def add_rsync_recipes(self):
+        self.plan.append({
+            'get': 'rsync-recipes',
+            'trigger': True
+        })
 
     def add_rsync_source(self):
         self.plan.append({
