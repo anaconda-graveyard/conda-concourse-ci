@@ -4,6 +4,8 @@ Classes for representing Concourse pipeline configuration items
 These map to the schema's in https://concourse-ci.org/docs.html
 """
 
+import os
+
 
 class Pipeline:
     """ configuration for a concourse pipeline. """
@@ -37,6 +39,116 @@ class Pipeline:
                 continue
             out[attr] = [v if isinstance(v, dict) else v.to_dict() for v in items]
         return out
+
+    def add_rsync_resources(self, config_vars, recipe_folder):
+        self.add_resource_type(
+            name='rsync-resource',
+            type_='docker-image',
+            source={
+                'repository': 'conda/concourse-rsync-resource',
+                'tag': 'latest'
+            },
+        )
+        self.add_resource(
+            name='rsync-recipes',
+            type_='rsync-resource',
+            source={
+                'server': config_vars['intermediate-server'],
+                'base_dir': recipe_folder,
+                'user': config_vars['intermediate-user'],
+                'private_key': config_vars['intermediate-private-key-job'],
+                'disable_version_path': True,
+            },
+        )
+        self.add_resource(
+            name='rsync-source',
+            type_='rsync-resource',
+            source={
+                'server': config_vars['intermediate-server'],
+                'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'source'),
+                'user': config_vars['intermediate-user'],
+                'private_key': config_vars['intermediate-private-key-job'],
+                'disable_version_path': True,
+            },
+        )
+        self.add_resource(
+            name='rsync-stats',
+            type_='rsync-resource',
+            source={
+                'server': config_vars['intermediate-server'],
+                'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'stats'),
+                'user': config_vars['intermediate-user'],
+                'private_key': config_vars['intermediate-private-key-job'],
+                'disable_version_path': True,
+            },
+        )
+
+    def add_rsync_build_pack(self, config_vars):
+        self.add_resource(
+            name='rsync-build-pack',
+            type_='rsync-resource',
+            source={
+                'server': config_vars['intermediate-server'],
+                'base_dir': config_vars['build_env_pkgs'],
+                'user': config_vars['intermediate-user'],
+                'private_key': config_vars['intermediate-private-key-job'],
+                'disable_version_path': True,
+            },
+        )
+
+    def add_rsync_packages(self, resource_name, config_vars):
+        source = {
+            'server': config_vars['intermediate-server'],
+            'base_dir': os.path.join(
+                config_vars['intermediate-base-folder'],
+                config_vars['base-name'], 'artifacts'),
+            'user': config_vars['intermediate-user'],
+            'private_key': config_vars['intermediate-private-key-job'],
+            'disable_version_path': True,
+        }
+        self.add_resource(resource_name, 'rsync-resource', source=source)
+
+    def add_anaconda_upload(self, all_rsync, config_vars):
+        self.add_jobs(
+            name='anaconda_upload',
+            plan=all_rsync + [{'put': 'anaconda_upload_resource'}]
+        )
+        self.add_resource_type(
+            name='anacondaorg-resource',
+            type_='docker-image',
+            source={
+                'repository': 'conda/concourse-anaconda_org-resource',
+                'tag': 'latest'
+            },
+        )
+        self.add_resource(
+            name='anaconda_upload_resource',
+            type_='anacondaorg-resource',
+            source={'token': config_vars['anaconda-upload-token']}
+        )
+
+    def add_repo_v6_upload(self, all_rsync, config_vars):
+        self.add_job(
+            name='repo_v6_upload',
+            plan=all_rsync + [{'put': 'repo_resource'}]
+        )
+        self.add_resource_type(
+            name='repo-resource-type',
+            type_='docker-image',
+            source={
+                'repository': 'condatest/repo_cli',
+                'tag': 'latest'},
+        )
+        self.add_resource(
+            name='repo_resource',
+            type_='repo-resource-type',
+            source={
+                'token': config_vars['repo-token'],
+                'user': config_vars['repo-username'],
+                'password': config_vars['repo-password'],
+                'channel': config_vars['repo-channel'],
+            },
+        )
 
 
 class _DictBacked:

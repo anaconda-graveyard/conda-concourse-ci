@@ -365,106 +365,6 @@ def convert_task(subdir):
     return {'task': 'convert .tar.bz2 to .conda', 'config': task_dict}
 
 
-def _add_resources_and_types(pipeline, config_vars, recipe_folder, osx_or_win):
-    pipeline.add_resource_type(
-        name='rsync-resource',
-        type_='docker-image',
-        source={
-            'repository': 'conda/concourse-rsync-resource',
-            'tag': 'latest'
-        },
-    )
-    pipeline.add_resource(
-        name='rsync-recipes',
-        type_='rsync-resource',
-        source={
-            'server': config_vars['intermediate-server'],
-            'base_dir': recipe_folder,
-            'user': config_vars['intermediate-user'],
-            'private_key': config_vars['intermediate-private-key-job'],
-            'disable_version_path': True,
-        },
-    )
-    pipeline.add_resource(
-        name='rsync-source',
-        type_='rsync-resource',
-        source={
-            'server': config_vars['intermediate-server'],
-            'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'source'),
-            'user': config_vars['intermediate-user'],
-            'private_key': config_vars['intermediate-private-key-job'],
-            'disable_version_path': True,
-        },
-    )
-    pipeline.add_resource(
-        name='rsync-stats',
-        type_='rsync-resource',
-        source={
-            'server': config_vars['intermediate-server'],
-            'base_dir': os.path.join(config_vars['intermediate-base-folder'], 'stats'),
-            'user': config_vars['intermediate-user'],
-            'private_key': config_vars['intermediate-private-key-job'],
-            'disable_version_path': True,
-        },
-    )
-    if osx_or_win:
-        pipeline.add_resource(
-            name='rsync-build-pack',
-            type_='rsync-resource',
-            source={
-                'server': config_vars['intermediate-server'],
-                'base_dir': config_vars['build_env_pkgs'],
-                'user': config_vars['intermediate-user'],
-                'private_key': config_vars['intermediate-private-key-job'],
-                'disable_version_path': True,
-            },
-        )
-
-
-def _add_anaconda_upload(pipeline, all_rsync, config_vars):
-    pipeline.add_jobs(
-        name='anaconda_upload',
-        plan=all_rsync + [{'put': 'anaconda_upload_resource'}]
-    )
-    pipeline.add_resource_type(
-        name='anacondaorg-resource',
-        type_='docker-image',
-        source={
-            'repository': 'conda/concourse-anaconda_org-resource',
-            'tag': 'latest'
-        },
-    )
-    pipeline.add_resource(
-        name='anaconda_upload_resource',
-        type_='anacondaorg-resource',
-        source={'token': config_vars['anaconda-upload-token']}
-    )
-
-
-def _add_repo_v6_upload(pipeline, all_rsync, config_vars):
-    pipeline.add_job(
-        name='repo_v6_upload',
-        plan=all_rsync + [{'put': 'repo_resource'}]
-    )
-    pipeline.add_resource_type(
-        name='repo-resource-type',
-        type_='docker-image',
-        source={
-            'repository': 'condatest/repo_cli',
-            'tag': 'latest'},
-    )
-    pipeline.add_resource(
-        name='repo_resource',
-        type_='repo-resource-type',
-        source={
-            'token': config_vars['repo-token'],
-            'user': config_vars['repo-username'],
-            'password': config_vars['repo-password'],
-            'channel': config_vars['repo-channel'],
-        },
-    )
-
-
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True, worker_tags=None, pass_throughs=None,
         use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
@@ -483,10 +383,11 @@ def graph_to_plan_with_jobs(
         recipe_folder = os.path.join(recipe_folder, commit_id)
         artifact_folder = os.path.join(artifact_folder, commit_id)
         status_folder = os.path.join(status_folder, commit_id)
-    osx_or_win = any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order)
 
     pipeline = Pipeline()
-    _add_resources_and_types(pipeline, config_vars, recipe_folder, osx_or_win)
+    pipeline.add_rsync_resources(config_vars, recipe_folder)
+    if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order):
+        pipeline.add_rsync_build_pack(config_vars)
 
     jobs = OrderedDict()
     for node in order:
@@ -500,19 +401,7 @@ def graph_to_plan_with_jobs(
         key = (meta.name(), worker['label'], meta.config.host_subdir,
                HashableDict({k: meta.config.variant[k] for k in meta.get_used_vars()}))
         if not test_only:
-            pipeline.add_resource(
-                name=resource_name,
-                type_='rsync-resource',
-                source={
-                    'server': config_vars['intermediate-server'],
-                    'base_dir': os.path.join(
-                        config_vars['intermediate-base-folder'],
-                        config_vars['base-name'], 'artifacts'),
-                    'user': config_vars['intermediate-user'],
-                    'private_key': config_vars['intermediate-private-key-job'],
-                    'disable_version_path': True,
-                }
-            )
+            pipeline.add_rsync_packages(resource_name, config_vars)
         tasks = jobs.get(key, {}).get(
                 'tasks', [{'get': 'rsync-recipes', 'trigger': True}])
 
@@ -645,9 +534,9 @@ def graph_to_plan_with_jobs(
             graph.nodes[node]['worker'].get("rsync") is None or
             graph.nodes[node]['worker'].get("rsync") is True]
         if config_vars.get('anaconda-upload-token'):
-            _add_anaconda_upload(pipeline, all_rsync, config_vars)
+            pipeline.add_anaconda_upload(all_rsync, config_vars)
         if config_vars.get('repo-username'):
-            _add_repo_v6_upload(pipeline, all_rsync, config_vars)
+            pipeline.add_repo_v6_upload(all_rsync, config_vars)
 
     if automated_pipeline:
         # build the automated pipeline
