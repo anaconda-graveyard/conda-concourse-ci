@@ -27,7 +27,7 @@ import yaml
 
 from .compute_build_graph import (construct_graph, expand_run, git_changed_recipes, order_build,
                                   package_key)
-from .concourse import Pipeline
+from .concourse import Pipeline, Job
 from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
 from .uploads import upload_staging_channel
@@ -394,53 +394,27 @@ def graph_to_plan_with_jobs(
         test_only = graph.nodes[node].get('test_only', False)
         meta = graph.nodes[node]['meta']
         worker = graph.nodes[node]['worker']
-        rsync_artifacts = (
-            True if worker.get("rsync") is None or worker.get("rsync") is True
-            else False)
         resource_name = 'rsync_' + node
         key = (meta.name(), worker['label'], meta.config.host_subdir,
                HashableDict({k: meta.config.variant[k] for k in meta.get_used_vars()}))
         if not test_only:
             pipeline.add_rsync_packages(resource_name, config_vars)
-        tasks = jobs.get(key, {}).get(
-                'tasks', [{'get': 'rsync-recipes', 'trigger': True}])
+        job = jobs.get(
+            key,
+            Job(meta=meta, worker=worker, plan=[{'get': 'rsync-recipes', 'trigger': True}])
+        )
 
         if graph.nodes[node]['worker']['platform'] == "win":
-            tasks.append({
-                'get': 'rsync-build-pack',
-                'params': {
-                    'rsync_opts': [
-                        '--include',
-                        'loner_conda_windows.exe',
-                        '--exclude', '*',
-                        '-v'
-                    ]
-                },
-            })
+            job.add_rsync_build_pack_win()
         elif graph.nodes[node]['worker']['platform'] == "osx":
-            tasks.append({
-                'get': 'rsync-build-pack',
-                'params': {
-                    'rsync_opts': [
-                        '--include',
-                        'loner_conda_osx.exe',
-                        '--exclude',
-                        '*',
-                        '-v'
-                    ]
-                }
-            })
+            job.add_rsync_build_pack_osx()
         prereqs = set(graph.successors(node))
         for prereq in prereqs:
-            if rsync_artifacts:
-                tasks.append({
-                    'get': 'rsync_' + prereq,
-                    'trigger': False,
-                    'passed': [prereq]}
-                )
+            if job.rsync_artifacts:
+                job.add_rsync_prereq(prereq)
         if prereqs:
-            tasks.append(consolidate_task(prereqs, meta.config.host_subdir))
-        tasks.append(get_build_task(
+            job.plan.append(consolidate_task(prereqs, meta.config.host_subdir))
+        job.plan.append(get_build_task(
             base_path, graph, node, commit_id, public,
             artifact_input=bool(prereqs),
             worker_tags=worker_tags,
@@ -452,80 +426,21 @@ def graph_to_plan_with_jobs(
         ))
 
         if not test_only:
-            tasks.append(convert_task(meta.config.host_subdir))
-            tasks.append({
-                'put': resource_name,
-                'params': {
-                    'sync_dir': 'converted-artifacts',
-                    'rsync_opts': [
-                        "--archive",
-                        "--no-perms",
-                        "--omit-dir-times",
-                        "--verbose",
-                        "--exclude", '"**/*.json*"',
-                        # html and xml files
-                        "--exclude", '"**/*.*ml"',
-                        # conda index cache
-                        "--exclude", '"**/.cache"',
+            job.plan.append(convert_task(meta.config.host_subdir))
+            job.add_put_artifacts(resource_name)
 
-                    ]
-                },
-                'get_params': {'skip_download': True}
-            })
+        jobs[key] = job
 
-        # as far as the graph is concerned, there's only one upload job.  However, this job can
-        # represent several upload tasks.  This take the job from the graph, and creates tasks
-        # appropriately.
-        #
-        # This is also more complicated, because uploads may involve other resource types and
-        # resources that are not used for build/test.  For example, the scp and commands uploads
-        # need to be able to access private keys, which are stored in config uploads.d folder.
-        # elif node.startswith('upload'):
-        #     pass
-        #     # tasks.extend(get_upload_tasks(graph, node, upload_config_path, config_vars,
-        #     #                               commit_id=commit_id, public=public))
-        # else:
-        #     raise NotImplementedError("Don't know how to handle task.  Currently, tasks must "
-        #                                 "start with 'build', 'test', or 'upload'")
-        jobs[key] = {'tasks': tasks, 'meta': meta, 'worker': worker}
-
-    for plan_dict in jobs.values():
-        plan_worker = plan_dict["worker"]
-        plan_rsync_artifacts = (
-            True if plan_worker.get("rsync") is None or
-            plan_worker.get("rsync") is True
-            else False
-        )
-        name = package_key(plan_dict['meta'], plan_dict['worker']['label'])
-        if any([t.get('task') == 'test' for t in plan_dict['tasks']]):
+    for foo in jobs.values():
+        job = Job(plan=foo.plan, meta=foo.meta, worker=foo.worker)
+        name = package_key(job.meta, job.worker['label'])
+        if any(step.get('task') == 'test' for step in job.plan):
             name = 'test-' + name
-        if plan_rsync_artifacts:
-            plan_dict['tasks'].append({
-                'put': 'rsync-source',
-                'params': {
-                    'sync_dir': 'output-source',
-                    'rsync_opts': [
-                        "--archive",
-                        "--no-perms",
-                        "--omit-dir-times",
-                        "--verbose",
-                        "--exclude",
-                        '"*.json*"']
-                },
-                'get_params': {'skip_download': True}
-            })
-            plan_dict['tasks'].append({
-                'put': 'rsync-stats',
-                'params': {
-                    'sync_dir': 'stats',
-                    'rsync_opts': [
-                        "--archive",
-                        "--no-perms",
-                        "--omit-dir-times",
-                        "--verbose"]},
-                'get_params': {'skip_download': True}
-            })
-        pipeline.add_job(name, plan_dict['tasks'])
+        job.name = name
+        if job.rsync_artifacts:
+            job.add_rsync_source()
+            job.add_rsync_stats()
+        pipeline.add_job(**job.to_dict())
 
     if config_vars.get('anaconda-upload-token') or config_vars.get('repo-username'):
         all_rsync = [

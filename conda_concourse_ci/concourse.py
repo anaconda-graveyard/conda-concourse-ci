@@ -198,14 +198,108 @@ class ResourceType(_DictBacked):
             setattr(self, attr, value)
 
 
-class Job(_DictBacked):
+class Job():
     """ configuration for a concourse job. """
     # https://concourse-ci.org/jobs.html
 
-    def __init__(self, name, plan=None, **kwargs):
+    def __init__(self, name="placeholder", plan=None, meta=None, worker=None):
         self.name = name
         self.plan = plan
         if plan is None:
             self.plan = []
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
+        self.meta = meta
+        self.worker = worker
+
+    def to_dict(self):
+        return {"name": self.name, "plan": self.plan}
+
+    @property
+    def rsync_artifacts(self):
+        worker_rsync = self.worker.get("rsync")
+        if worker_rsync in [None, True]:
+            return True
+        return False
+
+    def add_rsync_source(self):
+        self.plan.append({
+            'put': 'rsync-source',
+            'params': {
+                'sync_dir': 'output-source',
+                'rsync_opts': [
+                    "--archive",
+                    "--no-perms",
+                    "--omit-dir-times",
+                    "--verbose",
+                    "--exclude",
+                    '"*.json*"']
+            },
+            'get_params': {'skip_download': True}
+        })
+
+    def add_rsync_stats(self):
+        self.plan.append({
+            'put': 'rsync-stats',
+            'params': {
+                'sync_dir': 'stats',
+                'rsync_opts': [
+                    "--archive",
+                    "--no-perms",
+                    "--omit-dir-times",
+                    "--verbose"]},
+            'get_params': {'skip_download': True}
+        })
+
+    def add_rsync_build_pack_win(self):
+        self.plan.append({
+            'get': 'rsync-build-pack',
+            'params': {
+                'rsync_opts': [
+                    '--include',
+                    'loner_conda_windows.exe',
+                    '--exclude', '*',
+                    '-v'
+                ]
+            },
+        })
+
+    def add_rsync_build_pack_osx(self):
+        self.plan.append({
+            'get': 'rsync-build-pack',
+            'params': {
+                'rsync_opts': [
+                    '--include',
+                    'loner_conda_osx.exe',
+                    '--exclude',
+                    '*',
+                    '-v'
+                ]
+            }
+        })
+
+    def add_rsync_prereq(self, prereq):
+        self.plan.append({
+            'get': 'rsync_' + prereq,
+            'trigger': False,
+            'passed': [prereq]}
+        )
+
+    def add_put_artifacts(self, resource_name):
+        self.plan.append({
+            'put': resource_name,
+            'params': {
+                'sync_dir': 'converted-artifacts',
+                'rsync_opts': [
+                    "--archive",
+                    "--no-perms",
+                    "--omit-dir-times",
+                    "--verbose",
+                    "--exclude", '"**/*.json*"',
+                    # html and xml files
+                    "--exclude", '"**/*.*ml"',
+                    # conda index cache
+                    "--exclude", '"**/.cache"',
+
+                ]
+            },
+            'get_params': {'skip_download': True}
+        })
