@@ -365,27 +365,7 @@ def convert_task(subdir):
     return {'task': 'convert .tar.bz2 to .conda', 'config': task_dict}
 
 
-def graph_to_plan_with_jobs(
-        base_path, graph, commit_id, matrix_base_dir, config_vars, public=True,
-        worker_tags=None, pass_throughs=None,
-        use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
-    # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
-    order = order_build(graph)
-    if graph.number_of_nodes() == 0:
-        raise Exception(
-            "Build graph is empty. The default behaviour is to skip existing builds."
-        )
-
-    base_folder = os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'])
-    recipe_folder = os.path.join(base_folder, 'plan_and_recipes')
-    artifact_folder = os.path.join(base_folder, 'artifacts')
-    status_folder = os.path.join(base_folder, 'status')
-    if commit_id:
-        recipe_folder = os.path.join(recipe_folder, commit_id)
-        artifact_folder = os.path.join(artifact_folder, commit_id)
-        status_folder = os.path.join(status_folder, commit_id)
-
-    pipeline = Pipeline()
+def _add_resources_and_types(pipeline, config_vars, recipe_folder, osx_or_win):
     pipeline.add_resource_type(
         name='rsync-resource',
         type_='docker-image',
@@ -427,7 +407,7 @@ def graph_to_plan_with_jobs(
             'disable_version_path': True,
         },
     )
-    if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order):
+    if osx_or_win:
         pipeline.add_resource(
             name='rsync-build-pack',
             type_='rsync-resource',
@@ -439,6 +419,74 @@ def graph_to_plan_with_jobs(
                 'disable_version_path': True,
             },
         )
+
+
+def _add_anaconda_upload(pipeline, all_rsync, config_vars):
+    pipeline.add_jobs(
+        name='anaconda_upload',
+        plan=all_rsync + [{'put': 'anaconda_upload_resource'}]
+    )
+    pipeline.add_resource_type(
+        name='anacondaorg-resource',
+        type_='docker-image',
+        source={
+            'repository': 'conda/concourse-anaconda_org-resource',
+            'tag': 'latest'
+        },
+    )
+    pipeline.add_resource(
+        name='anaconda_upload_resource',
+        type_='anacondaorg-resource',
+        source={'token': config_vars['anaconda-upload-token']}
+    )
+
+
+def _add_repo_v6_upload(pipeline, all_rsync, config_vars):
+    pipeline.add_job(
+        name='repo_v6_upload',
+        plan=all_rsync + [{'put': 'repo_resource'}]
+    )
+    pipeline.add_resource_type(
+        name='repo-resource-type',
+        type_='docker-image',
+        source={
+            'repository': 'condatest/repo_cli',
+            'tag': 'latest'},
+    )
+    pipeline.add_resource(
+        name='repo_resource',
+        type_='repo-resource-type',
+        source={
+            'token': config_vars['repo-token'],
+            'user': config_vars['repo-username'],
+            'password': config_vars['repo-password'],
+            'channel': config_vars['repo-channel'],
+        },
+    )
+
+
+def graph_to_plan_with_jobs(
+        base_path, graph, commit_id, matrix_base_dir, config_vars, public=True, worker_tags=None, pass_throughs=None,
+        use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
+    # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
+    order = order_build(graph)
+    if graph.number_of_nodes() == 0:
+        raise Exception(
+            "Build graph is empty. The default behaviour is to skip existing builds."
+        )
+
+    base_folder = os.path.join(config_vars['intermediate-base-folder'], config_vars['base-name'])
+    recipe_folder = os.path.join(base_folder, 'plan_and_recipes')
+    artifact_folder = os.path.join(base_folder, 'artifacts')
+    status_folder = os.path.join(base_folder, 'status')
+    if commit_id:
+        recipe_folder = os.path.join(recipe_folder, commit_id)
+        artifact_folder = os.path.join(artifact_folder, commit_id)
+        status_folder = os.path.join(status_folder, commit_id)
+    osx_or_win = any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order)
+
+    pipeline = Pipeline()
+    _add_resources_and_types(pipeline, config_vars, recipe_folder, osx_or_win)
 
     jobs = OrderedDict()
     for node in order:
@@ -590,53 +638,16 @@ def graph_to_plan_with_jobs(
             })
         pipeline.add_job(name, plan_dict['tasks'])
 
-    if config_vars.get('anaconda-upload-token'):
-        pipeline.add_jobs(
-            name='anaconda_upload',
-            plan=[{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
-                        for node in order if
-                        graph.nodes[node]['worker'].get("rsync") is None or
-                        graph.nodes[node]['worker'].get("rsync") is True] +
-                 [{'put': 'anaconda_upload_resource'}])
-        pipeline.add_resource_type(
-            name='anacondaorg-resource',
-            type_='docker-image',
-            source={
-                'repository': 'conda/concourse-anaconda_org-resource',
-                'tag': 'latest'
-            },
-        )
-        pipeline.add_resource(
-            name='anaconda_upload_resource',
-            type_='anacondaorg-resource',
-            source={'token': config_vars['anaconda-upload-token']}
-        )
-
-    if config_vars.get('repo-username'):
-        pipeline.add_job(
-            name='repo_v6_upload',
-            plan=[{'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
-                        for node in order if (not node.startswith('test-') and
-                        (graph.nodes[node]['worker'].get("rsync") is None or
-                         graph.nodes[node]['worker'].get("rsync") is True))] +
-                 [{'put': 'repo_resource'}])
-        pipeline.add_resource_type(
-            name='repo-resource-type',
-            type_='docker-image',
-            source={
-                'repository': 'condatest/repo_cli',
-                'tag': 'latest'},
-        )
-        pipeline.add_resource(
-            name='repo_resource',
-            type_='repo-resource-type',
-            source={
-                'token': config_vars['repo-token'],
-                'user': config_vars['repo-username'],
-                'password': config_vars['repo-password'],
-                'channel': config_vars['repo-channel'],
-            },
-        )
+    if config_vars.get('anaconda-upload-token') or config_vars.get('repo-username'):
+        all_rsync = [
+            {'get': 'rsync_' + node, 'trigger': True, 'passed': [node]}
+            for node in order if
+            graph.nodes[node]['worker'].get("rsync") is None or
+            graph.nodes[node]['worker'].get("rsync") is True]
+        if config_vars.get('anaconda-upload-token'):
+            _add_anaconda_upload(pipeline, all_rsync, config_vars)
+        if config_vars.get('repo-username'):
+            _add_repo_v6_upload(pipeline, all_rsync, config_vars)
 
     if automated_pipeline:
         # build the automated pipeline
