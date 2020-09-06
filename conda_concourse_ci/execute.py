@@ -178,35 +178,10 @@ def collapse_noarch_python_nodes(graph):
     return
 
 
-def consolidate_task(inputs, subdir):
-    task_dict = {
-        # we can always do this on linux, so prefer it for speed.
-        'platform': 'linux',
-        'image_resource': {
-            'type': 'docker-image',
-            'source': {
-                'repository': 'conda/c3i-linux-64',
-                'tag': 'latest',
-                }
-            },
-
-        'inputs': [{'name': 'rsync_' + req} for req in inputs],
-        'outputs': [{'name': 'indexed-artifacts'}],
-        'run': {
-            'path': 'sh',
-            'args': ['-exc',
-                    ('mkdir -p indexed-artifacts/{subdir}\n'
-                     'mkdir -p indexed-artifacts/noarch \n'
-                     'find . -name "indexed-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/{subdir}\n'  # NOQA
-                     'find . -name "indexed-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file indexed-artifacts/noarch\n'  # NOQA
-                     'conda-index indexed-artifacts\n'.format(subdir=subdir))]
-        }}
-    return {'task': 'update-artifact-index', 'config': task_dict}
-
-
-def get_build_task(base_path, graph, node, commit_id, public=True, artifact_input=False,
-                   worker_tags=None, config_vars={}, pass_throughs=None, test_only=False,
-                   use_repo_access=False, use_staging_channel=False):
+def get_build_task(
+        base_path, graph, node, commit_id, public=True, artifact_input=False,
+        worker_tags=None, config_vars={}, pass_throughs=None, test_only=False,
+        use_repo_access=False, use_staging_channel=False):
     meta = graph.nodes[node]['meta']
     stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
 
@@ -333,38 +308,6 @@ def _resource_to_dict(resource):
     return out
 
 
-def convert_task(subdir):
-    inputs = [{'name': 'output-artifacts'}]
-    outputs = [{'name': 'converted-artifacts'}]
-    task_dict = {
-        # we can always do this on linux, so prefer it for speed.
-        'platform': 'linux',
-        'inputs': inputs,
-        'outputs': outputs,
-        'image_resource': {
-            'type': 'docker-image',
-            'source': {
-                'repository': 'conda/c3i-linux-64',
-                'tag': 'latest',
-                }
-            },
-        'run': {
-            'path': 'sh',
-            'args': [
-                '-exc',
-                    'mkdir -p converted-artifacts/{subdir}\n'
-                    'mkdir -p converted-artifacts/noarch\n'
-                    'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
-                    'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
-            'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
-            'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
-                .format(subdir=subdir)
-                ],
-            }
-        }
-    return {'task': 'convert .tar.bz2 to .conda', 'config': task_dict}
-
-
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True, worker_tags=None, pass_throughs=None,
         use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
@@ -408,7 +351,7 @@ def graph_to_plan_with_jobs(
             if rsync_artifacts:
                 job.add_rsync_prereq(prereq)
         if prereqs:
-            job.plan.append(consolidate_task(prereqs, meta.config.host_subdir))
+            job.add_consolidate_task(prereqs, meta.config.host_subdir)
         job.plan.append(get_build_task(
             base_path, graph, node, commit_id, public,
             artifact_input=bool(prereqs),
@@ -420,11 +363,10 @@ def graph_to_plan_with_jobs(
             use_staging_channel=use_staging_channel
         ))
         if not test_only:
-            job.plan.append(convert_task(meta.config.host_subdir))
+            job.add_convert_task(meta.config.host_subdir)
             resource_name = 'rsync_' + node
             job.add_put_artifacts(resource_name)
             pipeline.add_rsync_packages(resource_name, config_vars)
-
         if rsync_artifacts:
             job.add_rsync_source()
             job.add_rsync_stats()
