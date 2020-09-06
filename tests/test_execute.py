@@ -60,13 +60,6 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
     assert len(pipeline.jobs) == 3
 
 
-def test_resource_to_dict():
-    resource = HashableDict(source=HashableDict(options=set(('a', 'b'))))
-    out = execute._resource_to_dict(resource)
-    assert type(out['source']['options']) == list
-    assert type(out['source']) == dict
-
-
 def test_submit(mocker):
     mocker.patch.object(execute, 'subprocess')
     pipeline_file = os.path.join(test_config_dir, 'plan_director.yml')

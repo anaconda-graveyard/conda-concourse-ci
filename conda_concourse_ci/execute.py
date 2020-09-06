@@ -287,27 +287,6 @@ def get_build_task(
     return task_dict
 
 
-def _resource_type_to_dict(resource_type):
-    """We use sets and HashableDict to ensure no duplicates of resource types
-
-    These are not nicely yaml-encodable.  We convert them into yaml-friendly containers here.
-    """
-    out = dict(resource_type)
-    out['source'] = dict(out['source'])
-    return out
-
-
-def _resource_to_dict(resource):
-    """We use sets and HashableDict to ensure no duplicates of resources.
-
-    These are not nicely yaml-encodable.  We convert them into yaml-friendly containers here.
-    """
-    out = _resource_type_to_dict(resource)
-    if 'options' in out['source']:
-        out['source']['options'] = list(out['source']['options'])
-    return out
-
-
 def graph_to_plan_with_jobs(
         base_path, graph, commit_id, matrix_base_dir, config_vars, public=True, worker_tags=None, pass_throughs=None,
         use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
