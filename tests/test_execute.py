@@ -35,10 +35,11 @@ boilerplate_test_vars = {'base-name': 'steve',
 
 def test_get_build_task(testing_graph):
     # ensure that our channels make it into the args
-    meta = testing_graph.nodes['b-on-linux']['meta']
+    node = 'b-on-linux'
+    meta = testing_graph.nodes[node]['meta']
+    worker = testing_graph.nodes[node]['worker']
     meta.config.channel_urls = ['conda_build_test']
-    task = execute.get_build_task(base_path=graph_data_dir, graph=testing_graph,
-                                node='b-on-linux', commit_id='abc123')
+    task = execute.get_build_task(node, meta, worker)
     assert task['config']['platform'] == 'linux'
     assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
     assert 'rsync-recipes/b-on-linux' in task['config']['run']['args'][-1]

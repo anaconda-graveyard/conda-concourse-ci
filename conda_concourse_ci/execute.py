@@ -30,8 +30,6 @@ from .compute_build_graph import (construct_graph, expand_run, git_changed_recip
 from .concourse import Pipeline, Job
 from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
-from .uploads import upload_staging_channel
-
 log = logging.getLogger(__file__)
 bootstrap_path = os.path.join(os.path.dirname(__file__), 'bootstrap')
 
@@ -179,48 +177,62 @@ def collapse_noarch_python_nodes(graph):
 
 
 def get_build_task(
-        base_path, graph, node, commit_id, public=True, artifact_input=False,
-        worker_tags=None, config_vars={}, pass_throughs=None, test_only=False,
-        use_repo_access=False, use_staging_channel=False):
-    meta = graph.nodes[node]['meta']
-    stats_filename = '_'.join((node, "%d" % int(time.time()))) + '.json'
+        node,
+        meta,
+        worker,
+        artifact_input=False,
+        worker_tags=None,
+        config_vars={},
+        pass_throughs=None,
+        test_only=False,
+        use_repo_access=False,
+        use_staging_channel=False):
+    config = {}
 
-    if graph.nodes[node]['worker']['platform'] not in ['win']:
-        build_args = ['--no-anaconda-upload', '--error-overlinking', '--output-folder=output-artifacts',
-                    '--cache-dir=output-source', '--stats-file={}'.format(
-                        os.path.join('stats', stats_filename))]
+    platform = worker['platform']
+    subdir = f"{platform}-{worker['arch']}"
+    config["platform"] = conda_subdir_to_concourse_platform[subdir]
+
+    inputs = [{'name': 'rsync-recipes'}]
+    if platform in ['win', 'osx']:
+        inputs.append({'name': 'rsync-build-pack'})
+    if artifact_input:
+        inputs.append({'name': 'indexed-artifacts'})
+    config["inputs"] = inputs
+
+    config["outputs"] = [
+        {'name': 'output-artifacts'},
+        {'name': 'output-source'},
+        {'name': 'stats'}
+    ]
+
+    stats_file = os.path.join('stats', f"{node}_{int(time.time())}.json")
+    if platform not in ['win']:
+        build_args = [
+            '--no-anaconda-upload',
+            '--error-overlinking',
+            '--output-folder=output-artifacts',
+            '--cache-dir=output-source',
+            f'--stats-file={stats_file}',
+        ]
     else:
-        build_args = ['--no-anaconda-upload', '--output-folder=output-artifacts',
-                    '--cache-dir=output-source', '--stats-file={}'.format(
-                        os.path.join('stats', stats_filename))]
-
+        build_args = [
+            '--no-anaconda-upload',
+            '--output-folder=output-artifacts',
+            '--cache-dir=output-source',
+            f'--stats-file={stats_file}',
+        ]
     if test_only:
         build_args.append('--test')
-    inputs = [{'name': 'rsync-recipes'}]
-    worker = graph.nodes[node]['worker']
-
-    if worker['platform'] in ['win', 'osx']:
-        inputs.append({'name': 'rsync-build-pack'})
-
     for channel in meta.config.channel_urls:
         build_args.extend(['-c', channel])
     if artifact_input:
-        inputs.append({'name': 'indexed-artifacts'})
         build_args.extend(('-c', os.path.join('indexed-artifacts')))
-    subdir = '-'.join((worker['platform'], str(worker['arch'])))
-
-    task_dict = {
-        'platform': conda_subdir_to_concourse_platform[subdir],
-        # dependency inputs are down below
-        'inputs': inputs,
-        'outputs': [{'name': 'output-artifacts'}, {'name': 'output-source'}, {'name': 'stats'}],
-        'run': {}}
-
-    if worker['platform'] == 'win':
-        task_dict['run'].update({'path': 'cmd.exe', 'args': ['/c']})
+    if platform == 'win':
+        config["run"] = {'path': 'cmd.exe', 'args': ['/c']}
         build_args.extend(['--croot', 'C:\\ci'])
     else:
-        task_dict['run'].update({'path': 'sh', 'args': ['-exc']})
+        config["run"] = {'path': 'sh', 'args': ['-exc']}
         build_args.extend(['--croot', '.'])
 
     # these are any arguments passed to c3i that c3i doesn't recognize
@@ -233,58 +245,68 @@ def get_build_task(
         gh_access_user = config_vars.get('recipe-repo-access-user', None)
         gh_access_token = config_vars.get('recipe-repo-access-token', None)
         if gh_access_user and gh_access_token:
-            task_dict['params'] = {
+            config['params'] = {
                 'GITHUB_USER': gh_access_user,
                 'GITHUB_TOKEN': gh_access_token
             }
-            if worker['platform'] == 'win':
-                creds_cmd = ['(echo machine github.com '
-                                  'login %GITHUB_USER% '
-                                  'password %GITHUB_TOKEN% '
-                                  'protocol https > %USERPROFILE%\\_netrc || exit 0)']
+            if platform == 'win':
+                creds_cmd = [
+                    '(echo machine github.com '
+                    'login %GITHUB_USER% '
+                    'password %GITHUB_TOKEN% '
+                    'protocol https > %USERPROFILE%\\_netrc || exit 0)'
+                ]
             else:
-                creds_cmd = ['set +x',
-                            'echo machine github.com '
-                                'login $GITHUB_USER '
-                                'password $GITHUB_TOKEN '
-                                'protocol https > ~/.netrc',
-                            'set -x']
+                creds_cmd = [
+                    'set +x',
+                    'echo machine github.com '
+                    'login $GITHUB_USER '
+                    'password $GITHUB_TOKEN '
+                    'protocol https > ~/.netrc',
+                    'set -x'
+                ]
             worker['prefix_commands'] = worker.get('prefix_commands', []) + creds_cmd
 
+    if use_staging_channel:
+        sc_user = config_vars.get('staging-channel-user', 'staging')
+        build_args.extend(['-c', sc_user])
+        # todo: add proper source package path
+        pkg_path = '*.tar.bz2'
+        sc_command = f"anaconda upload --skip-existing --force -u {sc_user} {pkg_path}"
+    else:
+        sc_command = ''
+
+    build_command = " conda-build " + " ".join(build_args) + " "
     build_prefix_commands = " ".join(ensure_list(worker.get('build_prefix_commands')))
     build_suffix_commands = " ".join(ensure_list(worker.get('build_suffix_commands')))
+    commands = build_prefix_commands + build_command + build_suffix_commands
 
-    cmds = build_prefix_commands + ' conda-build ' + " ".join(build_args) + \
-           ' ' + build_suffix_commands
     prefix_commands = "&& ".join(ensure_list(worker.get('prefix_commands')))
-    suffix_commands = "&& ".join(ensure_list(worker.get('suffix_commands')))
-    if use_staging_channel:
-        sc_user = config_vars.get('staging-channel-user', None)
-        if not sc_user:
-            sc_user = 'staging'
-        cmds = cmds + ' -c ' + sc_user
-        # todo: add proper source package path
-        suffix_commands += upload_staging_channel(sc_user, '*.tar.bz2')
     if prefix_commands:
-        cmds = prefix_commands + '&& ' + cmds
-    if suffix_commands:
-        cmds = cmds + '&& ' + suffix_commands
+        commands = prefix_commands + '&& ' + commands
 
-    task_dict['run']['args'].append(cmds)
+    suffix_commands = "&& ".join(ensure_list(worker.get('suffix_commands')))
+    if suffix_commands:
+        commands = commands + '&& ' + suffix_commands
+
+    if sc_command:
+        commands = commands + '&& ' + sc_command
+
+    config['run']['args'].append(commands)
 
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
-    task_dict.update(graph.nodes[node]['worker'].get('connector', {}))
+    config.update(worker.get('connector', {}))
 
-    task_dict = {'task': 'build', 'config': task_dict}
+    step = {'task': 'build', 'config': config}
     if test_only:
-        task_dict['task'] = 'test'
+        step['task'] = 'test'
     worker_tags = (ensure_list(worker_tags) +
                    ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
     if worker_tags:
-        task_dict['tags'] = worker_tags
-    return task_dict
+        step['tags'] = worker_tags
+    return step
 
 
 def graph_to_plan_with_jobs(
@@ -332,7 +354,7 @@ def graph_to_plan_with_jobs(
         if prereqs:
             job.add_consolidate_task(prereqs, meta.config.host_subdir)
         job.plan.append(get_build_task(
-            base_path, graph, node, commit_id, public,
+            node, meta, worker,
             artifact_input=bool(prereqs),
             worker_tags=worker_tags,
             config_vars=config_vars,
