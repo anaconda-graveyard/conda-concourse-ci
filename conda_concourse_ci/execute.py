@@ -310,8 +310,11 @@ def get_build_task(
 
 
 def graph_to_plan_with_jobs(
-        base_path, graph, commit_id, matrix_base_dir, config_vars, public=True, worker_tags=None, pass_throughs=None,
-        use_repo_access=False, use_staging_channel=False, automated_pipeline=False, branches=None, folders=None, pr_num=None, repository=None):
+        base_path, graph, commit_id, matrix_base_dir, config_vars,
+        public=True, worker_tags=None, pass_throughs=None,
+        use_repo_access=False, use_staging_channel=False,
+        automated_pipeline=False, branches=None, folders=None,
+        pr_num=None, repository=None):
     # upload_config_path = os.path.join(matrix_base_dir, 'uploads.d')
     order = order_build(graph)
     if graph.number_of_nodes() == 0:
@@ -622,119 +625,6 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
-def add_push_branch_job(pipeline, data, folders, branches, pr_merged_resource, stage_job_name):
-    """ Adds the push branch job to the pipeline. """
-    if 'push-branch-config' not in data:
-        raise Exception(
-            ("--push-branch specified but configuration file contains "
-            "to 'push-branch-config entry"))
-    plan = []
-    if pr_merged_resource:
-        # The branch push causes a version change in the pull-recipes-<branch>
-        # resource(s) which causes the artifacts to be removed. To avoid a
-        # race condition between these jobs the packages need to be uploaded
-        # before pushing branch(es).
-        if stage_job_name:
-            plan.append({'get': 'pr-merged', 'trigger': True, 'passed': ['stage_for_upload']})
-        else:
-            plan.append({'get': 'pr-merged', 'trigger': True})
-    # resources to add
-    if branches is None:
-        branches = ['automated-build']
-    for n, folder in enumerate(folders):
-        if len(branches) == 1:
-            branch = branches[0]
-        elif len(folders) == len(branches):
-            branch = branches[n]
-        else:
-            raise Exception(
-                "The number of branches either needs to be exactly one or "
-                "equal to the number of feedstocks submitted. Exiting.")
-
-        config = data.get('push-branch-config')
-        # add PIPELINE and GIT_COMMIT_MSG to params
-        params = config.get('params', {})
-        params['BRANCH'] = branch
-        params['FEEDSTOCK'] = folder
-        config['params'] = params
-        plan.append({
-            'task': 'push-branch',
-            'trigger': False,
-            'config': config,
-        })
-        pipeline.add_job(f'push_branch_to_{folder}', plan)
-    return
-
-
-def add_destroy_pipeline_job(pipeline, data, folders):
-    """
-    Adds a destroy pipeline job to the pipeline.
-    """
-    # TODO move this elsewhere
-    if 'destroy-pipeline-config' not in data:
-        raise Exception(
-            "--destroy-pipeline specified but configuration file does not "
-            "have that entry."
-                )
-    passed_jobs = [f'push_branch_to_{folder}' for folder in folders]
-    passed_jobs.append('stage_for_upload')
-    config = data.get("destroy-pipeline-config")
-    params = config.get("params", {})
-    params['PIPELINE'] = data['base-name']
-    config['params'] = params
-    plan = [{
-        'get': 'pr-merged',
-        'trigger': True,
-        'passed': passed_jobs
-    }, {
-        'task': 'destroy-pipeline',
-        'trigger': False,
-        'config': config
-    }]
-    pipeline.add_job('destroy_pipeline', plan)
-    return
-
-
-def add_upload_job(pipeline, data, commit_msg, pr_merged_resource):
-    """ Adds the upload job and a resource (if needed) to the pipeline. """
-    if 'stage-for-upload-config' not in data:
-        raise Exception(
-            ("--stage-for-upload specified but configuration file contains "
-            "to 'stage-for-upload-config entry"))
-
-    plan = []
-    if pr_merged_resource:
-        plan.append({'get': 'pr-merged', 'trigger': True})
-    # add a git resource if specified in the configuration file
-    # this resource should be added as an input to the stage-for-upload-config
-    # if it is needed in the upload job
-    if "stage-for-upload-repo" in data:
-        pipeline.add_resource(
-            name="stage-packages-scripts",
-            type_="git",
-            source={
-                "uri": data["stage-for-upload-repo"],
-                "branch": data.get("stage-for-upload-branch", "master"),
-            },
-        )
-        plan.append({'get': 'stage-packages-scripts', 'trigger': False})
-
-    config = data.get('stage-for-upload-config')
-    # add PIPELINE and GIT_COMMIT_MSG to params
-    params = config.get('params', {})
-    params['PIPELINE'] = data['base-name']
-    params['GIT_COMMIT_MSG'] = commit_msg
-    config['params'] = params
-
-    plan.append({
-        'task': 'stage-packages',
-        'trigger': False,
-        'config': config,
-    })
-    pipeline.add_job('stage_for_upload', plan)
-    return
-
-
 def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
@@ -797,18 +687,18 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
                                    pass_throughs=pass_throughs, skip_existing=skip_existing)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
-        data = yaml.safe_load(src)
-    data['recipe-repo-commit'] = repo_commit
+        config_vars = yaml.safe_load(src)
+    config_vars['recipe-repo-commit'] = repo_commit
 
     if config_overrides:
-        data.update(config_overrides)
+        config_vars.update(config_overrides)
 
     pipeline = graph_to_plan_with_jobs(
         os.path.abspath(path),
         task_graph,
         commit_id=repo_commit,
         matrix_base_dir=matrix_base_dir,
-        config_vars=data,
+        config_vars=config_vars,
         public=public,
         worker_tags=worker_tags,
         pass_throughs=pass_throughs,
@@ -820,30 +710,41 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
         repository=kw.get("repository", None),
         folders=folders
     )
+
     if kw.get('pr_file'):
         pr_merged_resource = "pr-merged"  # TODO actually a name
-        pipeline.add_resource(
-            name="pr-merged",
-            type_="git",
-            source={
-                "uri": data['pr-repo'],
-                "branch": "master",
-                "paths": [kw.get("pr_file")],
-            },
-        )
+        pipeline.add_pr_merged_resource(config_vars['pr-repo'], kw.get("pr_file"))
     else:
         pr_merged_resource = None
+
     if kw.get('stage_for_upload', False):
-        add_upload_job(pipeline, data, kw['commit_msg'], pr_merged_resource)
+        # TODO move this
+        if 'stage-for-upload-config' not in config_vars:
+            raise Exception(
+                ("--stage-for-upload specified but configuration file contains "
+                "to 'stage-for-upload-config entry"))
+        pipeline.add_upload_job(config_vars, kw['commit_msg'], pr_merged_resource)
+
     if kw.get('push_branch', False):
+        # TODO move this
+        if 'push-branch-config' not in config_vars:
+            raise Exception(
+                ("--push-branch specified but configuration file contains "
+                "to 'push-branch-config entry"))
         if kw.get('stage_for_upload', False):
             stage_job_name = 'stage_for_upload'
         else:
             stage_job_name = None
-        add_push_branch_job(
-            pipeline, data, folders, kw['branches'], pr_merged_resource, stage_job_name)
+        pipeline.add_push_branch_job(
+            config_vars, folders, kw['branches'], pr_merged_resource, stage_job_name)
     if kw.get('destroy_pipeline', False):
-        add_destroy_pipeline_job(pipeline, data, folders)
+        # TODO move this
+        if 'destroy-pipeline-config' not in config_vars:
+            raise Exception(
+                "--destroy-pipeline specified but configuration file does not "
+                "have that entry."
+                    )
+        pipeline.add_destroy_pipeline_job(config_vars, folders)
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
     if not os.path.isdir(output_dir):

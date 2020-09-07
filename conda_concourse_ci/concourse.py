@@ -150,6 +150,114 @@ class Pipeline:
             },
         )
 
+    def add_pr_merged_resource(self, pr_repo, pr_file):
+        self.add_resource(
+            name="pr-merged",
+            type_="git",
+            source={
+                "uri": pr_repo,
+                "branch": "master",
+                "paths": [pr_file],
+            },
+        )
+
+    def add_upload_job(self, config_vars, commit_msg, pr_merged_resource):
+        """ Adds the upload job and a resource (if needed) to the pipeline. """
+        plan = []
+        if pr_merged_resource:
+            plan.append({'get': 'pr-merged', 'trigger': True})
+        # add a git resource if specified in the configuration file
+        # this resource should be added as an input to the stage-for-upload-config
+        # if it is needed in the upload job
+        if "stage-for-upload-repo" in config_vars:
+            self.add_resource(
+                name="stage-packages-scripts",
+                type_="git",
+                source={
+                    "uri": config_vars["stage-for-upload-repo"],
+                    "branch": config_vars.get("stage-for-upload-branch", "master"),
+                },
+            )
+            plan.append({'get': 'stage-packages-scripts', 'trigger': False})
+
+        config = config_vars.get('stage-for-upload-config')
+        # add PIPELINE and GIT_COMMIT_MSG to params
+        params = config.get('params', {})
+        params['PIPELINE'] = config_vars['base-name']
+        params['GIT_COMMIT_MSG'] = commit_msg
+        config['params'] = params
+
+        plan.append({
+            'task': 'stage-packages',
+            'trigger': False,
+            'config': config,
+        })
+        self.add_job('stage_for_upload', plan)
+
+    def add_push_branch_job(
+            self,
+            config_vars,
+            folders,
+            branches,
+            pr_merged_resource,
+            stage_job_name):
+        plan = []
+        if pr_merged_resource:
+            # The branch push causes a version change in the pull-recipes-<branch>
+            # resource(s) which causes the artifacts to be removed. To avoid a
+            # race condition between these jobs the packages need to be uploaded
+            # before pushing branch(es).
+            if stage_job_name:
+                plan.append({'get': 'pr-merged', 'trigger': True, 'passed': ['stage_for_upload']})
+            else:
+                plan.append({'get': 'pr-merged', 'trigger': True})
+        # resources to add
+        if branches is None:
+            branches = ['automated-build']
+        for n, folder in enumerate(folders):
+            if len(branches) == 1:
+                branch = branches[0]
+            elif len(folders) == len(branches):
+                branch = branches[n]
+            else:
+                raise Exception(
+                    "The number of branches either needs to be exactly one or "
+                    "equal to the number of feedstocks submitted. Exiting.")
+
+            config = config_vars.get('push-branch-config')
+            # add PIPELINE and GIT_COMMIT_MSG to params
+            params = config.get('params', {})
+            params['BRANCH'] = branch
+            params['FEEDSTOCK'] = folder
+            config['params'] = params
+            plan.append({
+                'task': 'push-branch',
+                'trigger': False,
+                'config': config,
+            })
+            self.add_job(f'push_branch_to_{folder}', plan)
+
+    def add_destroy_pipeline_job(self, config_vars, folders):
+        """
+        Adds a destroy pipeline job to the pipeline.
+        """
+        passed_jobs = [f'push_branch_to_{folder}' for folder in folders]
+        passed_jobs.append('stage_for_upload')
+        config = config_vars.get("destroy-pipeline-config")
+        params = config.get("params", {})
+        params['PIPELINE'] = config_vars['base-name']
+        config['params'] = params
+        plan = [{
+            'get': 'pr-merged',
+            'trigger': True,
+            'passed': passed_jobs
+        }, {
+            'task': 'destroy-pipeline',
+            'trigger': False,
+            'config': config
+        }]
+        self.add_job('destroy_pipeline', plan)
+
 
 class _DictBacked:
     """ Base class where attributes are stored in the _dict attribute """
