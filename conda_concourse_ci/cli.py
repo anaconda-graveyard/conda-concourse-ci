@@ -189,11 +189,6 @@ def parse_args(parse_this=None):
         dest="skip_existing", action="store_false"
     )
     one_off_parser.add_argument(
-        '--use_lock_pool',
-        help="Use the lock pool to limit jobs. DO NOT USE, WORKS POORLY",
-        dest="use_lock_pool", action="store_true"
-    )
-    one_off_parser.add_argument(
         '--use-repo-access',
         help="Pass the repo access credentials to the workers",
         action="store_true",
@@ -283,10 +278,6 @@ def parse_args(parse_this=None):
     batch_parser.add_argument(
         '--no-skip-existing', help="Do not skip existing builds",
         dest="skip_existing", action="store_false"
-    )
-    batch_parser.add_argument(
-        '--use_lock_pool', help="Use the lock pool to limit jobs",
-        dest="use_lock_pool", action="store_true"
     )
     batch_parser.add_argument(
         '--use-repo-access',
