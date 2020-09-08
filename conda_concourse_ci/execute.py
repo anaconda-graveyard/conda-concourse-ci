@@ -1,5 +1,3 @@
-from __future__ import division, print_function
-
 import contextlib
 import glob
 import json
@@ -25,8 +23,7 @@ import requests
 
 import yaml
 
-from .compute_build_graph import (construct_graph, expand_run, git_changed_recipes, order_build,
-                                  package_key)
+from .compute_build_graph import construct_graph, expand_run, order_build, package_key
 from .concourse import Pipeline, Job, BuildStep
 from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
@@ -44,11 +41,10 @@ yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
 yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
 
-def parse_platforms(matrix_base_dir, run, platform_filters):
-    platform_folder = '{}_platforms.d'.format(run)
-    platforms = load_yaml_config_dir(os.path.join(matrix_base_dir, platform_folder),
-                                     platform_filters)
-    log.debug("Platforms found for mode %s:", run)
+def parse_platforms(matrix_base_dir, platform_filters):
+    platform_dir = os.path.join(matrix_base_dir, 'build_platforms.d')
+    platforms = load_yaml_config_dir(platform_dir, platform_filters)
+    log.debug("Platforms found:")
     log.debug(platforms)
     return platforms
 
@@ -67,48 +63,68 @@ def _parse_python_numpy_from_pass_throughs(pass_through_list):
                 parsed[args[0]] = value
         except StopIteration:
             break
-
     return parsed
 
 
-def collect_tasks(path, folders, matrix_base_dir, channels=None, steps=0, test=False,
-                  max_downstream=5, variant_config_files=None, platform_filters=None,
-                  clobber_sections_file=None, append_sections_file=None, pass_throughs=None,
-                  skip_existing=True):
-    # runs = ['test']
-    # not testing means build and test
-    # if not test:
-    #     runs.insert(0, 'build')
-    runs = ['build']
-
+def collect_tasks(
+        path,
+        folders,
+        matrix_base_dir,
+        channels=None,
+        steps=0,
+        test=False,
+        max_downstream=5,
+        variant_config_files=None,
+        platform_filters=None,
+        clobber_sections_file=None,
+        append_sections_file=None,
+        pass_throughs=None,
+        skip_existing=True,
+        ):
+    """ Return a graph of build tasks """
     task_graph = nx.DiGraph()
     parsed_cli_args = _parse_python_numpy_from_pass_throughs(pass_throughs)
-    config = conda_build.api.Config(clobber_sections_file=clobber_sections_file,
-                                    append_sections_file=append_sections_file,
-                                    skip_existing=skip_existing, **parsed_cli_args)
+    config = conda_build.api.Config(
+        clobber_sections_file=clobber_sections_file,
+        append_sections_file=append_sections_file,
+        skip_existing=skip_existing,
+        **parsed_cli_args,
+    )
     platform_filters = ensure_list(platform_filters) if platform_filters else ['*']
-    for run in runs:
-        platforms = parse_platforms(matrix_base_dir, run, platform_filters)
-        # loop over platforms here because each platform may have different dependencies
-        # each platform will be submitted with a different label
-
-        for platform in platforms:
-            index_key = '-'.join([platform['platform'], str(platform['arch'])])
-            config.variants = get_package_variants(path, config, platform.get('variants'))
-            config.channel_urls = channels or []
-            config.variant_config_files = variant_config_files or []
-            conda_resolve = Resolve(get_build_index(subdir=index_key,
-                                                    bldpkgs_dir=config.bldpkgs_dir, channel_urls=channels)[0])
-            # this graph is potentially different for platform and for build or test mode ("run")
-            g = construct_graph(path, worker=platform, folders=folders, run=run,
-                                matrix_base_dir=matrix_base_dir, conda_resolve=conda_resolve,
-                                config=config)
-            # Apply the build label to any nodes that need (re)building or testing
-            expand_run(g, config=config.copy(), conda_resolve=conda_resolve, worker=platform,
-                       run=run, steps=steps, max_downstream=max_downstream, recipes_dir=path,
-                       matrix_base_dir=matrix_base_dir)
-            # merge this graph with the main one
-            task_graph = nx.compose(task_graph, g)
+    platforms = parse_platforms(matrix_base_dir, platform_filters)
+    # loop over platforms here because each platform may have different dependencies
+    # each platform will be submitted with a different label
+    for platform in platforms:
+        subdir = f"{platform['platform']}-{platform['arch']}"
+        config.variants = get_package_variants(path, config, platform.get('variants'))
+        config.channel_urls = channels or []
+        config.variant_config_files = variant_config_files or []
+        conda_resolve = Resolve(get_build_index(
+            subdir=subdir, bldpkgs_dir=config.bldpkgs_dir, channel_urls=channels)[0])
+        # this graph is potentially different for platform and for build or test mode ("run")
+        graph = construct_graph(
+            path,
+            worker=platform,
+            folders=folders,
+            run="build",
+            matrix_base_dir=matrix_base_dir,
+            conda_resolve=conda_resolve,
+            config=config,
+        )
+        # Apply the build label to any nodes that need (re)building or testing
+        expand_run(
+            graph,
+            config=config.copy(),
+            conda_resolve=conda_resolve,
+            worker=platform,
+            run="build",
+            steps=steps,
+            max_downstream=max_downstream,
+            recipes_dir=path,
+            matrix_base_dir=matrix_base_dir,
+        )
+        # merge this graph with the main one
+        task_graph = nx.compose(task_graph, graph)
     collapse_noarch_python_nodes(task_graph)
     return task_graph
 
@@ -563,15 +579,21 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
 
     repo_commit = ''
     git_identifier = ''
-    task_graph = collect_tasks(path, folders=folders, steps=steps,
-                                max_downstream=max_downstream, test=test,
-                                matrix_base_dir=matrix_base_dir,
-                                channels=kw.get('channel', []),
-                                variant_config_files=kw.get('variant_config_files', []),
-                                platform_filters=platform_filters,
-                                append_sections_file=append_sections_file,
-                                clobber_sections_file=clobber_sections_file,
-                                pass_throughs=pass_throughs, skip_existing=skip_existing)
+    task_graph = collect_tasks(
+        path,
+        folders=folders,
+        steps=steps,
+        max_downstream=max_downstream,
+        test=test,
+        matrix_base_dir=matrix_base_dir,
+        channels=kw.get('channel', []),
+        variant_config_files=kw.get('variant_config_files', []),
+        platform_filters=platform_filters,
+        append_sections_file=append_sections_file,
+        clobber_sections_file=clobber_sections_file,
+        pass_throughs=pass_throughs,
+        skip_existing=skip_existing
+    )
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         config_vars = yaml.safe_load(src)
