@@ -7,6 +7,16 @@ These map to the schema's in https://concourse-ci.org/docs.html
 import os
 
 
+CONDA_SUBDIR_TO_CONCOURSE_PLATFORM = {
+    'win-64': 'windows',
+    'win-32': 'windows',
+    'osx-64': 'darwin',
+    'linux-64': 'linux',
+    'linux-32': 'linux',
+    'linux-ppc64le': 'linux-ppc64le'
+}
+
+
 class Pipeline:
     """ configuration for a concourse pipeline. """
     # https://concourse-ci.org/pipelines.html
@@ -418,3 +428,108 @@ class Job:
             }
         }
         self.plan.append({'task': 'convert .tar.bz2 to .conda', 'config': config})
+
+
+class BuildStep:
+    """ Class for creating a Concourse step for package build jobs. """
+
+    def __init__(self, test_only, platform, worker_tags):
+        self.task_name = 'test' if test_only else 'build'
+        self.platform = platform
+        self.worker_tags = worker_tags
+        self.config = {}
+        self.cb_args = []  # list of arguments to pass to conda build
+        self.cmds = ''
+
+    def set_config_inputs(self, artifact_input):
+        """ Add inputs to the task config. """
+        inputs = [{'name': 'rsync-recipes'}]
+        if self.platform in ['win', 'osx']:
+            inputs.append({'name': 'rsync-build-pack'})
+        if artifact_input:
+            inputs.append({'name': 'indexed-artifacts'})
+        self.config["inputs"] = inputs
+
+    def set_config_outputs(self):
+        self.config["outputs"] = [
+            {'name': 'output-artifacts'},
+            {'name': 'output-source'},
+            {'name': 'stats'}
+        ]
+
+    def set_config_platform(self, arch):
+        subdir = f"{self.platform}-{arch}"
+        self.config["platform"] = CONDA_SUBDIR_TO_CONCOURSE_PLATFORM[subdir]
+
+    def set_config_init_run(self):
+        if self.platform == 'win':
+            self.config["run"] = {'path': 'cmd.exe', 'args': ['/c']}
+        else:
+            self.config["run"] = {'path': 'sh', 'args': ['-exc']}
+
+    def set_initial_cb_args(self):
+        if self.platform not in ['win']:
+            self.cb_args = [
+                '--no-anaconda-upload',
+                '--error-overlinking',
+                '--output-folder=output-artifacts',
+                '--cache-dir=output-source',
+            ]
+        else:
+            self.cb_args = [
+                '--no-anaconda-upload',
+                '--output-folder=output-artifacts',
+                '--cache-dir=output-source',
+            ]
+
+    def create_build_cmds(self, build_prefix_cmds, build_suffix_cmds):
+        build_cmd = " conda-build " + " ".join(self.cb_args) + " "
+        prefix = " ".join(build_prefix_cmds)
+        suffix = " ".join(build_suffix_cmds)
+        self.cmds = prefix + build_cmd + suffix
+
+    def add_prefix_cmds(self, prefix_cmds):
+        prefix = "&& ".join(prefix_cmds)
+        if prefix:
+            self.cmds = prefix + "&& " + self.cmds
+
+    def add_repo_access(self, github_user, github_token):
+        self.config['params'] = {
+            'GITHUB_USER': github_user,
+            'GITHUB_TOKEN': github_token,
+        }
+        if self.platform == 'win':
+            creds_cmds = [
+                '(echo machine github.com '
+                'login %GITHUB_USER% '
+                'password %GITHUB_TOKEN% '
+                'protocol https > %USERPROFILE%\\_netrc || exit 0)'
+            ]
+        else:
+            creds_cmds = [
+                'set +x',
+                'echo machine github.com '
+                'login $GITHUB_USER '
+                'password $GITHUB_TOKEN '
+                'protocol https > ~/.netrc',
+                'set -x'
+            ]
+        cmds = "&& ".join(creds_cmds)
+        self.cmds = self.cmds + "&& " + cmds
+
+    def add_suffix_cmds(self, suffix_cmds):
+        suffix = "&& ".join(suffix_cmds)
+        if suffix:
+            self.cmds = self.cmds + "&& " + suffix
+
+    def add_staging_channel_cmd(self, channel):
+        # todo: add proper source package path
+        path = "*.tar.bz2"
+        cmd = f"anaconda upload --skip-existing --force -u {channel} {path}"
+        self.cmds += cmd
+
+    def to_dict(self):
+        step = {'task': self.task_name, 'config': self.config}
+        if self.worker_tags:
+            step['tags'] = self.worker_tags
+        return step

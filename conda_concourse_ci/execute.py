@@ -27,7 +27,7 @@ import yaml
 
 from .compute_build_graph import (construct_graph, expand_run, git_changed_recipes, order_build,
                                   package_key)
-from .concourse import Pipeline, Job
+from .concourse import Pipeline, Job, BuildStep
 from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
@@ -42,16 +42,6 @@ except NameError:
 yaml.add_representer(HashableDict, yaml.representer.SafeRepresenter.represent_dict)
 yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
 yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
-
-
-conda_subdir_to_concourse_platform = {
-    'win-64': 'windows',
-    'win-32': 'windows',
-    'osx-64': 'darwin',
-    'linux-64': 'linux',
-    'linux-32': 'linux',
-    'linux-ppc64le': 'linux-ppc64le'
-}
 
 
 def parse_platforms(matrix_base_dir, run, platform_filters):
@@ -187,126 +177,61 @@ def get_build_task(
         test_only=False,
         use_repo_access=False,
         use_staging_channel=False):
-    config = {}
 
-    platform = worker['platform']
-    subdir = f"{platform}-{worker['arch']}"
-    config["platform"] = conda_subdir_to_concourse_platform[subdir]
+    worker_tags = (ensure_list(worker_tags) +
+                   ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
+    step = BuildStep(test_only, worker['platform'], worker_tags)
 
-    inputs = [{'name': 'rsync-recipes'}]
-    if platform in ['win', 'osx']:
-        inputs.append({'name': 'rsync-build-pack'})
-    if artifact_input:
-        inputs.append({'name': 'indexed-artifacts'})
-    config["inputs"] = inputs
+    # setup the task config
+    step.set_config_platform(worker['arch'])
+    step.set_config_inputs(artifact_input)
+    step.set_config_outputs()
+    step.set_config_init_run()
 
-    config["outputs"] = [
-        {'name': 'output-artifacts'},
-        {'name': 'output-source'},
-        {'name': 'stats'}
-    ]
-
+    # build up the arguments to pass to conda build
+    step.set_initial_cb_args()
     stats_file = os.path.join('stats', f"{node}_{int(time.time())}.json")
-    if platform not in ['win']:
-        build_args = [
-            '--no-anaconda-upload',
-            '--error-overlinking',
-            '--output-folder=output-artifacts',
-            '--cache-dir=output-source',
-            f'--stats-file={stats_file}',
-        ]
-    else:
-        build_args = [
-            '--no-anaconda-upload',
-            '--output-folder=output-artifacts',
-            '--cache-dir=output-source',
-            f'--stats-file={stats_file}',
-        ]
+    step.cb_args.append(f'--stats-file={stats_file}')
     if test_only:
-        build_args.append('--test')
+        step.cb_args.append('--test')
     for channel in meta.config.channel_urls:
-        build_args.extend(['-c', channel])
+        step.cb_args.extend(['-c', channel])
     if artifact_input:
-        build_args.extend(('-c', os.path.join('indexed-artifacts')))
-    if platform == 'win':
-        config["run"] = {'path': 'cmd.exe', 'args': ['/c']}
-        build_args.extend(['--croot', 'C:\\ci'])
+        step.cb_args.extend(('-c', os.path.join('indexed-artifacts')))
+    if step.platform == 'win':
+        step.cb_args.extend(['--croot', 'C:\\ci'])
     else:
-        config["run"] = {'path': 'sh', 'args': ['-exc']}
-        build_args.extend(['--croot', '.'])
-
+        step.cb_args.extend(['--croot', '.'])
     # these are any arguments passed to c3i that c3i doesn't recognize
-    build_args.extend(ensure_list(pass_throughs))
-
+    step.cb_args.extend(ensure_list(pass_throughs))
     # this is the recipe path to build
-    build_args.append(os.path.join('rsync-recipes', node))
-
-    if use_repo_access:
-        gh_access_user = config_vars.get('recipe-repo-access-user', None)
-        gh_access_token = config_vars.get('recipe-repo-access-token', None)
-        if gh_access_user and gh_access_token:
-            config['params'] = {
-                'GITHUB_USER': gh_access_user,
-                'GITHUB_TOKEN': gh_access_token
-            }
-            if platform == 'win':
-                creds_cmd = [
-                    '(echo machine github.com '
-                    'login %GITHUB_USER% '
-                    'password %GITHUB_TOKEN% '
-                    'protocol https > %USERPROFILE%\\_netrc || exit 0)'
-                ]
-            else:
-                creds_cmd = [
-                    'set +x',
-                    'echo machine github.com '
-                    'login $GITHUB_USER '
-                    'password $GITHUB_TOKEN '
-                    'protocol https > ~/.netrc',
-                    'set -x'
-                ]
-            worker['prefix_commands'] = worker.get('prefix_commands', []) + creds_cmd
-
+    step.cb_args.append(os.path.join('rsync-recipes', node))
     if use_staging_channel:
-        sc_user = config_vars.get('staging-channel-user', 'staging')
-        build_args.extend(['-c', sc_user])
-        # todo: add proper source package path
-        pkg_path = '*.tar.bz2'
-        sc_command = f"anaconda upload --skip-existing --force -u {sc_user} {pkg_path}"
-    else:
-        sc_command = ''
+        channel = config_vars.get('staging-channel-user', 'staging')
+        step.cb_args.extend(['-c', channel])
 
-    build_command = " conda-build " + " ".join(build_args) + " "
-    build_prefix_commands = " ".join(ensure_list(worker.get('build_prefix_commands')))
-    build_suffix_commands = " ".join(ensure_list(worker.get('build_suffix_commands')))
-    commands = build_prefix_commands + build_command + build_suffix_commands
-
-    prefix_commands = "&& ".join(ensure_list(worker.get('prefix_commands')))
-    if prefix_commands:
-        commands = prefix_commands + '&& ' + commands
-
-    suffix_commands = "&& ".join(ensure_list(worker.get('suffix_commands')))
-    if suffix_commands:
-        commands = commands + '&& ' + suffix_commands
-
-    if sc_command:
-        commands = commands + '&& ' + sc_command
-
-    config['run']['args'].append(commands)
+    # create the commands to run in the task
+    cb_prefix_cmds = ensure_list(worker.get("build_prefix_commands"))
+    cb_suffix_cmds = ensure_list(worker.get("build_suffix_commands"))
+    step.create_build_cmds(cb_prefix_cmds, cb_suffix_cmds)
+    step.add_prefix_cmds(ensure_list(worker.get('prefix_commands')))
+    if use_repo_access:
+        github_user = config_vars.get('recipe-repo-access-user', None)
+        github_token = config_vars.get('recipe-repo-access-token', None)
+        if github_user and github_token:
+            step.add_repo_access(github_user, github_token)
+    step.add_suffix_cmds(ensure_list(worker.get('suffix_commands')))
+    if use_staging_channel:
+        channel = config_vars.get('staging-channel-user', 'staging')
+        step.add_staging_channel_cmd(channel)
+    step.config['run']['args'].append(step.cmds)
 
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
-    config.update(worker.get('connector', {}))
+    step.config.update(worker.get('connector', {}))
 
-    step = {'task': 'build', 'config': config}
-    if test_only:
-        step['task'] = 'test'
-    worker_tags = (ensure_list(worker_tags) +
-                   ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
-    if worker_tags:
-        step['tags'] = worker_tags
-    return step
+    return step.to_dict()
 
 
 def graph_to_plan_with_jobs(
