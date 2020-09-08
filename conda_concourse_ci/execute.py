@@ -403,22 +403,6 @@ def _get_current_git_rev(path, branch=False):
     return out[:8] if not branch else out
 
 
-@contextlib.contextmanager
-def checkout_git_rev(checkout_rev, path):
-    checkout_ok = False
-    try:
-        git_current_rev = _get_current_git_rev(path, branch=True)
-        subprocess.check_call(['git', 'checkout', checkout_rev], cwd=path)
-        checkout_ok = True
-    except subprocess.CalledProcessError:    # pragma: no cover
-        log.warn("failed to check out git revision.  "
-                 "Source may not be a git repo (that's OK, "
-                 "but you need to specify --folders.)")  # pragma: no cover
-    yield
-    if checkout_ok:
-        subprocess.check_call(['git', 'checkout', git_current_rev], cwd=path)
-
-
 def _ensure_login_and_sync(config_root_dir):
     """Make sure end user is logged in and has a compatible version of the fly
     utility. This function should be called before executing other fly commands
@@ -550,14 +534,12 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                                'expose-pipeline', '-p', pipeline_name])
 
 
-def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, matrix_base_dir=None,
+def compute_builds(path, base_name, folders, matrix_base_dir=None,
                    steps=0, max_downstream=5, test=False, public=True, output_dir='../output',
                    output_folder_label='git', config_overrides=None, platform_filters=None,
                    worker_tags=None, clobber_sections_file=None, append_sections_file=None,
                    pass_throughs=None, skip_existing=True,
                    use_repo_access=False, use_staging_channel=False, **kw):
-    if not git_rev and not folders:
-        raise ValueError("Either git_rev or folders list are required to know what to compute")
     if kw.get('stage_for_upload', False):
         if kw.get('commit_msg') is None:
             raise ValueError(
@@ -567,11 +549,8 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
             raise ValueError(
                     "--destroy-pipeline requires that --push-branch "
                     "and stage-for-upload be specified as well.")
-    checkout_rev = stop_rev or git_rev
     folders = folders
     path = path.replace('"', '')
-    if not folders:
-        folders = git_changed_recipes(git_rev, stop_rev, git_root=path)
     if not folders:
         print("No folders specified to build, and nothing changed in git.  Exiting.")
         return
@@ -584,32 +563,15 @@ def compute_builds(path, base_name, git_rev=None, stop_rev=None, folders=None, m
 
     repo_commit = ''
     git_identifier = ''
-    if checkout_rev:
-        with checkout_git_rev(checkout_rev, path):
-            git_identifier = _get_current_git_rev(path)
-            task_graph = collect_tasks(path, folders=folders, steps=steps,
-                                       max_downstream=max_downstream, test=test,
-                                       matrix_base_dir=matrix_base_dir,
-                                       channels=kw.get('channel', []),
-                                       variant_config_files=kw.get('variant_config_files', []),
-                                       platform_filters=platform_filters,
-                                       append_sections_file=append_sections_file,
-                                       clobber_sections_file=clobber_sections_file,
-                                       pass_throughs=pass_throughs, skip_existing=skip_existing)
-            try:
-                repo_commit = _get_current_git_rev(path)
-            except subprocess.CalledProcessError:
-                repo_commit = 'master'
-    else:
-        task_graph = collect_tasks(path, folders=folders, steps=steps,
-                                   max_downstream=max_downstream, test=test,
-                                   matrix_base_dir=matrix_base_dir,
-                                   channels=kw.get('channel', []),
-                                   variant_config_files=kw.get('variant_config_files', []),
-                                   platform_filters=platform_filters,
-                                   append_sections_file=append_sections_file,
-                                   clobber_sections_file=clobber_sections_file,
-                                   pass_throughs=pass_throughs, skip_existing=skip_existing)
+    task_graph = collect_tasks(path, folders=folders, steps=steps,
+                                max_downstream=max_downstream, test=test,
+                                matrix_base_dir=matrix_base_dir,
+                                channels=kw.get('channel', []),
+                                variant_config_files=kw.get('variant_config_files', []),
+                                platform_filters=platform_filters,
+                                append_sections_file=append_sections_file,
+                                clobber_sections_file=clobber_sections_file,
+                                pass_throughs=pass_throughs, skip_existing=skip_existing)
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
         config_vars = yaml.safe_load(src)

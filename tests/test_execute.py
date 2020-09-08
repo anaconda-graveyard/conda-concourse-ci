@@ -125,21 +125,11 @@ def test_bootstrap(mocker, testing_workdir):
     assert os.path.isdir('frank/test_platforms.d')
 
 
-def test_get_current_git_rev(testing_workdir):
-    subprocess.check_call('git clone https://github.com/conda/conda_build_test_recipe'.split())
-    git_repo = 'conda_build_test_recipe'
-    assert execute._get_current_git_rev(git_repo) == '7e3525f4'
-    with execute.checkout_git_rev('1.21.0', git_repo):
-        assert execute._get_current_git_rev(git_repo) == '29bb0bd2'
-        assert execute._get_current_git_rev(git_repo, True) == 'HEAD'
-
-
 def test_compute_builds(testing_workdir, mocker, monkeypatch):
     monkeypatch.chdir(test_data_dir)
     output = os.path.join(testing_workdir, 'output')
     # neutralize git checkout so we're really testing the HEAD commit
-    mocker.patch.object(execute, 'checkout_git_rev')
-    execute.compute_builds('.', 'config-name', 'master',
+    execute.compute_builds('.', 'config-name',
                            folders=['python_test', 'conda_forge_style_recipe'],
                            matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
                            output_dir=output)
@@ -168,9 +158,8 @@ def test_compute_builds_intradependencies(testing_workdir, monkeypatch, mocker):
     already-available packages.)"""
     monkeypatch.chdir(os.path.join(test_data_dir, 'intradependencies'))
     # neutralize git checkout so we're really testing the HEAD commit
-    mocker.patch.object(execute, 'checkout_git_rev')
     output_dir = os.path.join(testing_workdir, 'output')
-    execute.compute_builds('.', 'config-name', 'master',
+    execute.compute_builds('.', 'config-name',
                            folders=['zlib', 'uses_zlib'],
                            matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
                            output_dir=output_dir)
@@ -183,18 +172,6 @@ def test_compute_builds_intradependencies(testing_workdir, monkeypatch, mocker):
     uses_zlib_job = [job for job in plan['jobs'] if job['name'] == 'uses_zlib-1.0-on-centos5-64'][0]
     assert any(task.get('passed') == ['zlib_wannabe-1.2.8-on-centos5-64']
                for task in uses_zlib_job['plan'])
-
-
-def test_compute_builds_dies_when_no_folders_and_no_git(testing_workdir, mocker, capfd):
-    changed = mocker.patch.object(execute, 'git_changed_recipes')
-    changed.return_value = None
-    output_dir = os.path.join(testing_workdir, 'output')
-    execute.compute_builds('.', 'config-name', 'master',
-                           folders=None,
-                           matrix_base_dir=os.path.join(test_data_dir, 'linux-config-test'),
-                           output_dir=output_dir)
-    out, err = capfd.readouterr()
-    assert "No folders specified to build" in out
 
 
 def test_python_build_matrix_expansion(monkeypatch):
