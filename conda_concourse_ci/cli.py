@@ -14,59 +14,6 @@ def parse_args(parse_this=None):
         help='Show the conda-build version number and exit.',
         version='conda-concourse-ci %s' % __version__)
     sp = parser.add_subparsers(title='subcommands', dest='subparser_name')
-    examine_parser = sp.add_parser('examine', help='examine path for changed recipes')
-    examine_parser.add_argument('base_name',
-                                help="name of your project, to distinguish it from other projects")
-    examine_parser.add_argument("path", default='.', nargs='?',
-                        help="path in which to examine/build/test recipes")
-    examine_parser.add_argument('--folders', default=[], nargs="+",
-                        help="Rather than determine tree from git, specify folders to build")
-    examine_parser.add_argument('--steps', type=int,
-                        help=("Number of downstream steps to follow in the DAG when "
-                              "computing what to test.  Used for making sure that an "
-                              "update does not break downstream packages.  Set to -1 "
-                              "to follow the complete dependency tree."),
-                        default=0),
-    examine_parser.add_argument('--max-downstream', default=5, type=int,
-                        help=("Limit the total number of downstream packages built.  Only applies "
-                              "if steps != 0.  Set to -1 for unlimited."))
-    examine_parser.add_argument('--git-rev',
-                        default='HEAD',
-                        help=('start revision to examine.  If stop not '
-                              'provided, changes are THIS_VAL~1..THIS_VAL'))
-    examine_parser.add_argument('--stop-rev', default=None,
-                        help=('stop revision to examine.  When provided,'
-                              'changes are git_rev..stop_rev'))
-    examine_parser.add_argument('--test', action='store_true',
-                        help='test packages (instead of building AND testing them)')
-    examine_parser.add_argument('--matrix-base-dir',
-                                help='path to matrix configuration, if different from recipe path',
-                                default=cc_conda_build.get('matrix_base_dir'))
-    examine_parser.add_argument('--output-dir', help="folder where output plan and recipes live",
-                                default='../output')
-    examine_parser.add_argument('--channel', '-c', action='append',
-                                help="Additional channel to use when building packages")
-    examine_parser.add_argument('--platform-filter', '-p', action='append',
-                                help="glob pattern(s) to filter build platforms.  For example, "
-                                "linux* will build all platform files whose filenames start with "
-                                "linux",
-                                dest='platform_filters')
-    examine_parser.add_argument('--worker-tag', '-t', action='append',
-                                help="set worker tag(s) to limit where jobs will run.  Applies "
-                                "to all jobs.  For finer control, use extra/worker_tags in "
-                                "meta.yaml with selectors.",
-                                dest='worker_tags')
-    examine_parser.add_argument(
-        '-m', '--variant-config-files',
-        action="append",
-        help="""Additional variant config files to add.  These yaml files can contain
-        keys such as `c_compiler` and `target_platform` to form a build matrix."""
-    )
-    examine_parser.add_argument(
-        '--no-skip-existing', help="Do not skip existing builds",
-        dest="skip_existing", action="store_false"
-    )
-
     submit_parser = sp.add_parser('submit', help="submit plan director to configured server")
     submit_parser.add_argument('base_name',
                                help="name of your project, to distinguish it from other projects")
@@ -334,8 +281,6 @@ def main(args=None):
         execute.submit(pass_throughs=pass_throughs, **args_dict)
     elif args.subparser_name == 'bootstrap':
         execute.bootstrap(pass_throughs=pass_throughs, **args.__dict__)
-    elif args.subparser_name == 'examine':
-        execute.compute_builds(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'one-off':
         execute.submit_one_off(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'batch':

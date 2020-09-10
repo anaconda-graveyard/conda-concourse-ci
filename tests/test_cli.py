@@ -108,20 +108,6 @@ def test_bootstrap_without_base_name_raises():
         cli.main(args)
 
 
-def test_examine(mocker):
-    mocker.patch.object(cli.execute, 'compute_builds')
-    args = ['examine', 'frank']
-    cli.main(args)
-    cli.execute.compute_builds.assert_called_once_with(base_name='frank', debug=False, folders=[],
-                                                       git_rev='HEAD', matrix_base_dir=mocker.ANY,
-                                                       max_downstream=5, output_dir='../output',
-                                                       path='.', steps=0, stop_rev=None,
-                                                       subparser_name='examine', test=False,
-                                                       channel=None, variant_config_files=None,
-                                                       platform_filters=None, worker_tags=None,
-                                                       pass_throughs=[], skip_existing=True)
-
-
 def test_examine_without_base_name_raises():
     with pytest.raises(SystemExit):
         args = ['examine']
