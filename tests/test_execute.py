@@ -35,10 +35,11 @@ boilerplate_test_vars = {'base-name': 'steve',
 
 def test_get_build_task(testing_graph):
     # ensure that our channels make it into the args
-    meta = testing_graph.nodes['b-on-linux']['meta']
+    node = 'b-on-linux'
+    meta = testing_graph.nodes[node]['meta']
+    worker = testing_graph.nodes[node]['worker']
     meta.config.channel_urls = ['conda_build_test']
-    task = execute.get_build_task(base_path=graph_data_dir, graph=testing_graph,
-                                node='b-on-linux', commit_id='abc123')
+    task = execute.get_build_task(node, meta, worker)
     assert task['config']['platform'] == 'linux'
     assert task['config']['inputs'] == [{'name': 'rsync-recipes'}]
     assert 'rsync-recipes/b-on-linux' in task['config']['run']['args'][-1]
@@ -52,19 +53,12 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
 
     with open(os.path.join(test_config_dir, 'config.yml')) as f:
         config_vars = yaml.safe_load(f)
-    plan_dict = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
+    pipeline = execute.graph_to_plan_with_jobs(graph_data_dir, testing_graph, 'abc123',
                                                 test_config_dir, config_vars)
     # rsync-recipes, rsync-source, rsync-stats, and one artifact resource per build
-    assert len(plan_dict['resources']) == 6
+    assert len(pipeline.resources) == 6
     # a, b, c
-    assert len(plan_dict['jobs']) == 3
-
-
-def test_resource_to_dict():
-    resource = HashableDict(source=HashableDict(options=set(('a', 'b'))))
-    out = execute._resource_to_dict(resource)
-    assert type(out['source']['options']) == list
-    assert type(out['source']) == dict
+    assert len(pipeline.jobs) == 3
 
 
 def test_submit(mocker):
