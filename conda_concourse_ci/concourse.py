@@ -101,7 +101,11 @@ class Concourse(AbstractContextManager):
         self._fly(['expose-pipeline', '--pipeline', pipeline])
 
     def destroy_pipeline(self, pipeline):
-        self._fly(['destroy-pipeline', '--pipeline', pipeline])
+        self._fly([
+            'destroy-pipeline',
+            '--non-interactive',
+            '--pipeline', pipeline,
+        ])
 
     @property
     def pipelines(self):
