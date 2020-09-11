@@ -192,7 +192,9 @@ def get_build_task(
         pass_throughs=None,
         test_only=False,
         use_repo_access=False,
-        use_staging_channel=False):
+        use_staging_channel=False,
+        automated_pipeline=False,
+        ):
 
     worker_tags = (ensure_list(worker_tags) +
                    ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
@@ -200,7 +202,11 @@ def get_build_task(
 
     # setup the task config
     stepconfig.set_config_platform(worker['arch'])
-    stepconfig.set_config_inputs(artifact_input)
+    stepconfig.set_config_inputs(artifact_input, automated_pipeline)
+    if automated_pipeline:
+        feedstock_name = meta.meta['package']['name']
+        stepconfig.config['inputs'].append(
+            {'name': f'pull-recipes-{feedstock_name}'})
     stepconfig.set_config_outputs()
     stepconfig.set_config_init_run()
 
@@ -221,7 +227,10 @@ def get_build_task(
     # these are any arguments passed to c3i that c3i doesn't recognize
     stepconfig.cb_args.extend(ensure_list(pass_throughs))
     # this is the recipe path to build
-    stepconfig.cb_args.append(os.path.join('rsync-recipes', node))
+    if automated_pipeline:
+        stepconfig.cb_args.append('pull-recipes*/')
+    else:
+        stepconfig.cb_args.append(os.path.join('rsync-recipes', node))
     if use_staging_channel:
         channel = config_vars.get('staging-channel-user', 'staging')
         stepconfig.cb_args.extend(['-c', channel])
@@ -236,6 +245,8 @@ def get_build_task(
         github_token = config_vars.get('recipe-repo-access-token', None)
         if github_user and github_token:
             stepconfig.add_repo_access(github_user, github_token)
+    if automated_pipeline:
+        stepconfig.add_autobuild_cmds()
     stepconfig.add_suffix_cmds(ensure_list(worker.get('suffix_commands')))
     if use_staging_channel:
         channel = config_vars.get('staging-channel-user', 'staging')
@@ -273,7 +284,12 @@ def graph_to_plan_with_jobs(
         status_folder = os.path.join(status_folder, commit_id)
 
     plconfig = PipelineConfig()
-    plconfig.add_rsync_resources(config_vars, recipe_folder)
+    plconfig.add_rsync_resource_type()
+    if not automated_pipeline:
+        plconfig.add_rsync_recipes(config_vars, recipe_folder)
+    plconfig.add_rsync_source(config_vars)
+    plconfig.add_rsync_stats(config_vars)
+
     if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order):
         plconfig.add_rsync_build_pack(config_vars)
 
@@ -286,7 +302,14 @@ def graph_to_plan_with_jobs(
         if test_only:
             name = 'test-' + name
         jobconfig = JobConfig(name=name)
-        jobconfig.add_rsync_recipes()
+        if automated_pipeline:
+            # TODO use mapping between node -> folder/feedstock
+            feedstock_name = meta.meta['package']['name']
+            jobconfig.plan.append(
+                {'get': f'pull-recipes-{feedstock_name}', 'trigger': True}
+            )
+        else:
+            jobconfig.add_rsync_recipes()
         if worker['platform'] == "win":
             jobconfig.add_rsync_build_pack_win()
         elif worker['platform'] == "osx":
@@ -305,7 +328,8 @@ def graph_to_plan_with_jobs(
             pass_throughs=pass_throughs,
             test_only=test_only,
             use_repo_access=use_repo_access,
-            use_staging_channel=use_staging_channel
+            use_staging_channel=use_staging_channel,
+            automated_pipeline=automated_pipeline,
         ))
         if not test_only:
             jobconfig.add_convert_task(meta.config.host_subdir)
@@ -329,76 +353,29 @@ def graph_to_plan_with_jobs(
             plconfig.add_repo_v6_upload(all_rsync, config_vars)
 
     if automated_pipeline:
-        # build the automated pipeline
-        build_automated_pipeline(plconfig, folders, order, branches, pr_num, repository, config_vars)
+        if branches is None:
+            branches = ['automated-build']
+        for n, folder in enumerate(folders):
+            if len(branches) == 1:
+                branch = branches[0]
+            elif len(folders) == len(branches):
+                branch = branches[n]
+            else:
+                raise Exception(
+                    "The number of branches either needs to be exactly one or "
+                    "equal to the number of feedstocks submitted. Exiting."
+                )
+            pull_recipes = {
+                'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0]),
+                'type': 'git',
+                'source': {
+                    'branch': branch,
+                    'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
+                },
+            }
+            plconfig.resources.append(pull_recipes)
 
-    # convert types for smoother output to yaml
     return plconfig
-
-
-def build_automated_pipeline(pline, folders, order, branches, pr_num, repository, config_vars):
-    # TODO adjust to use pipeline rather than pline or incorperate into earlier function
-    # resources to add
-    if branches is None:
-        branches = ['automated-build']
-    for n, folder in enumerate(folders):
-        if len(branches) == 1:
-            branch = branches[0]
-        elif len(folders) == len(branches):
-            branch = branches[n]
-        else:
-            raise Exception("The number of branches either needs to be exactly one or equal to the number of feedstocks submitted. Exiting.")
-
-        pull_recipes = {
-            'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0]),
-            'type': 'git',
-            'source': {
-                'branch': branch,
-                'uri': 'https://github.com/AnacondaRecipes/{0}.git'.format(folder)
-            },
-        }
-        pline.resources.append(pull_recipes)
-
-    for n, resource in enumerate(pline.resources):
-        if resource.get('name') == 'rsync-recipes' and not any(i.startswith('test-') for i in order):
-            del(pline.resources[n])
-
-    for job in pline.jobs:
-        if job.get('name') in order:
-            for num, plan in enumerate(job.get('plan')):
-                if plan.get('get') == 'rsync-recipes' and not job.get('name').startswith('test-'):
-                    for folder in folders:
-                        if job.get('name').startswith(folder.rsplit('-', 1)[0]):
-                            plan.update({'get': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0])})
-                if plan.get('task', '') == 'build':
-                    command = plan.get('config').get('run').get('args')[-1]
-                    clean_feedstock_linux = 'for i in `ls pull-recipes*`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
-                    # TODO fix this
-                    # clean_feedstock_win = 'pushd %cd%\pull-recipes* for /D %%D in ("*") do (if /I not "%%~nxD"=="recipe") for %%F in ("*") do (del "%%~F") popd'
-                    import re
-                    # replace the old rsync dir with the new one
-                    command = re.sub(r'rsync-recipes/([a-zA-Z\d\D+]*\ )', 'pull-recipes*/ ', command)
-                    print(job.get("name"))
-                    if "winbuilder" in job.get("name"):
-                        # command = clean_feedstock_win + command
-                        command = command
-                    else:
-                        command = clean_feedstock_linux + command
-                    plan.get('config').get('run').get('args')[-1] = command
-                    inputs = plan.get('config').get('inputs')
-                    for folder in folders:
-                        if job.get('name').startswith(folder.rsplit('-', 1)[0]):
-                            inputs.append({'name': 'pull-recipes-{0}'.format(folder.rsplit('-', 1)[0])})
-                    plan['config']['inputs'] = inputs
-                    for n, i in enumerate(plan.get('config').get('inputs')):
-                        if i.get('name') == 'rsync-recipes':
-                            del(plan['config']['inputs'][n])
-                if plan.get('task', '') == 'test':
-                    for resource in plan.resources:
-                        if resource.get('name').startswith('rsync_{}'.format(folders[0].split('-')[0])) and 'canary' not in resource.get('name'):
-                            plan.get('config').get('inputs').append({'name': resource.get('name')})
-
-    return
 
 
 def _get_current_git_rev(path, branch=False):
