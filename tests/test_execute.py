@@ -63,6 +63,7 @@ def test_graph_to_plan_with_jobs(mocker, testing_graph):
 
 def test_submit(mocker):
     mocker.patch.object(execute, 'subprocess')
+    mocker.patch.object(conda_concourse_ci.concourse, 'subprocess')
     pipeline_file = os.path.join(test_config_dir, 'plan_director.yml')
     execute.submit(pipeline_file, base_name="test", pipeline_name="test-pipeline",
                    src_dir='.', config_root_dir=os.path.join(test_data_dir, 'config-test'))
@@ -70,6 +71,7 @@ def test_submit(mocker):
 
 @pytest.mark.serial
 def test_submit_one_off(mocker):
+    mocker.patch.object(conda_concourse_ci.concourse, 'subprocess')
     check_call = mocker.patch.object(execute.subprocess, 'check_call')
     execute.submit_one_off('frank', os.path.join(test_data_dir, 'one-off-recipes'),
                            folders=('bzip2', 'pytest', 'pytest-cov'),
@@ -89,7 +91,8 @@ def test_submit_one_off(mocker):
 
 @pytest.mark.serial
 def test_submit_batch(mocker):
-    check_call = mocker.patch.object(execute.subprocess, 'check_call')
+    mocker.patch.object(execute, 'subprocess')
+    mocker.patch.object(conda_concourse_ci.concourse, 'subprocess')
     submit_one_off = mocker.patch.object(execute, 'submit_one_off')
     get_activate_builds = mocker.patch.object(execute, '_get_activate_builds', return_value=3)
 
@@ -98,13 +101,6 @@ def test_submit_batch(mocker):
         os.path.join(test_data_dir, 'one-off-recipes'),
         config_root_dir=test_config_dir,
         max_builds=999, poll_time=0, build_lookback=500, label_prefix='sentinel_')
-    # check that fly was executed
-    check_call.assert_has_calls([
-        mocker.call(['fly', '-t', 'conda-concourse-server', 'login',
-         '--concourse-url', mocker.ANY, '--team-name', mocker.ANY,
-        '--username', mocker.ANY, '--password', mocker.ANY]),
-        mocker.call(['fly', '-t', 'conda-concourse-server', 'sync'])
-    ])
     # submit_one_off should be called twice
     submit_one_off.assert_has_calls([
         mocker.call('sentinel_bzip', mocker.ANY, ['bzip'],
