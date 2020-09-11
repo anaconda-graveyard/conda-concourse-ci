@@ -17,7 +17,7 @@ CONDA_SUBDIR_TO_CONCOURSE_PLATFORM = {
 }
 
 
-class Pipeline:
+class PipelineConfig:
     """ configuration for a concourse pipeline. """
     # https://concourse-ci.org/pipelines.html
     jobs = []
@@ -269,7 +269,7 @@ class Pipeline:
         self.add_job('destroy_pipeline', plan)
 
 
-class Job:
+class JobConfig:
     """ configuration for a concourse job. """
     # https://concourse-ci.org/jobs.html
 
@@ -430,7 +430,7 @@ class Job:
         self.plan.append({'task': 'convert .tar.bz2 to .conda', 'config': config})
 
 
-class BuildStep:
+class BuildStepConfig:
     """ Class for creating a Concourse step for package build jobs. """
 
     def __init__(self, test_only, platform, worker_tags):

@@ -24,7 +24,7 @@ import requests
 import yaml
 
 from .compute_build_graph import construct_graph, expand_run, order_build, package_key
-from .concourse import Pipeline, Job, BuildStep
+from .concourse_config import PipelineConfig, JobConfig, BuildStepConfig
 from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
 log = logging.getLogger(__file__)
@@ -196,58 +196,58 @@ def get_build_task(
 
     worker_tags = (ensure_list(worker_tags) +
                    ensure_list(meta.meta.get('extra', {}).get('worker_tags')))
-    step = BuildStep(test_only, worker['platform'], worker_tags)
+    stepconfig = BuildStepConfig(test_only, worker['platform'], worker_tags)
 
     # setup the task config
-    step.set_config_platform(worker['arch'])
-    step.set_config_inputs(artifact_input)
-    step.set_config_outputs()
-    step.set_config_init_run()
+    stepconfig.set_config_platform(worker['arch'])
+    stepconfig.set_config_inputs(artifact_input)
+    stepconfig.set_config_outputs()
+    stepconfig.set_config_init_run()
 
     # build up the arguments to pass to conda build
-    step.set_initial_cb_args()
+    stepconfig.set_initial_cb_args()
     stats_file = os.path.join('stats', f"{node}_{int(time.time())}.json")
-    step.cb_args.append(f'--stats-file={stats_file}')
+    stepconfig.cb_args.append(f'--stats-file={stats_file}')
     if test_only:
-        step.cb_args.append('--test')
+        stepconfig.cb_args.append('--test')
     for channel in meta.config.channel_urls:
-        step.cb_args.extend(['-c', channel])
+        stepconfig.cb_args.extend(['-c', channel])
     if artifact_input:
-        step.cb_args.extend(('-c', os.path.join('indexed-artifacts')))
-    if step.platform == 'win':
-        step.cb_args.extend(['--croot', 'C:\\ci'])
+        stepconfig.cb_args.extend(('-c', os.path.join('indexed-artifacts')))
+    if stepconfig.platform == 'win':
+        stepconfig.cb_args.extend(['--croot', 'C:\\ci'])
     else:
-        step.cb_args.extend(['--croot', '.'])
+        stepconfig.cb_args.extend(['--croot', '.'])
     # these are any arguments passed to c3i that c3i doesn't recognize
-    step.cb_args.extend(ensure_list(pass_throughs))
+    stepconfig.cb_args.extend(ensure_list(pass_throughs))
     # this is the recipe path to build
-    step.cb_args.append(os.path.join('rsync-recipes', node))
+    stepconfig.cb_args.append(os.path.join('rsync-recipes', node))
     if use_staging_channel:
         channel = config_vars.get('staging-channel-user', 'staging')
-        step.cb_args.extend(['-c', channel])
+        stepconfig.cb_args.extend(['-c', channel])
 
     # create the commands to run in the task
     cb_prefix_cmds = ensure_list(worker.get("build_prefix_commands"))
     cb_suffix_cmds = ensure_list(worker.get("build_suffix_commands"))
-    step.create_build_cmds(cb_prefix_cmds, cb_suffix_cmds)
-    step.add_prefix_cmds(ensure_list(worker.get('prefix_commands')))
+    stepconfig.create_build_cmds(cb_prefix_cmds, cb_suffix_cmds)
+    stepconfig.add_prefix_cmds(ensure_list(worker.get('prefix_commands')))
     if use_repo_access:
         github_user = config_vars.get('recipe-repo-access-user', None)
         github_token = config_vars.get('recipe-repo-access-token', None)
         if github_user and github_token:
-            step.add_repo_access(github_user, github_token)
-    step.add_suffix_cmds(ensure_list(worker.get('suffix_commands')))
+            stepconfig.add_repo_access(github_user, github_token)
+    stepconfig.add_suffix_cmds(ensure_list(worker.get('suffix_commands')))
     if use_staging_channel:
         channel = config_vars.get('staging-channel-user', 'staging')
-        step.add_staging_channel_cmd(channel)
-    step.config['run']['args'].append(step.cmds)
+        stepconfig.add_staging_channel_cmd(channel)
+    stepconfig.config['run']['args'].append(stepconfig.cmds)
 
     # this has details on what image or image_resource to use.
     #   It is OK for it to be empty - it is used only for docker images, which is only a Linux
     #   feature right now.
-    step.config.update(worker.get('connector', {}))
+    stepconfig.config.update(worker.get('connector', {}))
 
-    return step.to_dict()
+    return stepconfig.to_dict()
 
 
 def graph_to_plan_with_jobs(
@@ -272,10 +272,10 @@ def graph_to_plan_with_jobs(
         artifact_folder = os.path.join(artifact_folder, commit_id)
         status_folder = os.path.join(status_folder, commit_id)
 
-    pipeline = Pipeline()
-    pipeline.add_rsync_resources(config_vars, recipe_folder)
+    plconfig = PipelineConfig()
+    plconfig.add_rsync_resources(config_vars, recipe_folder)
     if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order):
-        pipeline.add_rsync_build_pack(config_vars)
+        plconfig.add_rsync_build_pack(config_vars)
 
     for node in order:
         meta = graph.nodes[node]['meta']
@@ -285,19 +285,19 @@ def graph_to_plan_with_jobs(
         name = package_key(meta, worker['label'])
         if test_only:
             name = 'test-' + name
-        job = Job(name=name)
-        job.add_rsync_recipes()
+        jobconfig = JobConfig(name=name)
+        jobconfig.add_rsync_recipes()
         if worker['platform'] == "win":
-            job.add_rsync_build_pack_win()
+            jobconfig.add_rsync_build_pack_win()
         elif worker['platform'] == "osx":
-            job.add_rsync_build_pack_osx()
+            jobconfig.add_rsync_build_pack_osx()
         prereqs = set(graph.successors(node))
         for prereq in prereqs:
             if rsync_artifacts:
-                job.add_rsync_prereq(prereq)
+                jobconfig.add_rsync_prereq(prereq)
         if prereqs:
-            job.add_consolidate_task(prereqs, meta.config.host_subdir)
-        job.plan.append(get_build_task(
+            jobconfig.add_consolidate_task(prereqs, meta.config.host_subdir)
+        jobconfig.plan.append(get_build_task(
             node, meta, worker,
             artifact_input=bool(prereqs),
             worker_tags=worker_tags,
@@ -308,14 +308,14 @@ def graph_to_plan_with_jobs(
             use_staging_channel=use_staging_channel
         ))
         if not test_only:
-            job.add_convert_task(meta.config.host_subdir)
+            jobconfig.add_convert_task(meta.config.host_subdir)
             resource_name = 'rsync_' + node
-            job.add_put_artifacts(resource_name)
-            pipeline.add_rsync_packages(resource_name, config_vars)
+            jobconfig.add_put_artifacts(resource_name)
+            plconfig.add_rsync_packages(resource_name, config_vars)
         if rsync_artifacts:
-            job.add_rsync_source()
-            job.add_rsync_stats()
-        pipeline.add_job(**job.to_dict())
+            jobconfig.add_rsync_source()
+            jobconfig.add_rsync_stats()
+        plconfig.add_job(**jobconfig.to_dict())
 
     if config_vars.get('anaconda-upload-token') or config_vars.get('repo-username'):
         all_rsync = [
@@ -324,16 +324,16 @@ def graph_to_plan_with_jobs(
             graph.nodes[node]['worker'].get("rsync") is None or
             graph.nodes[node]['worker'].get("rsync") is True]
         if config_vars.get('anaconda-upload-token'):
-            pipeline.add_anaconda_upload(all_rsync, config_vars)
+            plconfig.add_anaconda_upload(all_rsync, config_vars)
         if config_vars.get('repo-username'):
-            pipeline.add_repo_v6_upload(all_rsync, config_vars)
+            plconfig.add_repo_v6_upload(all_rsync, config_vars)
 
     if automated_pipeline:
         # build the automated pipeline
-        build_automated_pipeline(pipeline, folders, order, branches, pr_num, repository, config_vars)
+        build_automated_pipeline(plconfig, folders, order, branches, pr_num, repository, config_vars)
 
     # convert types for smoother output to yaml
-    return pipeline
+    return plconfig
 
 
 def build_automated_pipeline(pline, folders, order, branches, pr_num, repository, config_vars):
@@ -602,7 +602,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
     if config_overrides:
         config_vars.update(config_overrides)
 
-    pipeline = graph_to_plan_with_jobs(
+    plconfig = graph_to_plan_with_jobs(
         os.path.abspath(path),
         task_graph,
         commit_id=repo_commit,
@@ -622,7 +622,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
 
     if kw.get('pr_file'):
         pr_merged_resource = "pr-merged"  # TODO actually a name
-        pipeline.add_pr_merged_resource(config_vars['pr-repo'], kw.get("pr_file"))
+        plconfig.add_pr_merged_resource(config_vars['pr-repo'], kw.get("pr_file"))
     else:
         pr_merged_resource = None
 
@@ -632,7 +632,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
             raise Exception(
                 ("--stage-for-upload specified but configuration file contains "
                 "to 'stage-for-upload-config entry"))
-        pipeline.add_upload_job(config_vars, kw['commit_msg'], pr_merged_resource)
+        plconfig.add_upload_job(config_vars, kw['commit_msg'], pr_merged_resource)
 
     if kw.get('push_branch', False):
         # TODO move this
@@ -644,7 +644,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
             stage_job_name = 'stage_for_upload'
         else:
             stage_job_name = None
-        pipeline.add_push_branch_job(
+        plconfig.add_push_branch_job(
             config_vars, folders, kw['branches'], pr_merged_resource, stage_job_name)
     if kw.get('destroy_pipeline', False):
         # TODO move this
@@ -653,13 +653,13 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
                 "--destroy-pipeline specified but configuration file does not "
                 "have that entry."
                     )
-        pipeline.add_destroy_pipeline_job(config_vars, folders)
+        plconfig.add_destroy_pipeline_job(config_vars, folders)
     output_dir = output_dir.format(base_name=base_name, git_identifier=git_identifier)
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     with open(os.path.join(output_dir, 'plan.yml'), 'w') as f:
-        yaml.dump(pipeline.to_dict(), f, default_flow_style=False)
+        yaml.dump(plconfig.to_dict(), f, default_flow_style=False)
 
     # expand folders to include any dependency builds or tests
     if not os.path.isabs(path):
