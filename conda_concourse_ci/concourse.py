@@ -89,6 +89,7 @@ class Concourse(AbstractContextManager):
     def set_pipeline(self, pipeline, config_file, vars_path):
         self._fly([
             "set-pipeline",
+            "--non-interactive",
             "--pipeline", pipeline,
             "--config", config_file,
             "--load-vars-from", vars_path
