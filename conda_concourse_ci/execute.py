@@ -1,6 +1,5 @@
 import contextlib
 import glob
-import json
 import logging
 import os
 import shutil
@@ -24,6 +23,7 @@ import requests
 import yaml
 
 from .compute_build_graph import construct_graph, expand_run, order_build, package_key
+from .concourse import Concourse
 from .concourse_config import PipelineConfig, JobConfig, BuildStepConfig
 from .utils import HashableDict, ensure_list, load_yaml_config_dir
 
@@ -420,47 +420,33 @@ def _get_current_git_rev(path, branch=False):
 
 
 def _ensure_login_and_sync(config_root_dir):
-    """Make sure end user is logged in and has a compatible version of the fly
-    utility. This function should be called before executing other fly commands
-    which require authentication.
     """
-
+    Return Concourse object after logging in and syncing the fly version.
+    """
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
-        data = yaml.safe_load(src)
-
-    # make sure we are logged in to the configured server
-    login_args = ['fly', '-t', 'conda-concourse-server', 'login',
-                  '--concourse-url', data['concourse-url'],
-                  '--team-name', data['concourse-team']]
-    if 'concourse-username' in data:
-        # auth is optional.  With Github OAuth, there's an interactive prompt that asks
-        #   the user to go log in with a web browser.  This should not interfere with that.
-        login_args.extend(['--username', data['concourse-username'],
-                           '--password', data['concourse-password']])
-
-    subprocess.check_call(login_args)
-
-    # sync (possibly update our client version)
-    subprocess.check_call('fly -t conda-concourse-server sync'.split())
+        config_vars = yaml.safe_load(src)
+    con = Concourse(
+        concourse_url=config_vars['concourse-url'],
+        username=config_vars.get('concourse-username'),
+        password=config_vars.get('concourse-password'),
+        team_name=config_vars.get('concourse-team'),
+    )
+    con.login()
+    con.sync()
+    return con
 
 
-def _filter_existing_pipelines(pipeline_patterns):
+def _filter_existing_pipelines(con, pipeline_patterns):
     """Iterate over the list of existing pipelines and filter out those which
     match any pattern in the given list (passed as an argument to this
     function). This function can be called before performing bulk operations on
     pipelines.
     """
-
-    existing_pipelines = subprocess.check_output('fly -t conda-concourse-server ps'.split())
-    if hasattr(existing_pipelines, 'decode'):
-        existing_pipelines = existing_pipelines.decode()
-    existing_pipelines = [line.split()[0] for line in existing_pipelines.splitlines()[1:]]
-
+    pipelines = con.pipelines
     filtered_pipelines = []
     for pattern in ensure_list(pipeline_patterns):
-        filtered_pipelines.extend([p for p in existing_pipelines if fnmatch(p, pattern)])
-
+        filtered_pipelines.extend([p for p in pipelines if fnmatch(p, pattern)])
     return filtered_pipelines
 
 
@@ -535,19 +521,11 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                         'mkdir -p {intermediate-base-folder}/{base-name}/status'.format(**data)])
     os.remove(key_file)
 
-    _ensure_login_and_sync(config_root_dir)
-
-    # set the new pipeline details
-    subprocess.check_call(['fly', '-t', 'conda-concourse-server', 'sp',
-                           '-c', pipeline_file,
-                           '-p', pipeline_name, '-n', '-l', config_path])
-    # unpause the pipeline
-    subprocess.check_call(['fly', '-t', 'conda-concourse-server',
-                           'up', '-p', pipeline_name])
-
+    con = _ensure_login_and_sync(config_root_dir)
+    con.set_pipeline(pipeline_name, pipeline_file, config_path)
+    con.unpause_pipeline(pipeline_name)
     if public:
-        subprocess.check_call(['fly', '-t', 'conda-concourse-server',
-                               'expose-pipeline', '-p', pipeline_name])
+        con.expose_pipeline(pipeline_name)
 
 
 def compute_builds(path, base_name, folders, matrix_base_dir=None,
@@ -827,8 +805,6 @@ def submit_batch(
         batch_lines = sorted([line for line in f])
         batch_items = [BatchItem(line) for line in batch_lines]
 
-    _ensure_login_and_sync(config_root_dir)
-
     config_path = os.path.expanduser(os.path.join(config_root_dir, 'config.yml'))
     with open(config_path) as src:
         data = yaml.safe_load(src)
@@ -905,10 +881,8 @@ def _get_activate_builds(concourse_url, limit):
 
 
 def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):
-    _ensure_login_and_sync(config_root_dir)
-
-    pipelines_to_remove = _filter_existing_pipelines(pipeline_names)
-
+    con = _ensure_login_and_sync(config_root_dir)
+    pipelines_to_remove = _filter_existing_pipelines(con, pipeline_names)
     print("Removing pipelines:")
     for p in pipelines_to_remove:
         print(p)
@@ -916,63 +890,40 @@ def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throug
         confirmation = input("Confirm [y]/n: ") or 'y'
     else:
         print("YOLO! removing all listed pipelines")
-
     if do_it_dammit or confirmation == 'y':
         # make sure we have aborted all pipelines and their jobs ...
         abort_pipeline(pipelines_to_remove, config_root_dir)
         # remove the specified pipelines
         for pipeline_name in pipelines_to_remove:
-            subprocess.check_call(['fly', '-t', 'conda-concourse-server',
-                                'dp', '-np', pipeline_name])
+            con.destroy_pipeline(pipeline_name)
     else:
         print("aborted")
 
 
-def trigger_pipeline(pipeline_names, config_root_dir, trigger_all=False,
-                     pass_throughs=None, **kwargs):
-    _ensure_login_and_sync(config_root_dir)
-
-    pipelines_to_trigger = _filter_existing_pipelines(pipeline_names)
-
+def trigger_pipeline(pipeline_names, config_root_dir, trigger_all=False, **kwargs):
+    con = _ensure_login_and_sync(config_root_dir)
+    pipelines_to_trigger = _filter_existing_pipelines(con, pipeline_names)
     print("Triggering jobs:")
     for pipeline in pipelines_to_trigger:
-        pipeline_jobs = subprocess.check_output(['fly', '-t', 'conda-concourse-server',
-                                                 'jobs', '--json', '-p', pipeline])
-        if hasattr(pipeline_jobs, 'decode'):
-            pipeline_jobs = pipeline_jobs.decode()
-        jobs_to_trigger = []
-        for job in json.loads(pipeline_jobs):
+        for job in con.get_jobs(pipeline):
             if trigger_all:
-                jobs_to_trigger.append(job["name"])
-            elif not job["next_build"]:  # next build has not been triggered yet
-                if ((not job["finished_build"]) or  # has never been triggered
-                    (job["finished_build"]["status"] !=
-                     "succeeded")):  # last trigger resulted in failure
-                    jobs_to_trigger.append(job["name"])
-        for job in jobs_to_trigger:
-            job_fqdn = "{}/{}".format(pipeline, job)
-            print(job_fqdn)
-            subprocess.check_call(['fly', '-t', 'conda-concourse-server',
-                                   'trigger-job', '-j', job_fqdn])
+                print(f"{pipeline}/{job}")
+                con.trigger_job(pipeline, job)
+                continue
+            if job["next_build"]:  # next build has already been triggered
+                continue
+            status = job.get('finished_build', {}).get('status', 'n/a')
+            if status != 'succeeded':
+                print(f"{pipeline}/{job}")
+                con.trigger_job(pipeline, job)
 
 
-def abort_pipeline(pipeline_names, config_root_dir, pass_throughs=None, **kwargs):
-    _ensure_login_and_sync(config_root_dir)
-
-    pipelines_to_abort = _filter_existing_pipelines(pipeline_names)
-
+def abort_pipeline(pipeline_names, config_root_dir, **kwargs):
+    con = _ensure_login_and_sync(config_root_dir)
+    pipelines_to_abort = _filter_existing_pipelines(con, pipeline_names)
     print("Aborting pipelines:")
     for pipeline in pipelines_to_abort:
-        pipeline_jobs = subprocess.check_output(['fly', '-t', 'conda-concourse-server',
-                                                 'builds', '--json', '-p', pipeline])
-        if hasattr(pipeline_jobs, 'decode'):
-            pipeline_jobs = pipeline_jobs.decode()
-        jobs_to_abort = []
-        for job in json.loads(pipeline_jobs):
+        for job in con.get_builds(pipeline):
             if job["status"] == "started":
-                jobs_to_abort.append(job)
-        for job in jobs_to_abort:
-            job_fqdn = "{}/{}".format(pipeline, job["job_name"])
-            print(job_fqdn)
-            subprocess.check_call(['fly', '-t', 'conda-concourse-server',
-                                   'abort-build', '-j', job_fqdn, '-b', job["name"]])
+                print(f"{pipeline}/{job['job_name']}")
+                con.abort_build(pipeline, job["job_name"], job["name"])
