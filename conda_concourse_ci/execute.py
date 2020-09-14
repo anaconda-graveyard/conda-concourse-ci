@@ -194,6 +194,7 @@ def get_build_task(
         use_repo_access=False,
         use_staging_channel=False,
         automated_pipeline=False,
+        pull_recipes_resource=None,
         ):
 
     worker_tags = (ensure_list(worker_tags) +
@@ -204,9 +205,7 @@ def get_build_task(
     stepconfig.set_config_platform(worker['arch'])
     stepconfig.set_config_inputs(artifact_input)
     if automated_pipeline:
-        feedstock_name = meta.meta['package']['name']
-        stepconfig.config['inputs'].append(
-            {'name': f'pull-recipes-{feedstock_name}'})
+        stepconfig.config['inputs'].append({'name': pull_recipes_resource})
     stepconfig.set_config_outputs()
     stepconfig.set_config_init_run()
 
@@ -246,8 +245,7 @@ def get_build_task(
         if github_user and github_token:
             stepconfig.add_repo_access(github_user, github_token)
     if automated_pipeline:
-        feedstock_name = meta.meta['package']['name']
-        recipe_path = os.path.join(f"pull-recipes-{feedstock_name}", "recipe")
+        recipe_path = os.path.join(pull_recipes_resource, "recipe")
         cbc_path = os.path.join('rsync-recipes', node, "conda_build_config.yaml")
         stepconfig.add_autobuild_cmds(recipe_path, cbc_path)
     stepconfig.add_suffix_cmds(ensure_list(worker.get('suffix_commands')))
@@ -307,9 +305,12 @@ def graph_to_plan_with_jobs(
         if automated_pipeline:
             # TODO use mapping between node -> folder/feedstock
             feedstock_name = meta.meta['package']['name']
+            pull_recipes_resource = f"pull-recipes-{feedstock_name}"
             jobconfig.plan.append(
-                {'get': f'pull-recipes-{feedstock_name}', 'trigger': True}
+                {'get': pull_recipes_resource, 'trigger': True}
             )
+        else:
+            pull_recipes_resource = None
         jobconfig.add_rsync_recipes()
         if worker['platform'] == "win":
             jobconfig.add_rsync_build_pack_win()
@@ -331,6 +332,7 @@ def graph_to_plan_with_jobs(
             use_repo_access=use_repo_access,
             use_staging_channel=use_staging_channel,
             automated_pipeline=automated_pipeline,
+            pull_recipes_resource=pull_recipes_resource,
         ))
         if not test_only:
             jobconfig.add_convert_task(meta.config.host_subdir)
