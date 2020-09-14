@@ -494,11 +494,25 @@ class BuildStepConfig:
         suffix = " ".join(build_suffix_cmds)
         self.cmds = prefix + build_cmd + suffix
 
-    def add_autobuild_cmds(self):
+    def add_autobuild_cmds(self, recipe_path, cbc_path):
+        # combine the recipe from recipe_path with the conda_build_config.yaml
+        # file in the cbc_path directory into a combined_recipe directory
         if self.platform == 'win':
-            cmd = ''
+            win_cbc_path = cbc_path.replace("/", "\\")
+            win_recipe_path = recipe_path.replace("/", "\\")
+            # no need to mkdir, xcopy /i creates the directory
+            cmd = (
+                f"xcopy /i /s /e /f /y {win_recipe_path} combined_recipe&&"
+                f"copy /y {win_cbc_path} combined_recipe\\conda_build_config.yaml&&"
+                "dir combined_recipe&&"
+            )
         else:
-            cmd = 'for i in `ls pull-recipes*`; do if [[ $i != "recipe" ]]; then rm -rf $i; fi done && '
+            cmd = (
+                "mkdir -p combined_recipe && "
+                f"cp -r {recipe_path}/* combined_recipe/ && "
+                f"cp {cbc_path} combined_recipe/ && "
+                "ls -lh combined_recipe/* && "
+            )
         self.cmds = cmd + self.cmds
 
     def add_prefix_cmds(self, prefix_cmds):

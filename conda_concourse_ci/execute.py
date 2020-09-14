@@ -228,7 +228,7 @@ def get_build_task(
     stepconfig.cb_args.extend(ensure_list(pass_throughs))
     # this is the recipe path to build
     if automated_pipeline:
-        stepconfig.cb_args.append('pull-recipes*/')
+        stepconfig.cb_args.append('combined_recipe')
     else:
         stepconfig.cb_args.append(os.path.join('rsync-recipes', node))
     if use_staging_channel:
@@ -246,7 +246,10 @@ def get_build_task(
         if github_user and github_token:
             stepconfig.add_repo_access(github_user, github_token)
     if automated_pipeline:
-        stepconfig.add_autobuild_cmds()
+        feedstock_name = meta.meta['package']['name']
+        recipe_path = os.path.join(f"pull-recipes-{feedstock_name}", "recipe")
+        cbc_path = os.path.join('rsync-recipes', node, "conda_build_config.yaml")
+        stepconfig.add_autobuild_cmds(recipe_path, cbc_path)
     stepconfig.add_suffix_cmds(ensure_list(worker.get('suffix_commands')))
     if use_staging_channel:
         channel = config_vars.get('staging-channel-user', 'staging')
