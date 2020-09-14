@@ -887,15 +887,15 @@ def trigger_pipeline(pipeline_names, config_root_dir, trigger_all=False, **kwarg
     for pipeline in pipelines_to_trigger:
         for job in con.get_jobs(pipeline):
             if trigger_all:
-                print(f"{pipeline}/{job}")
-                con.trigger_job(pipeline, job)
+                print(f"{pipeline}/{job['name']}")
+                con.trigger_job(pipeline, job['name'])
                 continue
             if job["next_build"]:  # next build has already been triggered
                 continue
             status = job.get('finished_build', {}).get('status', 'n/a')
             if status != 'succeeded':
-                print(f"{pipeline}/{job}")
-                con.trigger_job(pipeline, job)
+                print(f"{pipeline}/{job['name']}")
+                con.trigger_job(pipeline, job['name'])
 
 
 def abort_pipeline(pipeline_names, config_root_dir, **kwargs):
