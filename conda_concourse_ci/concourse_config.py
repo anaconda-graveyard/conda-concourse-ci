@@ -447,12 +447,9 @@ class BuildStepConfig:
         self.cb_args = []  # list of arguments to pass to conda build
         self.cmds = ''
 
-    def set_config_inputs(self, artifact_input, automated_pipeline):
+    def set_config_inputs(self, artifact_input):
         """ Add inputs to the task config. """
-        if automated_pipeline:
-            inputs = []
-        else:
-            inputs = [{'name': 'rsync-recipes'}]
+        inputs = [{'name': 'rsync-recipes'}]
         if self.platform in ['win', 'osx']:
             inputs.append({'name': 'rsync-build-pack'})
         if artifact_input:

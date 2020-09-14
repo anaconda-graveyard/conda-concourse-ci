@@ -202,7 +202,7 @@ def get_build_task(
 
     # setup the task config
     stepconfig.set_config_platform(worker['arch'])
-    stepconfig.set_config_inputs(artifact_input, automated_pipeline)
+    stepconfig.set_config_inputs(artifact_input)
     if automated_pipeline:
         feedstock_name = meta.meta['package']['name']
         stepconfig.config['inputs'].append(
@@ -285,8 +285,7 @@ def graph_to_plan_with_jobs(
 
     plconfig = PipelineConfig()
     plconfig.add_rsync_resource_type()
-    if not automated_pipeline:
-        plconfig.add_rsync_recipes(config_vars, recipe_folder)
+    plconfig.add_rsync_recipes(config_vars, recipe_folder)
     plconfig.add_rsync_source(config_vars)
     plconfig.add_rsync_stats(config_vars)
 
@@ -308,8 +307,7 @@ def graph_to_plan_with_jobs(
             jobconfig.plan.append(
                 {'get': f'pull-recipes-{feedstock_name}', 'trigger': True}
             )
-        else:
-            jobconfig.add_rsync_recipes()
+        jobconfig.add_rsync_recipes()
         if worker['platform'] == "win":
             jobconfig.add_rsync_build_pack_win()
         elif worker['platform'] == "osx":
