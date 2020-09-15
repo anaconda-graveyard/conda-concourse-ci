@@ -50,7 +50,7 @@ class PipelineConfig:
             out[attr] = [v if isinstance(v, dict) else v.to_dict() for v in items]
         return out
 
-    def add_rsync_resources(self, config_vars, recipe_folder):
+    def add_rsync_resource_type(self):
         self.add_resource_type(
             name='rsync-resource',
             type_='docker-image',
@@ -59,6 +59,8 @@ class PipelineConfig:
                 'tag': 'latest'
             },
         )
+
+    def add_rsync_recipes(self, config_vars, recipe_folder):
         self.add_resource(
             name='rsync-recipes',
             type_='rsync-resource',
@@ -70,6 +72,8 @@ class PipelineConfig:
                 'disable_version_path': True,
             },
         )
+
+    def add_rsync_source(self, config_vars):
         self.add_resource(
             name='rsync-source',
             type_='rsync-resource',
@@ -81,6 +85,8 @@ class PipelineConfig:
                 'disable_version_path': True,
             },
         )
+
+    def add_rsync_stats(self, config_vars):
         self.add_resource(
             name='rsync-stats',
             type_='rsync-resource',
@@ -487,6 +493,27 @@ class BuildStepConfig:
         prefix = " ".join(build_prefix_cmds)
         suffix = " ".join(build_suffix_cmds)
         self.cmds = prefix + build_cmd + suffix
+
+    def add_autobuild_cmds(self, recipe_path, cbc_path):
+        # combine the recipe from recipe_path with the conda_build_config.yaml
+        # file in the cbc_path directory into a combined_recipe directory
+        if self.platform == 'win':
+            win_cbc_path = cbc_path.replace("/", "\\")
+            win_recipe_path = recipe_path.replace("/", "\\")
+            # no need to mkdir, xcopy /i creates the directory
+            cmd = (
+                f"xcopy /i /s /e /f /y {win_recipe_path} combined_recipe&&"
+                f"copy /y {win_cbc_path} combined_recipe\\conda_build_config.yaml&&"
+                "dir combined_recipe&&"
+            )
+        else:
+            cmd = (
+                "mkdir -p combined_recipe && "
+                f"cp -r {recipe_path}/* combined_recipe/ && "
+                f"cp {cbc_path} combined_recipe/ && "
+                "ls -lh combined_recipe/* && "
+            )
+        self.cmds = cmd + self.cmds
 
     def add_prefix_cmds(self, prefix_cmds):
         prefix = "&& ".join(prefix_cmds)
