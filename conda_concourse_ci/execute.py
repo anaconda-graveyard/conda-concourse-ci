@@ -898,9 +898,9 @@ def trigger_pipeline(pipeline_names, config_root_dir, trigger_all=False, **kwarg
             else:
                 status = 'n/a'
             if any(sub in job.get('name') for sub in [
-                'stage_for_upload',
-                'push_branch_to',
-                'destroy_pipeline']):
+                    'stage_for_upload',
+                    'push_branch_to',
+                    'destroy_pipeline']):
                 continue
             if status != 'succeeded':
                 print(f"{pipeline}/{job['name']}")
