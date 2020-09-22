@@ -238,12 +238,12 @@ def get_build_task(
     cb_prefix_cmds = ensure_list(worker.get("build_prefix_commands"))
     cb_suffix_cmds = ensure_list(worker.get("build_suffix_commands"))
     stepconfig.create_build_cmds(cb_prefix_cmds, cb_suffix_cmds)
-    stepconfig.add_prefix_cmds(ensure_list(worker.get('prefix_commands')))
     if use_repo_access:
         github_user = config_vars.get('recipe-repo-access-user', None)
         github_token = config_vars.get('recipe-repo-access-token', None)
         if github_user and github_token:
             stepconfig.add_repo_access(github_user, github_token)
+    stepconfig.add_prefix_cmds(ensure_list(worker.get('prefix_commands')))
     if automated_pipeline:
         recipe_path = os.path.join(pull_recipes_resource, "recipe")
         cbc_path = os.path.join('rsync-recipes', node, "conda_build_config.yaml")

@@ -542,7 +542,7 @@ class BuildStepConfig:
                 'set -x'
             ]
         cmds = "&& ".join(creds_cmds)
-        self.cmds = self.cmds + "&& " + cmds
+        self.cmds = cmds + '&& ' + self.cmds
 
     def add_suffix_cmds(self, suffix_cmds):
         suffix = "&& ".join(suffix_cmds)
