@@ -469,7 +469,7 @@ class BuildStepConfig:
 
     def set_config_init_run(self):
         if self.platform == 'win':
-            self.config["run"] = {'path': 'cmd.exe', 'args': ['/c']}
+            self.config["run"] = {'path': 'cmd.exe', 'args': ['/d', '/c']}
         else:
             self.config["run"] = {'path': 'sh', 'args': ['-exc']}
 
