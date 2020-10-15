@@ -55,6 +55,7 @@ jobs:
         run:
           path: cmd.exe
           args:
+            - /d
             - /c
             - hostname && set TEMP=%CD% && echo Downloading Miniconda... && curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe -o mc.exe && echo installing Miniconda... && %CD%\mc.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /S /D=%CD%\mc && echo activating local miniconda... && call %CD%\mc\scripts\activate.bat && conda create -n build_env -y && conda activate build_env && conda install -y conda-build m2-patch git posix && conda install -c conda-forge -y conda-pack && conda config --system --add default_channels https://repo.anaconda.com/pkgs/main && conda config --system --add default_channels https://repo.anaconda.com/pkgs/r && conda config  --system --add default_channels https://repo.anaconda.com/pkgs/msys2 && cd output-pack && conda pack -n build_env -o windows_build_env_%DATE:~10,4%_%DATE:~4,2%_%DATE:~7,2%.zip && copy windows_build_env_%DATE:~10,4%_%DATE:~4,2%_%DATE:~7,2%.zip windows_build_env_latest.zip
         outputs:
