@@ -290,6 +290,11 @@ def graph_to_plan_with_jobs(
     plconfig.add_rsync_source(config_vars)
     plconfig.add_rsync_stats(config_vars)
 
+    # TODO :: Either add this for all platforms or remove it. Why do we not just have
+    #         the latest conda standalone exe pre-installed in each OS image?
+    #         Alternatively we can just curl it (probably even on Windows) from Zeus.
+    #         The real problem is I do not know where the code is that makes the payloads
+    #         for this.
     if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order):
         plconfig.add_rsync_build_pack(config_vars)
 
