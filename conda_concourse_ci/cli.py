@@ -22,7 +22,8 @@ def parse_args(parse_this=None):
     submit_parser.add_argument('--pipeline-file', default='plan_director.yml',
                                help="path to pipeline .yml file containing plan")
     submit_parser.add_argument('--config-root-dir',
-                               help="path containing config.yml and matrix definitions")
+                               help="path containing build-config.yml (optional), config.yml and matrix definitions")
+
     submit_parser.add_argument('--src-dir', help="folder where git repo of source code lives",
                                default=os.getcwd())
     submit_parser.add_argument('--private', action='store_false',
@@ -38,6 +39,8 @@ def parse_args(parse_this=None):
                                    help="submit local recipes and plan to configured server")
     one_off_parser.add_argument('pipeline_label',
                                 help="name of your project, to distinguish it from other projects")
+    one_off_parser.add_argument('--build-config', nargs="+",
+                                help=("Specify VAR=VAL to override values defined in build-config.yml"))
     one_off_parser.add_argument('folders', nargs="+",
                                 help=("Specify folders, relative to --recipe-root-dir, to upload "
                                       "and build"))

@@ -41,9 +41,9 @@ yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
 yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
 
-def parse_platforms(matrix_base_dir, platform_filters):
+def parse_platforms(matrix_base_dir, platform_filters, build_config_vars):
     platform_dir = os.path.join(matrix_base_dir, 'build_platforms.d')
-    platforms = load_yaml_config_dir(platform_dir, platform_filters)
+    platforms = load_yaml_config_dir(platform_dir, platform_filters, build_config_vars)
     log.debug("Platforms found:")
     log.debug(platforms)
     return platforms
@@ -80,6 +80,7 @@ def collect_tasks(
         append_sections_file=None,
         pass_throughs=None,
         skip_existing=True,
+        build_config_vars={}
         ):
     """ Return a graph of build tasks """
     task_graph = nx.DiGraph()
@@ -91,7 +92,7 @@ def collect_tasks(
         **parsed_cli_args,
     )
     platform_filters = ensure_list(platform_filters) if platform_filters else ['*']
-    platforms = parse_platforms(matrix_base_dir, platform_filters)
+    platforms = parse_platforms(matrix_base_dir, platform_filters, build_config_vars)
     # loop over platforms here because each platform may have different dependencies
     # each platform will be submitted with a different label
     for platform in platforms:
@@ -519,6 +520,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
                    worker_tags=None, clobber_sections_file=None, append_sections_file=None,
                    pass_throughs=None, skip_existing=True,
                    use_repo_access=False, use_staging_channel=False, **kw):
+    build_config = kw.get('build_config', []) or []
     if kw.get('stage_for_upload', False):
         if kw.get('commit_msg') is None:
             raise ValueError(
@@ -542,6 +544,33 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
 
     repo_commit = ''
     git_identifier = ''
+
+    build_config_yml = os.path.join(matrix_base_dir, 'build-config.yml')
+    matched = {}
+    build_config_vars = {}
+    try:
+        with open(build_config_yml) as build_config_file:
+            build_config_vars = yaml.safe_load(build_config_file)
+    except (OSError, IOError) as e:
+        print('WARNING :: open(build_config_yml={}) failed'.format(build_config_yml))
+        pass
+    for bcv in build_config_vars:
+        for var_val in build_config:
+            var = var_val.split('=', 1)[0]
+            val = var_val.split('=', 1)[1]
+            if fnmatch(bcv, var):
+                matched[var_val] = 1
+                log.info("Overriding build-config.yaml with {}={}".format(var, val))
+                build_config_vars[bcv] = val
+    for var_val in build_config:
+        if var_val not in matched:
+            var = var_val.split('=', 1)[0]
+            if '*' in var:
+                log.warning("Did not find match for --build-config={} (it has no effect)".format(var_val))
+            else:
+                val = var_val.split('=', 1)[1]
+                log.info("Adding {}={} to build configuration".format(var, val))
+                build_config_vars[var] = val
     task_graph = collect_tasks(
         path,
         folders=folders,
@@ -555,7 +584,8 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
         append_sections_file=append_sections_file,
         clobber_sections_file=clobber_sections_file,
         pass_throughs=pass_throughs,
-        skip_existing=skip_existing
+        skip_existing=skip_existing,
+        build_config_vars=build_config_vars
     )
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
