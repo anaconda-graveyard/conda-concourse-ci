@@ -551,7 +551,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
     try:
         with open(build_config_yml) as build_config_file:
             build_config_vars = yaml.safe_load(build_config_file)
-    except (OSError, IOError) as e:
+    except (OSError, IOError):
         print('WARNING :: open(build_config_yml={}) failed'.format(build_config_yml))
         pass
     for bcv in build_config_vars:
@@ -679,7 +679,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
 
         try:
             shutil.copytree(os.path.join(path, recipe), out_folder)
-        except:
+        except: # noqa
             os.system("cp -Rf '{}' '{}'".format(os.path.join(path, recipe), out_folder))
 
         # write the conda_build_config.yml for this particular metadata into that recipe
