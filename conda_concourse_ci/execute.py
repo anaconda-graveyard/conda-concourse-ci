@@ -228,7 +228,13 @@ def get_build_task(
     stepconfig.cb_args.extend(ensure_list(pass_throughs))
     # this is the recipe path to build
     if automated_pipeline:
-        stepconfig.cb_args.append('combined_recipe')
+        if test_only:
+            # when we test we should point directly at the tar.bz2 instead
+            # of at the recipe
+            stepconfig.cb_args.append('indexed-artifacts/*/*.tar.bz2')
+        else:
+            # when we build we should just point at the recipe
+            stepconfig.cb_args.append('combined_recipe')
     else:
         stepconfig.cb_args.append(os.path.join('rsync-recipes', node))
     if use_staging_channel:
