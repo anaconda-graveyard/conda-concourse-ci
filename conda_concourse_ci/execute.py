@@ -80,7 +80,8 @@ def collect_tasks(
         append_sections_file=None,
         pass_throughs=None,
         skip_existing=True,
-        build_config_vars={}
+        build_config_vars={},
+        build_subdir='linux-64'
         ):
     """ Return a graph of build tasks """
     task_graph = nx.DiGraph()
@@ -126,19 +127,17 @@ def collect_tasks(
         )
         # merge this graph with the main one
         task_graph = nx.compose(task_graph, graph)
-    collapse_noarch_python_nodes(task_graph)
+    collapse_noarch_python_nodes(task_graph, build_subdir=build_subdir)
     return task_graph
 
 
-def collapse_noarch_python_nodes(graph):
+def collapse_noarch_python_nodes(graph, build_subdir='linux-64'):
     """ Collapse nodes for noarch python packages into a single node
 
     Collapse nodes corresponding to any noarch python packages so that each package
     in built on a single platform and test on the remaining platforms.  Edges are
     reassinged or removed as needed.
     """
-    # TODO make build_subdir configurable
-    build_subdir = 'linux-64'
 
     # find all noarch python builds, group by package name
     noarch_groups = defaultdict(list)
@@ -541,6 +540,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
             raise ValueError(
                     "--destroy-pipeline requires that --push-branch "
                     "and stage-for-upload be specified as well.")
+    build_subdir = kw.get('buildsubdir', 'linux-64')
     folders = folders
     path = path.replace('"', '')
     if not folders:
@@ -596,7 +596,8 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
         clobber_sections_file=clobber_sections_file,
         pass_throughs=pass_throughs,
         skip_existing=skip_existing,
-        build_config_vars=build_config_vars
+        build_config_vars=build_config_vars,
+        build_subdir=build_subdir
     )
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:

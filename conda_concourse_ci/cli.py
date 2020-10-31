@@ -166,6 +166,10 @@ def parse_args(parse_this=None):
                                 "to all jobs.  For finer control, use extra/worker_tags in "
                                 "meta.yaml with selectors.",
                                 dest='worker_tags')
+    one_off_parser.add_argument('--noarch-build-subdir', '-s', action='store', default='linux-64',
+                                help="set the 'subdir' (machine to build on) for noarch",
+                                dest='buildsubdir')
+
     one_off_parser.add_argument(
         '-m', '--variant-config-files',
         action="append",
@@ -216,7 +220,7 @@ def parse_args(parse_this=None):
         help="""File describing batch job.  Each lines defines a seperate
         one-off job.  List one or more folders on each line.  Job specific
         arguments can be specified after a ';' using param=value, multiple
-        arguments are seperated by a ','.  For example:
+        arguments are separated by a ','.  For example:
 
             recipe-feedstock; channel=conda-forge,clobber_sections_file=clobber.yaml
         """)
