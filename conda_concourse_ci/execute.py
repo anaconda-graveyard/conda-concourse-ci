@@ -925,6 +925,44 @@ def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throug
         print("aborted")
 
 
+def pause_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):
+    con = _ensure_login_and_sync(config_root_dir)
+    pipelines_to_pause = _filter_existing_pipelines(con, pipeline_names)
+    print("Pausing pipelines:")
+    for p in pipelines_to_pause:
+        print(p)
+    if not do_it_dammit:
+        confirmation = input("Confirm [y]/n: ") or 'y'
+    else:
+        print("YOLO! pausing all listed pipelines")
+    if do_it_dammit or confirmation == 'y':
+        # make sure we have aborted all pipelines and their jobs ...
+        abort_pipeline(pipelines_to_pause, config_root_dir)
+        # pause the specified pipelines
+        for pipeline_name in pipelines_to_pause:
+            con.pause_pipeline(pipeline_name)
+    else:
+        print("aborted")
+
+
+def unpause_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):
+    con = _ensure_login_and_sync(config_root_dir)
+    pipelines_to_unpause = _filter_existing_pipelines(con, pipeline_names)
+    print("Unpausing pipelines:")
+    for p in pipelines_to_unpause:
+        print(p)
+    if not do_it_dammit:
+        confirmation = input("Confirm [y]/n: ") or 'y'
+    else:
+        print("YOLO! unpausing all listed pipelines")
+    if do_it_dammit or confirmation == 'y':
+        # unpause the specified pipelines
+        for pipeline_name in pipelines_to_unpause:
+            con.unpause_pipeline(pipeline_name)
+    else:
+        print("aborted")
+
+
 def trigger_pipeline(pipeline_names, config_root_dir, trigger_all=False, **kwargs):
     con = _ensure_login_and_sync(config_root_dir)
     pipelines_to_trigger = _filter_existing_pipelines(con, pipeline_names)

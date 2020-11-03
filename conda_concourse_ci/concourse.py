@@ -108,6 +108,20 @@ class Concourse(AbstractContextManager):
             '--pipeline', pipeline,
         ])
 
+
+    def pause_pipeline(self, pipeline):
+        self._fly([
+            'pause-pipeline',
+            '--pipeline', pipeline,
+        ])
+
+
+    def unpause_pipeline(self, pipeline):
+        self._fly([
+            'unpause-pipeline',
+            '--pipeline', pipeline,
+        ])
+
     @property
     def pipelines(self):
         """ A list of pipelines names """
