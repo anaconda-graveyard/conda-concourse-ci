@@ -247,6 +247,23 @@ def parse_args(parse_this=None):
                            default=cc_conda_build.get('matrix_base_dir'))
     rm_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
 
+    pause_parser = sp.add_parser('pause', help='pause pipelines on the server')
+    pause_parser.add_argument('pipeline_names', nargs="+",
+                           help=("Specify pipeline names on server to pause"))
+    pause_parser.add_argument('--config-root-dir',
+                           help="path containing config.yml and matrix definitions",
+                           default=cc_conda_build.get('matrix_base_dir'))
+    pause_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
+
+
+    unpause_parser = sp.add_parser('unpause', help='pause pipelines on the server')
+    unpause_parser.add_argument('pipeline_names', nargs="+",
+                           help=("Specify pipeline names on server to pause"))
+    unpause_parser.add_argument('--config-root-dir',
+                           help="path containing config.yml and matrix definitions",
+                           default=cc_conda_build.get('matrix_base_dir'))
+    unpause_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
+
     trigger_parser = sp.add_parser('trigger', help='trigger (failed) jobs of a pipeline')
     trigger_parser.add_argument('pipeline_names', nargs='+',
                            help=("Specify pipeline names to trigger"))
@@ -290,6 +307,10 @@ def main(args=None):
         execute.submit_batch(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'rm':
         execute.rm_pipeline(pass_throughs=pass_throughs, **args.__dict__)
+    elif args.subparser_name == 'pause':
+        execute.pause_pipeline(pass_throughs=pass_throughs, **args.__dict__)
+    elif args.subparser_name == 'unpause':
+        execute.unpause_pipeline(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'trigger':
         execute.trigger_pipeline(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'abort':
