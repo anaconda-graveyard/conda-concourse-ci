@@ -469,24 +469,18 @@ class BuildStepConfig:
 
     def set_config_init_run(self):
         if self.platform == 'win':
-            self.config["run"] = {'path': 'cmd.exe', 'args': ['/c']}
+            self.config["run"] = {'path': 'cmd.exe', 'args': ['/d', '/c']}
         else:
             self.config["run"] = {'path': 'sh', 'args': ['-exc']}
 
     def set_initial_cb_args(self):
-        if self.platform not in ['win']:
-            self.cb_args = [
-                '--no-anaconda-upload',
-                '--error-overlinking',
-                '--output-folder=output-artifacts',
-                '--cache-dir=output-source',
-            ]
-        else:
-            self.cb_args = [
-                '--no-anaconda-upload',
-                '--output-folder=output-artifacts',
-                '--cache-dir=output-source',
-            ]
+        self.cb_args = [
+            '--no-anaconda-upload',
+            '--error-overlinking',
+            '--error-overdepending',
+            '--output-folder=output-artifacts',
+            '--cache-dir=output-source',
+        ]
 
     def create_build_cmds(self, build_prefix_cmds, build_suffix_cmds):
         build_cmd = " conda-build " + " ".join(self.cb_args) + " "

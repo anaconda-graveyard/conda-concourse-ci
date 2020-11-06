@@ -22,7 +22,8 @@ def parse_args(parse_this=None):
     submit_parser.add_argument('--pipeline-file', default='plan_director.yml',
                                help="path to pipeline .yml file containing plan")
     submit_parser.add_argument('--config-root-dir',
-                               help="path containing config.yml and matrix definitions")
+                               help="path containing build-config.yml (optional), config.yml and matrix definitions")
+
     submit_parser.add_argument('--src-dir', help="folder where git repo of source code lives",
                                default=os.getcwd())
     submit_parser.add_argument('--private', action='store_false',
@@ -38,6 +39,8 @@ def parse_args(parse_this=None):
                                    help="submit local recipes and plan to configured server")
     one_off_parser.add_argument('pipeline_label',
                                 help="name of your project, to distinguish it from other projects")
+    one_off_parser.add_argument('--build-config', nargs="+",
+                                help=("Specify VAR=VAL to override values defined in build-config.yml"))
     one_off_parser.add_argument('folders', nargs="+",
                                 help=("Specify folders, relative to --recipe-root-dir, to upload "
                                       "and build"))
@@ -244,6 +247,23 @@ def parse_args(parse_this=None):
                            default=cc_conda_build.get('matrix_base_dir'))
     rm_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
 
+    pause_parser = sp.add_parser('pause', help='pause pipelines on the server')
+    pause_parser.add_argument('pipeline_names', nargs="+",
+                           help=("Specify pipeline names on server to pause"))
+    pause_parser.add_argument('--config-root-dir',
+                           help="path containing config.yml and matrix definitions",
+                           default=cc_conda_build.get('matrix_base_dir'))
+    pause_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
+
+
+    unpause_parser = sp.add_parser('unpause', help='pause pipelines on the server')
+    unpause_parser.add_argument('pipeline_names', nargs="+",
+                           help=("Specify pipeline names on server to pause"))
+    unpause_parser.add_argument('--config-root-dir',
+                           help="path containing config.yml and matrix definitions",
+                           default=cc_conda_build.get('matrix_base_dir'))
+    unpause_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
+
     trigger_parser = sp.add_parser('trigger', help='trigger (failed) jobs of a pipeline')
     trigger_parser.add_argument('pipeline_names', nargs='+',
                            help=("Specify pipeline names to trigger"))
@@ -287,6 +307,10 @@ def main(args=None):
         execute.submit_batch(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'rm':
         execute.rm_pipeline(pass_throughs=pass_throughs, **args.__dict__)
+    elif args.subparser_name == 'pause':
+        execute.pause_pipeline(pass_throughs=pass_throughs, **args.__dict__)
+    elif args.subparser_name == 'unpause':
+        execute.unpause_pipeline(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'trigger':
         execute.trigger_pipeline(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'abort':

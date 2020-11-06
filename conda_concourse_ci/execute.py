@@ -41,9 +41,9 @@ yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
 yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
 
-def parse_platforms(matrix_base_dir, platform_filters):
+def parse_platforms(matrix_base_dir, platform_filters, build_config_vars):
     platform_dir = os.path.join(matrix_base_dir, 'build_platforms.d')
-    platforms = load_yaml_config_dir(platform_dir, platform_filters)
+    platforms = load_yaml_config_dir(platform_dir, platform_filters, build_config_vars)
     log.debug("Platforms found:")
     log.debug(platforms)
     return platforms
@@ -80,6 +80,7 @@ def collect_tasks(
         append_sections_file=None,
         pass_throughs=None,
         skip_existing=True,
+        build_config_vars={}
         ):
     """ Return a graph of build tasks """
     task_graph = nx.DiGraph()
@@ -91,7 +92,7 @@ def collect_tasks(
         **parsed_cli_args,
     )
     platform_filters = ensure_list(platform_filters) if platform_filters else ['*']
-    platforms = parse_platforms(matrix_base_dir, platform_filters)
+    platforms = parse_platforms(matrix_base_dir, platform_filters, build_config_vars)
     # loop over platforms here because each platform may have different dependencies
     # each platform will be submitted with a different label
     for platform in platforms:
@@ -227,7 +228,13 @@ def get_build_task(
     stepconfig.cb_args.extend(ensure_list(pass_throughs))
     # this is the recipe path to build
     if automated_pipeline:
-        stepconfig.cb_args.append('combined_recipe')
+        if test_only:
+            # when we test we should point directly at the tar.bz2 instead
+            # of at the recipe
+            stepconfig.cb_args.append('indexed-artifacts/*/*.tar.bz2')
+        else:
+            # when we build we should just point at the recipe
+            stepconfig.cb_args.append('combined_recipe')
     else:
         stepconfig.cb_args.append(os.path.join('rsync-recipes', node))
     if use_staging_channel:
@@ -290,6 +297,11 @@ def graph_to_plan_with_jobs(
     plconfig.add_rsync_source(config_vars)
     plconfig.add_rsync_stats(config_vars)
 
+    # TODO :: Either add this for all platforms or remove it. Why do we not just have
+    #         the latest conda standalone exe pre-installed in each OS image?
+    #         Alternatively we can just curl it (probably even on Windows) from Zeus.
+    #         The real problem is I do not know where the code is that makes the payloads
+    #         for this.
     if any(graph.nodes[node]['worker']['platform'] in ["win", "osx"] for node in order):
         plconfig.add_rsync_build_pack(config_vars)
 
@@ -514,6 +526,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
                    worker_tags=None, clobber_sections_file=None, append_sections_file=None,
                    pass_throughs=None, skip_existing=True,
                    use_repo_access=False, use_staging_channel=False, **kw):
+    build_config = kw.get('build_config', []) or []
     if kw.get('stage_for_upload', False):
         if kw.get('commit_msg') is None:
             raise ValueError(
@@ -537,6 +550,33 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
 
     repo_commit = ''
     git_identifier = ''
+
+    build_config_yml = os.path.join(matrix_base_dir, 'build-config.yml')
+    matched = {}
+    build_config_vars = {}
+    try:
+        with open(build_config_yml) as build_config_file:
+            build_config_vars = yaml.safe_load(build_config_file)
+    except (OSError, IOError):
+        print('WARNING :: open(build_config_yml={}) failed'.format(build_config_yml))
+        pass
+    for bcv in build_config_vars:
+        for var_val in build_config:
+            var = var_val.split('=', 1)[0]
+            val = var_val.split('=', 1)[1]
+            if fnmatch(bcv, var):
+                matched[var_val] = 1
+                log.info("Overriding build-config.yaml with {}={}".format(var, val))
+                build_config_vars[bcv] = val
+    for var_val in build_config:
+        if var_val not in matched:
+            var = var_val.split('=', 1)[0]
+            if '*' in var:
+                log.warning("Did not find match for --build-config={} (it has no effect)".format(var_val))
+            else:
+                val = var_val.split('=', 1)[1]
+                log.info("Adding {}={} to build configuration".format(var, val))
+                build_config_vars[var] = val
     task_graph = collect_tasks(
         path,
         folders=folders,
@@ -550,7 +590,8 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
         append_sections_file=append_sections_file,
         clobber_sections_file=clobber_sections_file,
         pass_throughs=pass_throughs,
-        skip_existing=skip_existing
+        skip_existing=skip_existing,
+        build_config_vars=build_config_vars
     )
 
     with open(os.path.join(matrix_base_dir, 'config.yml')) as src:
@@ -642,7 +683,11 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
         if os.path.isdir(out_folder):
             shutil.rmtree(out_folder)
 
-        shutil.copytree(os.path.join(path, recipe), out_folder)
+        try:
+            shutil.copytree(os.path.join(path, recipe), out_folder)
+        except: # noqa
+            os.system("cp -Rf '{}' '{}'".format(os.path.join(path, recipe), out_folder))
+
         # write the conda_build_config.yml for this particular metadata into that recipe
         #   This should sit alongside meta.yaml, where conda-build will be able to find it
         with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
@@ -876,6 +921,44 @@ def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throug
         # remove the specified pipelines
         for pipeline_name in pipelines_to_remove:
             con.destroy_pipeline(pipeline_name)
+    else:
+        print("aborted")
+
+
+def pause_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):
+    con = _ensure_login_and_sync(config_root_dir)
+    pipelines_to_pause = _filter_existing_pipelines(con, pipeline_names)
+    print("Pausing pipelines:")
+    for p in pipelines_to_pause:
+        print(p)
+    if not do_it_dammit:
+        confirmation = input("Confirm [y]/n: ") or 'y'
+    else:
+        print("YOLO! pausing all listed pipelines")
+    if do_it_dammit or confirmation == 'y':
+        # make sure we have aborted all pipelines and their jobs ...
+        abort_pipeline(pipelines_to_pause, config_root_dir)
+        # pause the specified pipelines
+        for pipeline_name in pipelines_to_pause:
+            con.pause_pipeline(pipeline_name)
+    else:
+        print("aborted")
+
+
+def unpause_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):
+    con = _ensure_login_and_sync(config_root_dir)
+    pipelines_to_unpause = _filter_existing_pipelines(con, pipeline_names)
+    print("Unpausing pipelines:")
+    for p in pipelines_to_unpause:
+        print(p)
+    if not do_it_dammit:
+        confirmation = input("Confirm [y]/n: ") or 'y'
+    else:
+        print("YOLO! unpausing all listed pipelines")
+    if do_it_dammit or confirmation == 'y':
+        # unpause the specified pipelines
+        for pipeline_name in pipelines_to_unpause:
+            con.unpause_pipeline(pipeline_name)
     else:
         print("aborted")
 
