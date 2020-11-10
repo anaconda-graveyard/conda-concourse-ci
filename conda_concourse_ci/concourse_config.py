@@ -160,7 +160,7 @@ class PipelineConfig:
         _source = {
                 'repository': 'condatest/repo_cli',
                 'tag': 'latest'}
-         if config_vars.get('docker-user', None) and config_vars.get('docker-pass', None):
+        if config_vars.get('docker-user', None) and config_vars.get('docker-pass', None):
             _source.update({'username': config_vars.get('docker-user'),
                             'password': config_vars.get('docker-pass')})
 
@@ -399,8 +399,8 @@ class JobConfig:
                     }
         if docker_user and docker_pass:
             _source.update({
-                'username': config_vars.get('docker-user'),
-                'password': config_vars.get('docker-pass')
+                'username': docker_user,
+                'password': docker_pass
                 })
 
         config = {
@@ -435,8 +435,8 @@ class JobConfig:
                 }
         if docker_user and docker_pass:
             _source.update({
-                'username': config_vars.get('docker-user'),
-                'password': config_vars.get('docker-pass')
+                'username': docker_user,
+                'password': docker_pass
                 })
 
         config = {
