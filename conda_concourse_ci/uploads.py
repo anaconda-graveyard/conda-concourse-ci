@@ -19,8 +19,8 @@ from .utils import ensure_list, load_yaml_config_dir
 log = logging.getLogger(__file__)
 
 
-def _base_task(upload_job_name):
-    return {'task': upload_job_name,
+def _base_task(upload_job_name, username=None, password=None):
+    base_task = {'task': upload_job_name,
             'config': {
                 'inputs': [{'name': 'output-artifacts'}],
                 'image_resource': {
@@ -31,6 +31,13 @@ def _base_task(upload_job_name):
                 'run': {}
             }}
 
+    if username and password:
+        source = base_task.get('config').get('image_resource').get('source')
+        source.update({'username': username, 'password': password})
+        base_task['config']['image_resource']['source'] = source
+
+    return base_task
+
 
 def upload_staging_channel(user, package_path):
     """
@@ -40,7 +47,7 @@ def upload_staging_channel(user, package_path):
     return "anaconda " + cmd
 
 
-def upload_anaconda(package_path, token, user=None, label=None):
+def upload_anaconda(package_path, config_vars, token, user=None, label=None):
     """
     Upload to anaconda.org using a token.  Tokens are associated with a channel, so the channel
     need not be specified.  You may specify a label to install to a label other than main.
@@ -61,7 +68,7 @@ def upload_anaconda(package_path, token, user=None, label=None):
         cmd.extend(['--label', label])
     cmd.append(os.path.join(package_path))
     upload_job_name = 'anaconda-' + identifier
-    task = _base_task(upload_job_name)
+    task = _base_task(upload_job_name, config_vars.get('docker-user', None), config_vars.get('docker-pass', None))
     task['config']['run'].update({'path': 'anaconda', 'args': cmd})
     return [task]
 
@@ -88,7 +95,7 @@ def upload_scp(package_path, server, destination_path, auth_dict, worker,
 
     for task in ('scp', 'chmod', 'index'):
         job_name = task + '-' + identifier
-        tasks.append(_base_task(job_name))
+        tasks.append(_base_task(job_name, config_vars.get('docker-user', None), config_vars.get('docker-pass', None)))
     key = os.path.join('config', 'uploads.d', auth_dict['key_file'])
 
     package_path = os.path.join(package_path)
@@ -135,7 +142,7 @@ def upload_commands(package_path, commands, config_vars, **file_contents):
 
     for command in commands:
         command = command.split(' ')
-        task = _base_task('custom')
+        task = _base_task('custom', config_vars.get('docker-user', None), config_vars.get('docker-pass', None))
         task['config']['run'].update({'path': command[0]})
         if len(command) > 1:
             task['config']['run'].update({'args': command[1:]})
@@ -154,7 +161,7 @@ def get_upload_tasks(graph, node, upload_config_path, config_vars, commit_id, pu
                                     filename)
         for config in configurations:
             if 'token' in config:
-                tasks = upload_anaconda(package_path, **config)
+                tasks = upload_anaconda(package_path=package_path, config_vars=config_vars, **config)
             elif 'server' in config:
                 tasks = upload_scp(package_path=package_path,
                                 worker=worker, config_vars=config_vars,

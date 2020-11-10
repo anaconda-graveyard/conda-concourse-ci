@@ -50,14 +50,19 @@ class PipelineConfig:
             out[attr] = [v if isinstance(v, dict) else v.to_dict() for v in items]
         return out
 
-    def add_rsync_resource_type(self):
+    def add_rsync_resource_type(self, docker_user=None, docker_pass=None):
+        _source = {
+                'repository': 'conda/concourse-rsync-resource',
+                'tag': 'latest'
+            }
+
+        if docker_user and docker_pass:
+            _source.update({'username': docker_user, 'password': docker_pass})
+
         self.add_resource_type(
             name='rsync-resource',
             type_='docker-image',
-            source={
-                'repository': 'conda/concourse-rsync-resource',
-                'tag': 'latest'
-            },
+            source=_source,
         )
 
     def add_rsync_recipes(self, config_vars, recipe_folder):
@@ -129,13 +134,17 @@ class PipelineConfig:
             name='anaconda_upload',
             plan=all_rsync + [{'put': 'anaconda_upload_resource'}]
         )
+        _source = {
+                'repository': 'conda/concourse-anaconda_org-resource',
+                'tag': 'latest'
+            }
+        if config_vars.get('docker-user', None) and config_vars.get('docker-pass', None):
+            _source.update({'username': config_vars.get('docker-user'),
+                            'password': config_vars.get('docker-pass')})
         self.add_resource_type(
             name='anacondaorg-resource',
             type_='docker-image',
-            source={
-                'repository': 'conda/concourse-anaconda_org-resource',
-                'tag': 'latest'
-            },
+            source=_source,
         )
         self.add_resource(
             name='anaconda_upload_resource',
@@ -148,12 +157,17 @@ class PipelineConfig:
             name='repo_v6_upload',
             plan=all_rsync + [{'put': 'repo_resource'}]
         )
+        _source = {
+                'repository': 'condatest/repo_cli',
+                'tag': 'latest'}
+         if config_vars.get('docker-user', None) and config_vars.get('docker-pass', None):
+            _source.update({'username': config_vars.get('docker-user'),
+                            'password': config_vars.get('docker-pass')})
+
         self.add_resource_type(
             name='repo-resource-type',
             type_='docker-image',
-            source={
-                'repository': 'condatest/repo_cli',
-                'tag': 'latest'},
+            source=_source,
         )
         self.add_resource(
             name='repo_resource',
@@ -378,16 +392,23 @@ class JobConfig:
             'get_params': {'skip_download': True}
         })
 
-    def add_consolidate_task(self, inputs, subdir):
+    def add_consolidate_task(self, inputs, subdir, docker_user=None, docker_pass=None):
+        _source = {
+                    'repository': 'conda/c3i-linux-64',
+                    'tag': 'latest',
+                    }
+        if docker_user and docker_pass:
+            _source.update({
+                'username': config_vars.get('docker-user'),
+                'password': config_vars.get('docker-pass')
+                })
+
         config = {
             # we can always do this on linux, so prefer it for speed.
             'platform': 'linux',
             'image_resource': {
                 'type': 'docker-image',
-                'source': {
-                    'repository': 'conda/c3i-linux-64',
-                    'tag': 'latest',
-                    }
+                'source': _source,
             },
             'inputs': [{'name': 'rsync_' + req} for req in inputs],
             'outputs': [{'name': 'indexed-artifacts'}],
@@ -404,9 +425,20 @@ class JobConfig:
         }
         self.plan.append({'task': 'update-artifact-index', 'config': config})
 
-    def add_convert_task(self, subdir):
+    def add_convert_task(self, subdir, docker_user=None, docker_pass=None):
         inputs = [{'name': 'output-artifacts'}]
         outputs = [{'name': 'converted-artifacts'}]
+
+        _source = {
+                    'repository': 'conda/c3i-linux-64',
+                    'tag': 'latest',
+                }
+        if docker_user and docker_pass:
+            _source.update({
+                'username': config_vars.get('docker-user'),
+                'password': config_vars.get('docker-pass')
+                })
+
         config = {
             # we can always do this on linux, so prefer it for speed.
             'platform': 'linux',
@@ -414,10 +446,7 @@ class JobConfig:
             'outputs': outputs,
             'image_resource': {
                 'type': 'docker-image',
-                'source': {
-                    'repository': 'conda/c3i-linux-64',
-                    'tag': 'latest',
-                }
+                'source': _source,
             },
             'run': {
                 'path': 'sh',

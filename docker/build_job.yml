@@ -12,6 +12,8 @@ jobs:
           # can't template just part of a line: https://github.com/concourse/concourse/issues/545
           repository: conda/c3i-linux-64
           tag: latest
+          username: {{docker-hub-username}}
+          password: {{docker-hub-password}}
         type: docker-image
       inputs:
       - name: recipe-repo-source
@@ -30,7 +32,10 @@ jobs:
       platform: linux
       image_resource:
         source:
+          username: {{docker-hub-username}}
+          password: {{docker-hub-password}}
           repository: conda/c3i-linux-64
+          tag: latest
         type: docker-image
       inputs:
         - name: recipe-repo-source

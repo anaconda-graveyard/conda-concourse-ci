@@ -6,3 +6,5 @@ connector:
     type: docker-image
     source:
       repository: busybox
+      username: ((docker-user))
+      password: ((docker-pass))

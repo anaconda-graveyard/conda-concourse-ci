@@ -4,6 +4,8 @@ resource_types:
   source:
       repository: conda/concourse-rsync-resource
       tag: latest
+      username: ((docker-user))
+      password: ((docker-pass))
 
 resources:
 - name: tracker-timer
@@ -50,6 +52,8 @@ jobs:
           type: docker-image
           source:
             repository: conda/c3i-linux-64
+            username: ((docker-user))
+            password: ((docker-pass))
         params:
           GITHUB_TOKEN: ((recipe-repo-access-token))
         run:
@@ -68,6 +72,8 @@ jobs:
           type: docker-image
           source:
             repository: conda/c3i-linux-64
+            username: ((docker-user))
+            password: ((docker-pass))
         params:
           GITHUB_TOKEN: ((recipe-repo-access-token))
         run:
@@ -103,6 +109,8 @@ jobs:
         type: docker-image
         source:
           repository: conda/c3i-linux-64
+          username: ((docker-user))
+          password: ((docker-pass))
       platform: linux
       run:
         # this should output plan.yaml (credentials baked in) and recipes.  These will be in a folder
@@ -135,6 +143,8 @@ jobs:
         type: docker-image
         source:
           repository: conda/c3i-linux-64
+          username: ((docker-user))
+          password: ((docker-pass))
       platform: linux
       run:
         path: c3i

@@ -5,6 +5,8 @@ resource_types:
   source:
       repository: conda/concourse-rsync-resource
       tag: latest
+      username: ((docker-user))
+      password: ((docker-pass))
 
 resources:
 - name: once-a-week

@@ -8,3 +8,5 @@ connector:
     source:
       repository: conda/c3i-linux-64
       tag: latest
+      username: ((docker-user))
+      password: ((docker-pass))
