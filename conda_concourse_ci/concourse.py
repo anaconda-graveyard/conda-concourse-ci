@@ -95,9 +95,6 @@ class Concourse(AbstractContextManager):
             "--load-vars-from", vars_path
         ])
 
-    def unpause_pipeline(self, pipeline):
-        self._fly(['unpause-pipeline', '--pipeline', pipeline])
-
     def expose_pipeline(self, pipeline):
         self._fly(['expose-pipeline', '--pipeline', pipeline])
 

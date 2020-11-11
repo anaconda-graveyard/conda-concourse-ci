@@ -291,8 +291,11 @@ def graph_to_plan_with_jobs(
         artifact_folder = os.path.join(artifact_folder, commit_id)
         status_folder = os.path.join(status_folder, commit_id)
 
+    docker_user = config_vars.get('docker-user', None)
+    docker_pass = config_vars.get('docker-pass', None)
+
     plconfig = PipelineConfig()
-    plconfig.add_rsync_resource_type()
+    plconfig.add_rsync_resource_type(docker_user=docker_user, docker_pass=docker_pass)
     plconfig.add_rsync_recipes(config_vars, recipe_folder)
     plconfig.add_rsync_source(config_vars)
     plconfig.add_rsync_stats(config_vars)
@@ -333,7 +336,8 @@ def graph_to_plan_with_jobs(
             if rsync_artifacts:
                 jobconfig.add_rsync_prereq(prereq)
         if prereqs:
-            jobconfig.add_consolidate_task(prereqs, meta.config.host_subdir)
+            jobconfig.add_consolidate_task(prereqs, meta.config.host_subdir,
+                    docker_user=docker_user, docker_pass=docker_pass)
         jobconfig.plan.append(get_build_task(
             node, meta, worker,
             artifact_input=bool(prereqs),
@@ -347,7 +351,8 @@ def graph_to_plan_with_jobs(
             pull_recipes_resource=pull_recipes_resource,
         ))
         if not test_only:
-            jobconfig.add_convert_task(meta.config.host_subdir)
+            jobconfig.add_convert_task(meta.config.host_subdir,
+                    docker_user=docker_user, docker_pass=docker_pass)
             resource_name = 'rsync_' + node
             jobconfig.add_put_artifacts(resource_name)
             plconfig.add_rsync_packages(resource_name, config_vars)
