@@ -727,11 +727,11 @@ def submit_local(pipeline_file, base_name, pipeline_name, src_dir, config_root_d
             priv_key = key_file.read().decode('utf-8')
 
         # Hack some stuff up!
-        data = data.copy()
+        # data = data.copy()
         # data['intermediate-base-folder'] = os.getcwd() + '/' + data['intermediate-base-folder']
-        data['intermediate-base-folder'] = data['output_dir'] + '/' + data['intermediate-base-folder']
-        data['intermediate-user'] = 'rdonnelly'
-        data['intermediate-server'] = '127.0.0.1'
+        # data['intermediate-base-folder'] = data['output_dir'] + '/' + data['intermediate-base-folder']
+        # data['intermediate-user'] = 'rdonnelly'
+        # data['intermediate-server'] = '127.0.0.1'
 
         key_handle, key_file = tempfile.mkstemp()
         key_handle = os.fdopen(key_handle, 'w')
