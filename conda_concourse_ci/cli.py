@@ -176,6 +176,14 @@ def parse_args(parse_this=None):
         help="""Additional variant config files to add.  These yaml files can contain
         keys such as `c_compiler` and `target_platform` to form a build matrix."""
     )
+    one_off_parser.add_argument(
+        '-b', '--build-on',
+        action="append",
+        help="""Build on these platforms, either locally or locally-via-docker (macOS supported
+        only at present.  Use of this flag currently implies `--dry-run` and you will not get"
+        concourse runs (currently). Example usage: `--build-on=local` or
+        `--build-on=docker=conda/c3i-linux-64 --build-on=docker=conda/c3i-linux-ppc64le`"""
+    )
     one_off_parser.add_argument('--output-dir', help=("folder where output plan and recipes live."
                                 "Defaults to temp folder.  Set to something to save output."))
     one_off_parser.add_argument(
@@ -210,7 +218,9 @@ def parse_args(parse_this=None):
         action="store_true",
         help=(
             "Dry run, prepare concourse plan and files but do not submit. "
-            "Best used with the --output-dir option so the output can be inspected"
+            "Best used with the --output-dir option so the output can be inspected."
+            "Use of `--build-on=*` currently implies `--dry-run` and you will not get"
+            "concourse runs (currently)."
         ),
     )
 
@@ -359,6 +369,21 @@ def main(args=None):
     elif args.subparser_name == 'examine':
         execute.compute_builds(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'one-off':
+        build_on = {}
+        if 'build_on' in args and len(args.build_on):
+            for bo in args.build_on:
+                bo_var = bo
+                bo_val = True
+                if '=' in bo_var:
+                    bo_var = bo.split('=', 1)[0]
+                    bo_val = ''.join(bo.split('=', 1)[1:])
+                if bo_var in build_on:
+                    build_on[bo_var].append(bo_val)
+                else:
+                    build_on[bo_var] = [bo_val]
+        args_dict = args.__dict__
+        if args_dict.get('build_on'):
+            args_dict['build_on'] = build_on
         execute.submit_one_off(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'batch':
         execute.submit_batch(pass_throughs=pass_throughs, **args.__dict__)

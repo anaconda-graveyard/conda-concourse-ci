@@ -16,6 +16,8 @@ from conda_build.conda_interface import Resolve, TemporaryDirectory, cc_conda_bu
 from conda_build.index import get_build_index
 from conda_build.variants import get_package_variants
 
+from conda.utils import quote_for_shell
+
 import networkx as nx
 
 import requests
@@ -473,48 +475,44 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     os.chmod(key_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     # this is a plan director job.  Sync config.
+    ssh_id_args = ['ssh', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no', '-i', key_file]
+    ssh_target_arg = '{intermediate-user}@{intermediate-server}'.format(**data)
+    ssh_base_folder_arg = '{intermediate-base-folder}/{base-name}'.format(**data)
+    ssh_config_arg = ssh_base_folder_arg + '/config'
+    rsync_args = ['rsync', '--delete', '-av', '-e']
     if not config_overrides:
-        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
-                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
-                        '{intermediate-user}@{intermediate-server}'.format(**data),
-                        'mkdir -p {intermediate-base-folder}/{base-name}/config'.format(**data)])
-        subprocess.check_call(['rsync', '--delete', '-av', '-e',
-                               'ssh -o UserKnownHostsFile=/dev/null '
-                               '-o StrictHostKeyChecking=no -i ' + key_file,
+
+        subprocess.check_call(ssh_id_args + [ssh_target_arg] +
+                              ['mkdir -p ' + ssh_config_arg])
+
+        subprocess.check_call(rsync_args + [
+                               ' '.join(ssh_id_args),
                                config_root_dir + '/',
-                               ('{intermediate-user}@{intermediate-server}:'
-                                '{intermediate-base-folder}/{base-name}/config'.format(**data))
+                               ('{}:'.format(ssh_target_arg),
+                                '{}'.format(ssh_config_arg))
                                ])
     # this is a one-off job.  Sync the recipes we've computed locally.
     else:
-        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
-                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
-                        '{intermediate-user}@{intermediate-server}'.format(**data),
-                        'mkdir -p {intermediate-base-folder}/{base-name}'.format(**data)])
+        subprocess.check_call(ssh_id_args + [ssh_target_arg] + [
+                        'mkdir -p ' + ssh_base_folder_arg])
         # create the PR file
         if kw.get('pr_num', None):
             with open(f"{src_dir}/pr_num", 'w') as pr_file:
                 pr_file.write(kw.get('pr_num'))
 
-        subprocess.check_call(['rsync', '--delete', '-av', '-e',
-                               'ssh -o UserKnownHostsFile=/dev/null '
-                               '-o StrictHostKeyChecking=no -i ' + key_file,
-                               '-p', '--chmod=a=rwx',
+        subprocess.check_call(rsync_args +
+                              ssh_id_args +
+                              ['-p', '--chmod=a=rwx',
                                src_dir + '/',
-                               ('{intermediate-user}@{intermediate-server}:'
-                                '{intermediate-base-folder}/{base-name}/plan_and_recipes'
-                                .format(**data))
+                               ('{}:'.format(ssh_target_arg),
+                                '{}'.format(ssh_config_arg))
                                ])
         # remove any existing artifacts for sanity's sake - artifacts are only from this build.
-        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
-                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
-                        '{intermediate-user}@{intermediate-server}'.format(**data),
-                        'rm -rf {intermediate-base-folder}/{base-name}/artifacts'.format(**data)])
+        subprocess.check_call(ssh_id_args + [ssh_target_arg] + [
+            'rm -rf {}/artifacts'.format(ssh_base_folder_arg)])
         # create the status dir
-        subprocess.check_call(['ssh', '-o', 'UserKnownHostsFile=/dev/null',
-                        '-o', 'StrictHostKeyChecking=no', '-i', key_file,
-                        '{intermediate-user}@{intermediate-server}'.format(**data),
-                        'mkdir -p {intermediate-base-folder}/{base-name}/status'.format(**data)])
+        subprocess.check_call(ssh_id_args + [ssh_target_arg] + [
+                        'mkdir -p {}/status'.format(ssh_base_folder_arg)])
     os.remove(key_file)
 
     con = _ensure_login_and_sync(config_root_dir)
@@ -522,6 +520,254 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
     con.unpause_pipeline(pipeline_name)
     if public:
         con.expose_pipeline(pipeline_name)
+
+import multiprocessing
+
+
+def worker(run_config):
+    """worker function (for a specific platform at present, so is a list of all builds, but
+       really we may want parallelism of that, also this should interface with the build graph) """
+    print('Worker: {}'.format(run_config))
+    for local_config in run_config:
+        output = subprocess.check_output([local_config['exe']] + local_config['args'])
+        print("CARMEN OUTPUT for {} is:\n{}".format(local_config, output))
+    return
+
+
+
+@contextlib.contextmanager
+def remember_cwd():
+    curdir = os.getcwd()
+    try:
+        yield
+    finally:
+        os.chdir(curdir)
+
+def launch_jobs(max_cpus, run_configs):
+
+    if run_configs:
+
+        jobs = []
+
+        # for i in range(max_cpus):
+        for run_config_platform, run_config in run_configs.items():
+            j = multiprocessing.Process(target=worker, args=(run_config, ))
+            jobs.append(j)
+            j.start()
+            j.join()
+        jobs[-1].terminate()
+        for j in jobs:
+            j.join()
+            print('%s.exitcode = %s' % (j.name, j.exitcode))
+
+
+
+def run_plan_yml(data):
+    """
+    # Now pull apart the plan.yaml file.
+    # We are re-implementing the following bash script snippet:
+
+    mkdir /tmp/$$.c3i-locally
+    pushd /tmp/$$.c3i-locally
+      conda activate
+      cp -rf ${_RECIPES}/$FS_STUB-feedstock .
+      c3i one-off rdonnelly.$FS_STUB  \
+                  $FS_STUB-feedstock  \
+                  -m ${_RECIPES}/conda_build_config.yaml  \
+                  --config-root-dir=${_ASRC}/automated-build/c3i_configurations/github_public  \
+                  --dry-run  \
+                  --output-dir $PWD  \
+                  --noarch-build-subdir ${BUILD_SUBDIR}  \
+                  --no-skip-existing  \
+                  --platform ${PLATFORM}
+      mkdir rsync-recipes
+      cp -rf *-on-* rsync-recipes/
+      mkdir stats
+      declare -a cmds=()
+      cmds+=("export CONDA_SUBDIR=${PLATFORM} && ")
+      echo "1 ${cmds[@]}"
+      if [[ $(uname) =~ M.* ]]; then
+        cmds+=("cmd.exe ")
+      else
+        cmds+=("bash")
+      fi
+      echo "2 ${cmds[@]}"
+      while IFS= read -r line; do
+        cmds+=("$line")
+      done < <( cat plan.yml | yq -r '.jobs[0].plan[] | select(.task=="build").config.run.args[]' | sed 's#\\#\\\\#g' | tr '\r\n' '\n' )
+      echo "3 ${cmds[@]}"
+      conda deactivate
+      if [[ -n ${LOG} ]]; then
+        cmds+=("| tee ${LOG}")
+      fi
+        eval "${cmds[@]}"
+      fi
+    popd
+    """
+
+    local_builds = False
+    docker_builds = False
+    for platform, targets in data['build_on'].items():
+        if platform == 'docker':
+            for target in targets:
+                print(target)
+        elif platform == 'local':
+            assert targets == [True]
+            local_builds = True
+        else:
+            log.error("build_on platform {} unknown".format(platform))
+
+    import json
+
+    print(json.dumps(data, indent=2))
+    the_plan_filename = os.path.join(data['output_dir'], 'plan.yml')
+    with open(the_plan_filename, 'r') as the_plan_file:
+        the_plan = yaml.load(the_plan_file, Loader=yaml.SafeLoader)
+    run_configs = {}
+
+    rsync_recipes = {}
+    task_builds = {}
+    for type, items in the_plan.items():
+        if type == 'jobs':
+            for j in items:
+                this_plan_name = j['name']
+                this_plan = j['plan'].copy()
+                rsync_recipes[this_plan_name] = [pi for pi in this_plan if ('get' in pi and
+                                                                            pi['get'] == 'rsync-recipes')]
+                # TODO :: We need to lookup the 'resource' for this and execute it. We want a backend
+                #         that does not involve rsync / ssh and instead just copies things.
+                task_builds[this_plan_name] = [pi for pi in this_plan if ('task' in pi and
+                                                                          pi['task'] == 'build')]
+
+                for rsync_item in rsync_recipes[this_plan_name]:
+                    found = False
+                    for resource in the_plan['resources']:
+                        if resource['name'] == rsync_item['get']:
+                            log.info("Found 'resource' for {}:\n{}".format(rsync_item, resource))
+                            found = True
+                            break
+                    if not found:
+                        log.error("Did not find 'resource' for {}".format(rsync_item))
+                    print("NYI :: rsync_item and 'resource' {}:\n{}".format(rsync_item, json.dumps(resource, indent=2)))
+
+                for plan_item in task_builds[this_plan_name]:
+                    # First search for rsync-sources
+                    if 'task' in plan_item and plan_item['task'] == 'build':
+                        d = {}
+                        d['args'] = plan_item['config']['run']['args']
+                        d['exe'] = plan_item['config']['run']['path']
+                        pi_config = plan_item['config']
+                        d['platform'] = pi_config['platform']
+                        if 'image_resource' in pi_config and pi_config['image_resource']['type'] == 'docker-image':
+                            d['docker-image'] = pi_config['image_resource']['source']
+                        if d['platform'] == 'darwin':
+                            d['platform'] = 'osx-64'
+                        '''
+                        native_subdir = 'linux-64'
+                        import sys
+                        if sys.platform == 'darwin':
+                            native_subdir = 'osx-64'
+                        '''
+                        from conda.base.context import context
+                        native_subdir = context.subdir
+                        local_possible = ((native_subdir.startswith(d['platform']) and
+                                           'docker-image' in d and native_subdir in d['docker-image']['repository']) or
+                                          native_subdir == d['platform'])
+                        # TODO :: 1. Add some cross build and run tests here.  We should allow Wine
+                        #            and and other such things to be used (if the user requests it).
+                        #         2. Consider Windows. `native_possible` works for win-32<>win-64
+                        #            (to some extend, looking at you conda package cache bug).
+                        d['local_possible'] = local_possible
+                        add = False
+                        if not docker_builds and (local_builds and local_possible):
+                            print("A local build, as docker is disabled")
+                            add = True
+                        elif docker_builds and not local_possible:
+                            print("A docker build, as docker is enabled and not local_possible (needs config option)")
+                            add = True
+                        elif docker_builds and local_possible:
+                            print("A docker build, as docker is enabled, but also local_possible (needs config option)")
+                            add = True
+                        if add:
+                            if d['platform'] not in run_configs:
+                                run_configs[d['platform']] = []
+                            run_configs[d['platform']].append(d)
+    with remember_cwd():
+        os.chdir(data['intermediate-base-folder'])
+        launch_jobs(4, run_configs)
+
+
+def submit_local(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
+                 public=True, config_overrides=None, pass_throughs=None, **kw):
+    """submit task locally (generally on docker, tested on macOS)
+
+    Does not do much fancy stuff that submit() does.  The idea is to be minimal.
+    Only implemented for `one-off` mode at present.
+    """
+    git_identifier = _get_current_git_rev(src_dir) if config_overrides else None
+    pipeline_name = pipeline_name.format(base_name=base_name,
+                                         git_identifier=git_identifier)
+    pipeline_file = pipeline_file.format(git_identifier=git_identifier)
+
+    config_path = os.path.join(config_root_dir, 'config.yml')
+    with open(config_path) as src:
+        data = yaml.safe_load(src)
+
+    if config_overrides:
+        data.update(config_overrides)
+
+    use_ssh_with_docker = True
+    sync_or_mount_args = []
+    if use_ssh_with_docker:
+
+        priv_key = data['intermediate-private-key']
+        with open(os.path.expanduser('~/.ssh/id_rsa'), 'rb') as key_file:
+            priv_key = key_file.read().decode('utf-8')
+
+        # Hack some stuff up!
+        data = data.copy()
+        # data['intermediate-base-folder'] = os.getcwd() + '/' + data['intermediate-base-folder']
+        data['intermediate-base-folder'] = data['output_dir'] + '/' + data['intermediate-base-folder']
+        data['intermediate-user'] = 'rdonnelly'
+        data['intermediate-server'] = '127.0.0.1'
+
+        key_handle, key_file = tempfile.mkstemp()
+        key_handle = os.fdopen(key_handle, 'w')
+        key_handle.write(priv_key)
+        key_handle.close()
+        os.chmod(key_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        ssh_id_args = ['ssh', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no', '-i', key_file]
+        ssh_id_args_shell = quote_for_shell(ssh_id_args)
+
+        ssh_target_arg = '{intermediate-user}@{intermediate-server}'.format(**data)
+        ssh_base_folder_arg = '{intermediate-base-folder}/{base-name}'.format(**data)
+        ssh_config_arg = ssh_base_folder_arg + '/config'
+        rsync_args = ['rsync', '--delete', '-av', '-e']
+
+        # this is a one-off job.  Sync the recipes we've computed locally.
+        subprocess.check_call(ssh_id_args + [ssh_target_arg] + [
+                        'mkdir -p ' + ssh_base_folder_arg])
+        # create the PR file
+        if kw.get('pr_num', None):
+            with open(f"{src_dir}/pr_num", 'w') as pr_file:
+                pr_file.write(kw.get('pr_num'))
+        subprocess.check_call(rsync_args +
+                              [ssh_id_args_shell] +
+                              ['-p', '--chmod=a=rwx',
+                               src_dir + '/',
+                               '{}:{}'.format(ssh_target_arg, ssh_config_arg),
+                               ])
+        # remove any existing artifacts for sanity's sake - artifacts are only from this build.
+        subprocess.check_call(ssh_id_args + [ssh_target_arg] + [
+            'rm -rf {}/artifacts'.format(ssh_base_folder_arg)])
+        # create the status dir
+        subprocess.check_call(ssh_id_args + [ssh_target_arg] + [
+            'mkdir -p {}/status'.format(ssh_base_folder_arg)])
+
+    subprocess.check_call(ssh_id_args + [ssh_target_arg] + [
+        'mkdir -p {}/status'.format(ssh_base_folder_arg)])
+    # Now pull apart the plan.yaml file.
+    run_plan_yml(data)
 
 
 def compute_builds(path, base_name, folders, matrix_base_dir=None,
@@ -822,9 +1068,20 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, pa
             print("!!! Dry run, pipeline not submitted to concourse")
             print(f"!!! Prepared plans and recipes stored in {tmpdir}")
         else:
-            submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
-                pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
-                config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
+            if kwargs['build_on']:
+                config_overrides['output_dir'] = tmpdir
+                config_overrides['build_on'] = kwargs['build_on']
+                config_overrides['intermediate-base-folder'] = tmpdir + '/' + 'javier4'
+                config_overrides['intermediate-user'] = os.environ['USER'] if 'USER' in os.environ else os.environ['USERNAME']
+                config_overrides['intermediate-server'] = '127.0.0.1'
+
+                submit_local(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
+                    pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
+                    config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
+            else:
+                submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
+                    pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
+                    config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
 
 
 def submit_batch(
@@ -1008,3 +1265,7 @@ def abort_pipeline(pipeline_names, config_root_dir, **kwargs):
             if job["status"] == "started":
                 print(f"{pipeline}/{job['job_name']}")
                 con.abort_build(pipeline, job["job_name"], job["name"])
+
+
+if __name__ == '__main__':
+    print("HELLO JAVIER")
