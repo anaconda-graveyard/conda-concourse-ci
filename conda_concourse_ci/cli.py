@@ -179,6 +179,7 @@ def parse_args(parse_this=None):
     one_off_parser.add_argument(
         '-b', '--build-on',
         action="append",
+        default=[],
         help="""Build on these platforms, either locally or locally-via-docker (macOS supported
         only at present.  Use of this flag currently implies `--dry-run` and you will not get"
         concourse runs (currently). Example usage: `--build-on=local` or
@@ -370,7 +371,8 @@ def main(args=None):
         execute.compute_builds(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'one-off':
         build_on = {}
-        if 'build_on' in args and len(args.build_on):
+        print(args.build_on)
+        if 'build_on' in args and args.build_on and len(args.build_on):
             for bo in args.build_on:
                 bo_var = bo
                 bo_val = True

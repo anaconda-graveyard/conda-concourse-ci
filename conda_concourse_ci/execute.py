@@ -1072,16 +1072,16 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, pa
                 config_overrides['output_dir'] = tmpdir
                 config_overrides['build_on'] = kwargs['build_on']
                 config_overrides['intermediate-base-folder'] = tmpdir + '/' + 'javier4'
-                config_overrides['intermediate-user'] = os.environ['USER'] if 'USER' in os.environ else os.environ['USERNAME']
+                config_overrides['intermediate-user'] = (os.environ['USER'] if 'USER' in os.environ
+                                                         else os.environ['USERNAME'])
                 config_overrides['intermediate-server'] = '127.0.0.1'
-
                 submit_local(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
-                    pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
-                    config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
+                             pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
+                             config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
             else:
                 submit(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
-                    pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
-                    config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
+                       pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
+                       config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
 
 
 def submit_batch(
