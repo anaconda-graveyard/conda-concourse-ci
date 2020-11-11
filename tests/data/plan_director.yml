@@ -92,8 +92,8 @@ jobs:
         type: docker-image
         source:
           repository: conda/c3i-linux-64
-          username: ((docker-user))
-          password: ((docker-pass))
+          username: ((common.dockerhub-user))
+          password: ((common.dockerhub-pass))
       platform: linux
       run:
         path: c3i
