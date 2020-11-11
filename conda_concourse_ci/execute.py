@@ -534,7 +534,6 @@ def worker(run_config):
     return
 
 
-
 @contextlib.contextmanager
 def remember_cwd():
     curdir = os.getcwd()
@@ -542,6 +541,7 @@ def remember_cwd():
         yield
     finally:
         os.chdir(curdir)
+
 
 def launch_jobs(max_cpus, run_configs):
 
@@ -632,8 +632,10 @@ def run_plan_yml(data):
             for j in items:
                 this_plan_name = j['name']
                 this_plan = j['plan'].copy()
-                rsync_recipes[this_plan_name] = [pi for pi in this_plan if ('get' in pi and
-                                                                            pi['get'] == 'rsync-recipes')]
+                rsync_recipes[this_plan_name] = [pi for pi in this_plan if (('get' in pi and
+                                                                             pi['get'].startswith('rsync')) or
+                                                                            ('put' in pi and
+                                                                             pi['put'].startswith('rsync')))]
                 # TODO :: We need to lookup the 'resource' for this and execute it. We want a backend
                 #         that does not involve rsync / ssh and instead just copies things.
                 task_builds[this_plan_name] = [pi for pi in this_plan if ('task' in pi and
@@ -1061,6 +1063,13 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, pa
            kwargs.get('output_dir') else TemporaryDirectory)
     with ctx() as tmpdir:
         kwargs['output_dir'] = tmpdir
+        if kwargs['build_on']:
+            config_overrides['output_dir'] = tmpdir
+            config_overrides['build_on'] = kwargs['build_on']
+            config_overrides['intermediate-base-folder'] = tmpdir + '/' + 'javier4'
+            config_overrides['intermediate-user'] = (os.environ['USER'] if 'USER' in os.environ
+                                                     else os.environ['USERNAME'])
+            config_overrides['intermediate-server'] = '127.0.0.1'
         compute_builds(path=recipe_root_dir, base_name=pipeline_label, folders=folders,
                        matrix_base_dir=config_root_dir, config_overrides=config_overrides,
                        pass_throughs=pass_throughs, **kwargs)
@@ -1069,12 +1078,6 @@ def submit_one_off(pipeline_label, recipe_root_dir, folders, config_root_dir, pa
             print(f"!!! Prepared plans and recipes stored in {tmpdir}")
         else:
             if kwargs['build_on']:
-                config_overrides['output_dir'] = tmpdir
-                config_overrides['build_on'] = kwargs['build_on']
-                config_overrides['intermediate-base-folder'] = tmpdir + '/' + 'javier4'
-                config_overrides['intermediate-user'] = (os.environ['USER'] if 'USER' in os.environ
-                                                         else os.environ['USERNAME'])
-                config_overrides['intermediate-server'] = '127.0.0.1'
                 submit_local(pipeline_file=os.path.join(tmpdir, 'plan.yml'), base_name=pipeline_label,
                              pipeline_name=pipeline_label, src_dir=tmpdir, config_root_dir=config_root_dir,
                              config_overrides=config_overrides, pass_throughs=pass_throughs, **kwargs)
