@@ -941,7 +941,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
             shutil.copytree(os.path.join(path, recipe), out_folder)
         except Exception as e1:
             try:
-                os.system("cp -Rf '{}/*' '{}'".format(os.path.join(path, recipe), out_folder))
+                os.system("cp -Rf {}/* '{}'".format(os.path.join(path, recipe), out_folder), shell=True)
             except Exception as e2:
                 print('urgh')
 
