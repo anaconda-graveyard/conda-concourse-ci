@@ -476,6 +476,7 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
 
     # this is a plan director job.  Sync config.
     ssh_id_args = ['ssh', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no', '-i', key_file]
+    ssh_id_args_shell = quote_for_shell(ssh_id_args)
     ssh_target_arg = '{intermediate-user}@{intermediate-server}'.format(**data)
     ssh_base_folder_arg = '{intermediate-base-folder}/{base-name}'.format(**data)
     ssh_config_arg = ssh_base_folder_arg + '/config'
@@ -485,11 +486,9 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
         subprocess.check_call(ssh_id_args + [ssh_target_arg] +
                               ['mkdir -p ' + ssh_config_arg])
 
-        subprocess.check_call(rsync_args + [
-                               ' '.join(ssh_id_args),
+        subprocess.check_call(rsync_args + [ssh_id_args_shell,
                                config_root_dir + '/',
-                               ('{}:'.format(ssh_target_arg),
-                                '{}'.format(ssh_config_arg))
+                               ('{}:{}'.format(ssh_target_arg, ssh_config_arg))
                                ])
     # this is a one-off job.  Sync the recipes we've computed locally.
     else:
@@ -501,11 +500,10 @@ def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
                 pr_file.write(kw.get('pr_num'))
 
         subprocess.check_call(rsync_args +
-                              ssh_id_args +
-                              ['-p', '--chmod=a=rwx',
+                              [ssh_id_args_shell,
+                              '-p', '--chmod=a=rwx',
                                src_dir + '/',
-                               ('{}:'.format(ssh_target_arg),
-                                '{}'.format(ssh_config_arg))
+                               ('{}:{}'.format(ssh_target_arg, ssh_config_arg))
                                ])
         # remove any existing artifacts for sanity's sake - artifacts are only from this build.
         subprocess.check_call(ssh_id_args + [ssh_target_arg] + [
