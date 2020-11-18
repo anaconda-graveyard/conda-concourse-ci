@@ -1,0 +1,3219 @@
+groups: []
+resources:
+- name: rsync_build_r_script0-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script1-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script2-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script3-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script4-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script5-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script6-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script7-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script8-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script9-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script10-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script11-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script12-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script13-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script14-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script15-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script16-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script17-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script18-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script19-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script20-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script21-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script22-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script23-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script24-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script25-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script26-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script27-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script28-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+- name: rsync_build_r_script29-on-linux_64
+  type: rsync-resource
+  source:
+    base_dir: /ci/ktietz/artifacts
+    disable_version_path: true
+    private_key: ((common.intermediate-private-key))
+    server: bremen.corp.continuum.io
+    user: ci
+resource_types:
+- name: rsync-resource
+  type: docker-image
+  source:
+    repository: conda/concourse-rsync-resource
+    tag: latest
+jobs:
+- name: build_r_script0-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script0-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-noia-feedstock
+          aggregateR/r-noisyce2-feedstock
+          aggregateR/r-nomclust-feedstock
+          aggregateR/r-nomnoml-feedstock
+          aggregateR/r-noncensus-feedstock
+          aggregateR/r-noncompart-feedstock
+          aggregateR/r-nonnest2-feedstock
+          aggregateR/r-nonnormvtdist-feedstock
+          aggregateR/r-nonpar-feedstock
+          aggregateR/r-nonpareil-feedstock
+          aggregateR/r-nontargetdata-feedstock
+          aggregateR/r-nor1mix-feedstock
+          aggregateR/r-nordklimdata1-feedstock
+          aggregateR/r-normalp-feedstock
+          aggregateR/r-normalr-feedstock
+          aggregateR/r-normexpression-feedstock
+          aggregateR/r-normtest-feedstock
+          aggregateR/r-normwhn.test-feedstock
+          aggregateR/r-nortara-feedstock
+          aggregateR/r-nortest-feedstock
+          aggregateR/r-nose-feedstock
+          aggregateR/r-notemd-feedstock
+          aggregateR/r-notifyr-feedstock
+          aggregateR/r-noweb-feedstock
+          aggregateR/r-nozzle.r1-feedstock
+          aggregateR/r-nparcomp-feedstock
+          aggregateR/r-nparld-feedstock
+          aggregateR/r-nparsurv-feedstock
+          aggregateR/r-npcd-feedstock
+          aggregateR/r-npexact-feedstock
+          aggregateR/r-nphazardrate-feedstock
+          aggregateR/r-nplplot-feedstock
+          aggregateR/r-nplr-feedstock
+          aggregateR/r-npmlda-feedstock
+          aggregateR/r-npmlecmprsk-feedstock
+          aggregateR/r-npmlencc-feedstock
+          aggregateR/r-npmr-feedstock
+          aggregateR/r-npmv-feedstock
+          aggregateR/r-npmvcp-feedstock
+          aggregateR/r-npordtests-feedstock
+          aggregateR/r-npp-feedstock
+          aggregateR/r-nppbib-feedstock
+          aggregateR/r-npreg-feedstock
+          aggregateR/r-nps-feedstock
+          aggregateR/r-nptest-feedstock
+          aggregateR/r-nricens-feedstock
+          aggregateR/r-nscancor-feedstock
+          aggregateR/r-nsgp-feedstock
+          aggregateR/r-nso1212-feedstock
+          aggregateR/r-nsprcomp-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script0-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script1-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script1-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-nsrr-feedstock
+          aggregateR/r-numbers-feedstock
+          aggregateR/r-numbersbr-feedstock
+          aggregateR/r-numform-feedstock
+          aggregateR/r-numgen-feedstock
+          aggregateR/r-numkm-feedstock
+          aggregateR/r-nutshell.audioscrobbler-feedstock
+          aggregateR/r-nutshell.bbdb-feedstock
+          aggregateR/r-nws-feedstock
+          aggregateR/r-nzelect-feedstock
+          aggregateR/r-nzilbb.labbcat-feedstock
+          aggregateR/r-nzpullover-feedstock
+          aggregateR/r-oacolors-feedstock
+          aggregateR/r-oaiharvester-feedstock
+          aggregateR/r-oak-feedstock
+          aggregateR/r-oarray-feedstock
+          aggregateR/r-objectsignals-feedstock
+          aggregateR/r-obmbpkg-feedstock
+          aggregateR/r-obs.agree-feedstock
+          aggregateR/r-obssens-feedstock
+          aggregateR/r-oca-feedstock
+          aggregateR/r-occ-feedstock
+          aggregateR/r-ocedata-feedstock
+          aggregateR/r-ocomposition-feedstock
+          aggregateR/r-ocp-feedstock
+          aggregateR/r-odata-feedstock
+          aggregateR/r-odb-feedstock
+          aggregateR/r-odds.converter-feedstock
+          aggregateR/r-odds.n.ends-feedstock
+          aggregateR/r-odenetwork-feedstock
+          aggregateR/r-odr-feedstock
+          aggregateR/r-ods-feedstock
+          aggregateR/r-ogi-feedstock
+          aggregateR/r-oglmx-feedstock
+          aggregateR/r-ohit-feedstock
+          aggregateR/r-ohpl-feedstock
+          aggregateR/r-ohtadstats-feedstock
+          aggregateR/r-oidata-feedstock
+          aggregateR/r-okcupiddata-feedstock
+          aggregateR/r-okmesonet-feedstock
+          aggregateR/r-oligospecificitysystem-feedstock
+          aggregateR/r-olscurve-feedstock
+          aggregateR/r-omd-feedstock
+          aggregateR/r-omickriging-feedstock
+          aggregateR/r-omisc-feedstock
+          aggregateR/r-onage-feedstock
+          aggregateR/r-oncomodel-feedstock
+          aggregateR/r-oncotree-feedstock
+          aggregateR/r-oner-feedstock
+          aggregateR/r-onetr-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script1-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script2-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script2-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-onetwosamples-feedstock
+          aggregateR/r-onnx-feedstock
+          aggregateR/r-ontologyindex-feedstock
+          aggregateR/r-oomisc-feedstock
+          aggregateR/r-oompabase-feedstock
+          aggregateR/r-oompadata-feedstock
+          aggregateR/r-oor-feedstock
+          aggregateR/r-opalr-feedstock
+          aggregateR/r-openblender-feedstock
+          aggregateR/r-openintro-feedstock
+          aggregateR/r-opennlpdata-feedstock
+          aggregateR/r-opera-feedstock
+          aggregateR/r-operator.tools-feedstock
+          aggregateR/r-operators-feedstock
+          aggregateR/r-opi-feedstock
+          aggregateR/r-opportunistic-feedstock
+          aggregateR/r-ops-feedstock
+          aggregateR/r-optauc-feedstock
+          aggregateR/r-optbdmaeat-feedstock
+          aggregateR/r-optextras-feedstock
+          aggregateR/r-optifunset-feedstock
+          aggregateR/r-optigrab-feedstock
+          aggregateR/r-optimalcutpoints-feedstock
+          aggregateR/r-optimaldesign-feedstock
+          aggregateR/r-optimbase-feedstock
+          aggregateR/r-optimparallel-feedstock
+          aggregateR/r-optimstrat-feedstock
+          aggregateR/r-optimx-feedstock
+          aggregateR/r-optinterim-feedstock
+          aggregateR/r-optional-feedstock
+          aggregateR/r-optionpricing-feedstock
+          aggregateR/r-optionstrat-feedstock
+          aggregateR/r-optiscale-feedstock
+          aggregateR/r-optismixture-feedstock
+          aggregateR/r-optparse-feedstock
+          aggregateR/r-optr-feedstock
+          aggregateR/r-optrcdmaeat-feedstock
+          aggregateR/r-optrees-feedstock
+          aggregateR/r-orclus-feedstock
+          aggregateR/r-orcutt-feedstock
+          aggregateR/r-orddisp-feedstock
+          aggregateR/r-orddom-feedstock
+          aggregateR/r-order2parent-feedstock
+          aggregateR/r-ordering-feedstock
+          aggregateR/r-orderstats-feedstock
+          aggregateR/r-ordfacreg-feedstock
+          aggregateR/r-ordinalcont-feedstock
+          aggregateR/r-ordinallbm-feedstock
+          aggregateR/r-ordinalnet-feedstock
+          aggregateR/r-ordmonreg-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script2-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script3-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script3-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-ores-feedstock
+          aggregateR/r-org-feedstock
+          aggregateR/r-orgmassspecr-feedstock
+          aggregateR/r-oriclust-feedstock
+          aggregateR/r-orientlib-feedstock
+          aggregateR/r-orsifronts-feedstock
+          aggregateR/r-orthogonalsplinebasis-feedstock
+          aggregateR/r-orthopanels-feedstock
+          aggregateR/r-oscillatorgenerator-feedstock
+          aggregateR/r-osdr-feedstock
+          aggregateR/r-oshka-feedstock
+          aggregateR/r-osmose-feedstock
+          aggregateR/r-osrmr-feedstock
+          aggregateR/r-ote-feedstock
+          aggregateR/r-otrselect-feedstock
+          aggregateR/r-otutable-feedstock
+          aggregateR/r-outbreaks-feedstock
+          aggregateR/r-outlierdc-feedstock
+          aggregateR/r-outliers-feedstock
+          aggregateR/r-outrankingtools-feedstock
+          aggregateR/r-overture-feedstock
+          aggregateR/r-owea-feedstock
+          aggregateR/r-oxcaar-feedstock
+          aggregateR/r-oxybs-feedstock
+          aggregateR/r-oz-feedstock
+          aggregateR/r-p2distance-feedstock
+          aggregateR/r-p3state.msm-feedstock
+          aggregateR/r-pabonlasso-feedstock
+          aggregateR/r-pacbpred-feedstock
+          aggregateR/r-pack-feedstock
+          aggregateR/r-packclassic-feedstock
+          aggregateR/r-packs4-feedstock
+          aggregateR/r-pacman-feedstock
+          aggregateR/r-pact-feedstock
+          aggregateR/r-pade-feedstock
+          aggregateR/r-paf-feedstock
+          aggregateR/r-pagenum-feedstock
+          aggregateR/r-pageviews-feedstock
+          aggregateR/r-pagi-feedstock
+          aggregateR/r-pagwas-feedstock
+          aggregateR/r-painter-feedstock
+          aggregateR/r-paintmap-feedstock
+          aggregateR/r-pairedci-feedstock
+          aggregateR/r-pairheatmap-feedstock
+          aggregateR/r-pairsd3-feedstock
+          aggregateR/r-pairwise-feedstock
+          aggregateR/r-pairwised-feedstock
+          aggregateR/r-pakpmics2014ch-feedstock
+          aggregateR/r-pakpmics2014hh-feedstock
+          aggregateR/r-pakpmics2014hl-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script3-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script4-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script4-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-pakpmics2014wm-feedstock
+          aggregateR/r-palasso-feedstock
+          aggregateR/r-paleobiodb-feedstock
+          aggregateR/r-paleomorph-feedstock
+          aggregateR/r-paleots-feedstock
+          aggregateR/r-palettesforr-feedstock
+          aggregateR/r-palettetown-feedstock
+          aggregateR/r-palinsol-feedstock
+          aggregateR/r-palr-feedstock
+          aggregateR/r-pameasures-feedstock
+          aggregateR/r-pampe-feedstock
+          aggregateR/r-pandocfilters-feedstock
+          aggregateR/r-panelaggregation-feedstock
+          aggregateR/r-paneldata-feedstock
+          aggregateR/r-panjen-feedstock
+          aggregateR/r-paperplanes-feedstock
+          aggregateR/r-parade-feedstock
+          aggregateR/r-parallelize.dynamic-feedstock
+          aggregateR/r-parallelmap-feedstock
+          aggregateR/r-parallelmcmccombine-feedstock
+          aggregateR/r-parallelml-feedstock
+          aggregateR/r-parallelpc-feedstock
+          aggregateR/r-parallelsvm-feedstock
+          aggregateR/r-params-feedstock
+          aggregateR/r-paramtest-feedstock
+          aggregateR/r-paran-feedstock
+          aggregateR/r-parentoffspring-feedstock
+          aggregateR/r-parse-feedstock
+          aggregateR/r-parsetools-feedstock
+          aggregateR/r-partdsa-feedstock
+          aggregateR/r-partiallyoverlapping-feedstock
+          aggregateR/r-partialor-feedstock
+          aggregateR/r-partitionbefsp-feedstock
+          aggregateR/r-partitionmap-feedstock
+          aggregateR/r-partitionmetric-feedstock
+          aggregateR/r-partsm-feedstock
+          aggregateR/r-pas-feedstock
+          aggregateR/r-pass.lme-feedstock
+          aggregateR/r-passport-feedstock
+          aggregateR/r-password-feedstock
+          aggregateR/r-pastecs-feedstock
+          aggregateR/r-pastis-feedstock
+          aggregateR/r-paswr-feedstock
+          aggregateR/r-patchplot-feedstock
+          aggregateR/r-patchsynctex-feedstock
+          aggregateR/r-patentsview-feedstock
+          aggregateR/r-pathlibr-feedstock
+          aggregateR/r-patternator-feedstock
+          aggregateR/r-pawacc-feedstock
+          aggregateR/r-paws.common-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script4-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script5-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script5-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-pbapply-feedstock
+          aggregateR/r-pbibd-feedstock
+          aggregateR/r-pbimisc-feedstock
+          aggregateR/r-pbm-feedstock
+          aggregateR/r-pbo-feedstock
+          aggregateR/r-pbrackets-feedstock
+          aggregateR/r-pbs-feedstock
+          aggregateR/r-pcamixdata-feedstock
+          aggregateR/r-pcensmix-feedstock
+          aggregateR/r-pcfam-feedstock
+          aggregateR/r-pcg-feedstock
+          aggregateR/r-pch-feedstock
+          aggregateR/r-pco-feedstock
+          aggregateR/r-pcse-feedstock
+          aggregateR/r-pcsinr-feedstock
+          aggregateR/r-pder-feedstock
+          aggregateR/r-pdftables-feedstock
+          aggregateR/r-pdm-feedstock
+          aggregateR/r-pdshiny-feedstock
+          aggregateR/r-peacock.test-feedstock
+          aggregateR/r-peacots-feedstock
+          aggregateR/r-peakpick-feedstock
+          aggregateR/r-peakram-feedstock
+          aggregateR/r-pear-feedstock
+          aggregateR/r-pearson7-feedstock
+          aggregateR/r-pearsonica-feedstock
+          aggregateR/r-peerperformance-feedstock
+          aggregateR/r-pegrouptesting-feedstock
+          aggregateR/r-pemm-feedstock
+          aggregateR/r-pepsavims-feedstock
+          aggregateR/r-perc-feedstock
+          aggregateR/r-periodictable-feedstock
+          aggregateR/r-permalgo-feedstock
+          aggregateR/r-permgs-feedstock
+          aggregateR/r-permute-feedstock
+          aggregateR/r-persiandictionary-feedstock
+          aggregateR/r-persianstemmer-feedstock
+          aggregateR/r-perturb-feedstock
+          aggregateR/r-pesel-feedstock
+          aggregateR/r-petfinder-feedstock
+          aggregateR/r-petitr-feedstock
+          aggregateR/r-pgee-feedstock
+          aggregateR/r-pgls-feedstock
+          aggregateR/r-pgm2-feedstock
+          aggregateR/r-pgnorm-feedstock
+          aggregateR/r-ph2mult-feedstock
+          aggregateR/r-phd-feedstock
+          aggregateR/r-pheatmap-feedstock
+          aggregateR/r-phenability-feedstock
+          aggregateR/r-phenocamapi-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script5-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script6-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script6-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-pheval-feedstock
+          aggregateR/r-phidelta-feedstock
+          aggregateR/r-phonenumber-feedstock
+          aggregateR/r-phontools-feedstock
+          aggregateR/r-phtt-feedstock
+          aggregateR/r-phuassess-feedstock
+          aggregateR/r-phuse-feedstock
+          aggregateR/r-phylin-feedstock
+          aggregateR/r-phyloclim-feedstock
+          aggregateR/r-phylogr-feedstock
+          aggregateR/r-phylogram-feedstock
+          aggregateR/r-phylometrics-feedstock
+          aggregateR/r-phylotate-feedstock
+          aggregateR/r-phylotools-feedstock
+          aggregateR/r-phyreg-feedstock
+          aggregateR/r-physactbedrest-feedstock
+          aggregateR/r-physicalactivity-feedstock
+          aggregateR/r-piggyback-feedstock
+          aggregateR/r-pigshift-feedstock
+          aggregateR/r-pinfsc50-feedstock
+          aggregateR/r-pinnacle.api-feedstock
+          aggregateR/r-pinochet-feedstock
+          aggregateR/r-pinp-feedstock
+          aggregateR/r-pins-feedstock
+          aggregateR/r-pipefittr-feedstock
+          aggregateR/r-pipegs-feedstock
+          aggregateR/r-pipeliner-feedstock
+          aggregateR/r-piper-feedstock
+          aggregateR/r-pips-feedstock
+          aggregateR/r-pivotaltrackr-feedstock
+          aggregateR/r-pixels-feedstock
+          aggregateR/r-pixmap-feedstock
+          aggregateR/r-pk-feedstock
+          aggregateR/r-pkconverter-feedstock
+          aggregateR/r-pkgcond-feedstock
+          aggregateR/r-pkgkitten-feedstock
+          aggregateR/r-pkmon-feedstock
+          aggregateR/r-pkpdmodels-feedstock
+          aggregateR/r-pksea-feedstock
+          aggregateR/r-pla-feedstock
+          aggregateR/r-plan-feedstock
+          aggregateR/r-planesmuestra-feedstock
+          aggregateR/r-planets-feedstock
+          aggregateR/r-plantecophys-feedstock
+          aggregateR/r-plaqr-feedstock
+          aggregateR/r-plde-feedstock
+          aggregateR/r-plis-feedstock
+          aggregateR/r-plot.matrix-feedstock
+          aggregateR/r-plotcontour-feedstock
+          aggregateR/r-plotfunctions-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script6-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script7-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script7-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-plotlygeoassets-feedstock
+          aggregateR/r-plotmcmc-feedstock
+          aggregateR/r-plotpc-feedstock
+          aggregateR/r-plotregionhighlighter-feedstock
+          aggregateR/r-plotrix-feedstock
+          aggregateR/r-plotscale-feedstock
+          aggregateR/r-plotwidgets-feedstock
+          aggregateR/r-plrasch-feedstock
+          aggregateR/r-plrmodels-feedstock
+          aggregateR/r-plsbiplot1-feedstock
+          aggregateR/r-plsdepot-feedstock
+          aggregateR/r-plsdof-feedstock
+          aggregateR/r-plus-feedstock
+          aggregateR/r-pluscode-feedstock
+          aggregateR/r-plusser-feedstock
+          aggregateR/r-pmcmr-feedstock
+          aggregateR/r-pmml-feedstock
+          aggregateR/r-pmmltransformations-feedstock
+          aggregateR/r-pmr-feedstock
+          aggregateR/r-pmsampsize-feedstock
+          aggregateR/r-pmultinom-feedstock
+          aggregateR/r-pnmtrem-feedstock
+          aggregateR/r-pnn-feedstock
+          aggregateR/r-pocrm-feedstock
+          aggregateR/r-pod-feedstock
+          aggregateR/r-poet-feedstock
+          aggregateR/r-poiclaclu-feedstock
+          aggregateR/r-pointdensityp-feedstock
+          aggregateR/r-poisbinnonnor-feedstock
+          aggregateR/r-poisnonnor-feedstock
+          aggregateR/r-poisnor-feedstock
+          aggregateR/r-poisson-feedstock
+          aggregateR/r-poisson.glm.mix-feedstock
+          aggregateR/r-poissonseq-feedstock
+          aggregateR/r-poistweedie-feedstock
+          aggregateR/r-poker-feedstock
+          aggregateR/r-polidata-feedstock
+          aggregateR/r-politicaldata-feedstock
+          aggregateR/r-pollstr-feedstock
+          aggregateR/r-polyaaeppli-feedstock
+          aggregateR/r-polycor-feedstock
+          aggregateR/r-polynom-feedstock
+          aggregateR/r-polypatex-feedstock
+          aggregateR/r-polysegratio-feedstock
+          aggregateR/r-polytrend-feedstock
+          aggregateR/r-pomic-feedstock
+          aggregateR/r-pooledmeangroup-feedstock
+          aggregateR/r-poolfstat-feedstock
+          aggregateR/r-pop-feedstock
+          aggregateR/r-popbio-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script7-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script8-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script8-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-popdemog-feedstock
+          aggregateR/r-popgenkit-feedstock
+          aggregateR/r-popkorn-feedstock
+          aggregateR/r-poprange-feedstock
+          aggregateR/r-popreconstruct-feedstock
+          aggregateR/r-poptrend-feedstock
+          aggregateR/r-portfolio-feedstock
+          aggregateR/r-portsort-feedstock
+          aggregateR/r-posi-feedstock
+          aggregateR/r-postcodesior-feedstock
+          aggregateR/r-postinfectious-feedstock
+          aggregateR/r-postlogic-feedstock
+          aggregateR/r-poweranalysis-feedstock
+          aggregateR/r-powercomprisk-feedstock
+          aggregateR/r-powerfulmaxeigenpair-feedstock
+          aggregateR/r-powerlaw-feedstock
+          aggregateR/r-powerlmm-feedstock
+          aggregateR/r-powermediation-feedstock
+          aggregateR/r-powernormal-feedstock
+          aggregateR/r-powerpkg-feedstock
+          aggregateR/r-powersurvepi-feedstock
+          aggregateR/r-powerupr-feedstock
+          aggregateR/r-ppcor-feedstock
+          aggregateR/r-ppls-feedstock
+          aggregateR/r-pps-feedstock
+          aggregateR/r-pqantimalarials-feedstock
+          aggregateR/r-pracma-feedstock
+          aggregateR/r-practools-feedstock
+          aggregateR/r-pragma-feedstock
+          aggregateR/r-prais-feedstock
+          aggregateR/r-praktikum-feedstock
+          aggregateR/r-prediction-feedstock
+          aggregateR/r-predictiveregression-feedstock
+          aggregateR/r-predmixcor-feedstock
+          aggregateR/r-preknitposthtmlrender-feedstock
+          aggregateR/r-preputils-feedstock
+          aggregateR/r-prereg-feedstock
+          aggregateR/r-presenceabsence-feedstock
+          aggregateR/r-prettyb-feedstock
+          aggregateR/r-prettycode-feedstock
+          aggregateR/r-prettydoc-feedstock
+          aggregateR/r-prettygraphs-feedstock
+          aggregateR/r-prettymapr-feedstock
+          aggregateR/r-prettyr-feedstock
+          aggregateR/r-prevederer-feedstock
+          aggregateR/r-primefactr-feedstock
+          aggregateR/r-prinsimp-feedstock
+          aggregateR/r-printr-feedstock
+          aggregateR/r-priogene-feedstock
+          aggregateR/r-prioritizrdata-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script8-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script9-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script9-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-prioritylasso-feedstock
+          aggregateR/r-prism.forecast-feedstock
+          aggregateR/r-prithulib-feedstock
+          aggregateR/r-privatelr-feedstock
+          aggregateR/r-prnsamplr-feedstock
+          aggregateR/r-pro-feedstock
+          aggregateR/r-probemod-feedstock
+          aggregateR/r-probfda-feedstock
+          aggregateR/r-probhat-feedstock
+          aggregateR/r-probsvm-feedstock
+          aggregateR/r-proccalibrad-feedstock
+          aggregateR/r-processcontrol-feedstock
+          aggregateR/r-prodigenr-feedstock
+          aggregateR/r-profilelikelihood-feedstock
+          aggregateR/r-profmem-feedstock
+          aggregateR/r-profr-feedstock
+          aggregateR/r-proftools-feedstock
+          aggregateR/r-prognosticroc-feedstock
+          aggregateR/r-projecttemplate-feedstock
+          aggregateR/r-projmgr-feedstock
+          aggregateR/r-proliferativeindex-feedstock
+          aggregateR/r-promethee-feedstock
+          aggregateR/r-promote-feedstock
+          aggregateR/r-propcis-feedstock
+          aggregateR/r-properties-feedstock
+          aggregateR/r-propscrrand-feedstock
+          aggregateR/r-proscorertools-feedstock
+          aggregateR/r-prosper-feedstock
+          aggregateR/r-proteindescriptors-feedstock
+          aggregateR/r-proteomicdesign-feedstock
+          aggregateR/r-protoclass-feedstock
+          aggregateR/r-protolidar-feedstock
+          aggregateR/r-proton-feedstock
+          aggregateR/r-protr-feedstock
+          aggregateR/r-provparser-feedstock
+          aggregateR/r-provviz-feedstock
+          aggregateR/r-prroc-feedstock
+          aggregateR/r-psagraphics-feedstock
+          aggregateR/r-pseval-feedstock
+          aggregateR/r-psi-feedstock
+          aggregateR/r-pso-feedstock
+          aggregateR/r-psoptim-feedstock
+          aggregateR/r-pstat-feedstock
+          aggregateR/r-psumtsim-feedstock
+          aggregateR/r-psy-feedstock
+          aggregateR/r-psychtools-feedstock
+          aggregateR/r-psymonitor-feedstock
+          aggregateR/r-psyphy-feedstock
+          aggregateR/r-pte-feedstock
+          aggregateR/r-ptprocess-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script9-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script10-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script10-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-ptwikiwords-feedstock
+          aggregateR/r-ptycho-feedstock
+          aggregateR/r-publish-feedstock
+          aggregateR/r-pulsar-feedstock
+          aggregateR/r-pumilior-feedstock
+          aggregateR/r-purge-feedstock
+          aggregateR/r-purging-feedstock
+          aggregateR/r-pushbar-feedstock
+          aggregateR/r-pushoverr-feedstock
+          aggregateR/r-pvclass-feedstock
+          aggregateR/r-pvclust-feedstock
+          aggregateR/r-pvsr-feedstock
+          aggregateR/r-pwr-feedstock
+          aggregateR/r-pwr2-feedstock
+          aggregateR/r-pwrab-feedstock
+          aggregateR/r-pwrrasch-feedstock
+          aggregateR/r-pwt-feedstock
+          aggregateR/r-pwt8-feedstock
+          aggregateR/r-pwt9-feedstock
+          aggregateR/r-pxr-feedstock
+          aggregateR/r-pxweb-feedstock
+          aggregateR/r-pymturkr-feedstock
+          aggregateR/r-pyramid-feedstock
+          aggregateR/r-pzfx-feedstock
+          aggregateR/r-qaig-feedstock
+          aggregateR/r-qboxplot-feedstock
+          aggregateR/r-qcafalsepositive-feedstock
+          aggregateR/r-qcba-feedstock
+          aggregateR/r-qcc-feedstock
+          aggregateR/r-qcewas-feedstock
+          aggregateR/r-qcgwas-feedstock
+          aggregateR/r-qcsis-feedstock
+          aggregateR/r-qcv-feedstock
+          aggregateR/r-qdapdictionaries-feedstock
+          aggregateR/r-qdapregex-feedstock
+          aggregateR/r-qdaptools-feedstock
+          aggregateR/r-qdcomparison-feedstock
+          aggregateR/r-qdm-feedstock
+          aggregateR/r-qfrm-feedstock
+          aggregateR/r-qgglmm-feedstock
+          aggregateR/r-qgtools-feedstock
+          aggregateR/r-qhot-feedstock
+          aggregateR/r-qiitr-feedstock
+          aggregateR/r-qkerntool-feedstock
+          aggregateR/r-qlearn-feedstock
+          aggregateR/r-qlearning-feedstock
+          aggregateR/r-qmrparser-feedstock
+          aggregateR/r-qqman-feedstock
+          aggregateR/r-qqperm-feedstock
+          aggregateR/r-qqvases-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script10-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script11-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script11-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-qrage-feedstock
+          aggregateR/r-qrank-feedstock
+          aggregateR/r-qrcode-feedstock
+          aggregateR/r-qrmdata-feedstock
+          aggregateR/r-qrmix-feedstock
+          aggregateR/r-qrnn-feedstock
+          aggregateR/r-qrsvm-feedstock
+          aggregateR/r-qsardata-feedstock
+          aggregateR/r-qtlbook-feedstock
+          aggregateR/r-qtldesign-feedstock
+          aggregateR/r-quadprogxt-feedstock
+          aggregateR/r-qualci-feedstock
+          aggregateR/r-qualvar-feedstock
+          aggregateR/r-quandl-feedstock
+          aggregateR/r-quantileda-feedstock
+          aggregateR/r-quantilegrader-feedstock
+          aggregateR/r-quantilenpci-feedstock
+          aggregateR/r-quantnorm-feedstock
+          aggregateR/r-quantpsyc-feedstock
+          aggregateR/r-quantreggrowth-feedstock
+          aggregateR/r-quantumops-feedstock
+          aggregateR/r-quclu-feedstock
+          aggregateR/r-queryparser-feedstock
+          aggregateR/r-queueing-feedstock
+          aggregateR/r-quiddich-feedstock
+          aggregateR/r-quietr-feedstock
+          aggregateR/r-quran-feedstock
+          aggregateR/r-r.blip-feedstock
+          aggregateR/r-r.cache-feedstock
+          aggregateR/r-r.devices-feedstock
+          aggregateR/r-r.huge-feedstock
+          aggregateR/r-r.matlab-feedstock
+          aggregateR/r-r0-feedstock
+          aggregateR/r-r1magic-feedstock
+          aggregateR/r-r2admb-feedstock
+          aggregateR/r-r2beat-feedstock
+          aggregateR/r-r2d2-feedstock
+          aggregateR/r-r2dgc-feedstock
+          aggregateR/r-r2dt-feedstock
+          aggregateR/r-r2html-feedstock
+          aggregateR/r-r2openbugs-feedstock
+          aggregateR/r-r2pmml-feedstock
+          aggregateR/r-r2ppt-feedstock
+          aggregateR/r-r2stl-feedstock
+          aggregateR/r-r2wd-feedstock
+          aggregateR/r-r2winbugs-feedstock
+          aggregateR/r-r3port-feedstock
+          aggregateR/r-r4couchdb-feedstock
+          aggregateR/r-r62s3-feedstock
+          aggregateR/r-r6ds-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script11-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script12-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script12-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-radanalysis-feedstock
+          aggregateR/r-radar-feedstock
+          aggregateR/r-radarboxplot-feedstock
+          aggregateR/r-radarchart-feedstock
+          aggregateR/r-raddata-feedstock
+          aggregateR/r-radiosonde-feedstock
+          aggregateR/r-radjust-feedstock
+          aggregateR/r-radviz-feedstock
+          aggregateR/r-radwords-feedstock
+          aggregateR/r-rafalib-feedstock
+          aggregateR/r-rahrefs-feedstock
+          aggregateR/r-rainfallerosivityfactor-feedstock
+          aggregateR/r-rainfarmr-feedstock
+          aggregateR/r-raltmetric-feedstock
+          aggregateR/r-ramble-feedstock
+          aggregateR/r-ramchoice-feedstock
+          aggregateR/r-ramify-feedstock
+          aggregateR/r-rampath-feedstock
+          aggregateR/r-randcorr-feedstock
+          aggregateR/r-randgeo-feedstock
+          aggregateR/r-randmeta-feedstock
+          aggregateR/r-random-feedstock
+          aggregateR/r-randomglm-feedstock
+          aggregateR/r-randomizebe-feedstock
+          aggregateR/r-randtests-feedstock
+          aggregateR/r-rangemodelr-feedstock
+          aggregateR/r-rankfd-feedstock
+          aggregateR/r-rankhazard-feedstock
+          aggregateR/r-rankingproject-feedstock
+          aggregateR/r-rankresponse-feedstock
+          aggregateR/r-rap-feedstock
+          aggregateR/r-rapiclient-feedstock
+          aggregateR/r-rapidjsonr-feedstock
+          aggregateR/r-rapidxmlr-feedstock
+          aggregateR/r-raptor-feedstock
+          aggregateR/r-rarity-feedstock
+          aggregateR/r-rasciidoc-feedstock
+          aggregateR/r-rasterize-feedstock
+          aggregateR/r-rasterlist-feedstock
+          aggregateR/r-rastervis-feedstock
+          aggregateR/r-ratedistortion-feedstock
+          aggregateR/r-ratelimitr-feedstock
+          aggregateR/r-rateratio.test-feedstock
+          aggregateR/r-raters-feedstock
+          aggregateR/r-ratesci-feedstock
+          aggregateR/r-ratios-feedstock
+          aggregateR/r-rattle.data-feedstock
+          aggregateR/r-raw-feedstock
+          aggregateR/r-rbenchmark-feedstock
+          aggregateR/r-rbiouml-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script12-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script13-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script13-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-rbit-feedstock
+          aggregateR/r-rbitcoin-feedstock
+          aggregateR/r-rbitcoinchartsapi-feedstock
+          aggregateR/r-rbldatalicense-feedstock
+          aggregateR/r-rbmn-feedstock
+          aggregateR/r-rbtc-feedstock
+          aggregateR/r-rbtt-feedstock
+          aggregateR/r-rca-feedstock
+          aggregateR/r-rcane-feedstock
+          aggregateR/r-rcapture-feedstock
+          aggregateR/r-rcarbon-feedstock
+          aggregateR/r-rcarto-feedstock
+          aggregateR/r-rcbalance-feedstock
+          aggregateR/r-rcbsubset-feedstock
+          aggregateR/r-rcc-feedstock
+          aggregateR/r-rcdklibs-feedstock
+          aggregateR/r-rceim-feedstock
+          aggregateR/r-rcelldata-feedstock
+          aggregateR/r-rcereal-feedstock
+          aggregateR/r-rcgmin-feedstock
+          aggregateR/r-rchallenge-feedstock
+          aggregateR/r-rcheology-feedstock
+          aggregateR/r-rchoicedialogs-feedstock
+          aggregateR/r-rcircos-feedstock
+          aggregateR/r-rcites-feedstock
+          aggregateR/r-rclean-feedstock
+          aggregateR/r-rclinicalcodes-feedstock
+          aggregateR/r-rclipboard-feedstock
+          aggregateR/r-rclone-feedstock
+          aggregateR/r-rcma-feedstock
+          aggregateR/r-rcolombos-feedstock
+          aggregateR/r-rconics-feedstock
+          aggregateR/r-rcorpora-feedstock
+          aggregateR/r-rcpp11-feedstock
+          aggregateR/r-rcppthread-feedstock
+          aggregateR/r-rcppxptrutils-feedstock
+          aggregateR/r-rcreds-feedstock
+          aggregateR/r-rcriteo-feedstock
+          aggregateR/r-rcriticor-feedstock
+          aggregateR/r-rcrypt-feedstock
+          aggregateR/r-rcssplot-feedstock
+          aggregateR/r-rcube-feedstock
+          aggregateR/r-rcur-feedstock
+          aggregateR/r-rd2md-feedstock
+          aggregateR/r-rd2roxygen-feedstock
+          aggregateR/r-rda-feedstock
+          aggregateR/r-rdatacanvas-feedstock
+          aggregateR/r-rdataretriever-feedstock
+          aggregateR/r-rdbnomics-feedstock
+          aggregateR/r-rde-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script13-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script14-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script14-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-rdetools-feedstock
+          aggregateR/r-rdian-feedstock
+          aggregateR/r-rdice-feedstock
+          aggregateR/r-rdidq-feedstock
+          aggregateR/r-rdistance-feedstock
+          aggregateR/r-rdnase-feedstock
+          aggregateR/r-rdnb-feedstock
+          aggregateR/r-rdocumentation-feedstock
+          aggregateR/r-rdota2-feedstock
+          aggregateR/r-rdrobust-feedstock
+          aggregateR/r-rdroolsjars-feedstock
+          aggregateR/r-rdsm-feedstock
+          aggregateR/r-rdstk-feedstock
+          aggregateR/r-rdstreeboot-feedstock
+          aggregateR/r-reactlog-feedstock
+          aggregateR/r-reactr-feedstock
+          aggregateR/r-read.gb-feedstock
+          aggregateR/r-readabf-feedstock
+          aggregateR/r-readbrukerflexdata-feedstock
+          aggregateR/r-readbulk-feedstock
+          aggregateR/r-readhac-feedstock
+          aggregateR/r-readjdx-feedstock
+          aggregateR/r-readmldata-feedstock
+          aggregateR/r-readmnist-feedstock
+          aggregateR/r-readmzxmldata-feedstock
+          aggregateR/r-readoffice-feedstock
+          aggregateR/r-reams-feedstock
+          aggregateR/r-rearrangement-feedstock
+          aggregateR/r-reat-feedstock
+          aggregateR/r-rebus.base-feedstock
+          aggregateR/r-reca-feedstock
+          aggregateR/r-rechonest-feedstock
+          aggregateR/r-recipa-feedstock
+          aggregateR/r-recoder-feedstock
+          aggregateR/r-recombinator-feedstock
+          aggregateR/r-recorder-feedstock
+          aggregateR/r-records-feedstock
+          aggregateR/r-redas-feedstock
+          aggregateR/r-redmonder-feedstock
+          aggregateR/r-reemtree-feedstock
+          aggregateR/r-reffreeewas-feedstock
+          aggregateR/r-refmanager-feedstock
+          aggregateR/r-refnr-feedstock
+          aggregateR/r-refset-feedstock
+          aggregateR/r-regclust-feedstock
+          aggregateR/r-regent-feedstock
+          aggregateR/r-regexpipes-feedstock
+          aggregateR/r-regexselect-feedstock
+          aggregateR/r-regpro-feedstock
+          aggregateR/r-regress-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script14-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script15-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script15-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-regressionfactory-feedstock
+          aggregateR/r-regsel-feedstock
+          aggregateR/r-regspec-feedstock
+          aggregateR/r-regsubseq-feedstock
+          aggregateR/r-regtest-feedstock
+          aggregateR/r-rehh.data-feedstock
+          aggregateR/r-reinforcelearn-feedstock
+          aggregateR/r-reinstallr-feedstock
+          aggregateR/r-rel-feedstock
+          aggregateR/r-rela-feedstock
+          aggregateR/r-relabeloadings-feedstock
+          aggregateR/r-relatable-feedstock
+          aggregateR/r-relaxnet-feedstock
+          aggregateR/r-relaxo-feedstock
+          aggregateR/r-relen-feedstock
+          aggregateR/r-reliability-feedstock
+          aggregateR/r-reliar-feedstock
+          aggregateR/r-relimp-feedstock
+          aggregateR/r-relvalanalysis-feedstock
+          aggregateR/r-remindr-feedstock
+          aggregateR/r-renpow-feedstock
+          aggregateR/r-rentrez-feedstock
+          aggregateR/r-repeatedhighdim-feedstock
+          aggregateR/r-repec-feedstock
+          aggregateR/r-repo-feedstock
+          aggregateR/r-repogenerator-feedstock
+          aggregateR/r-reportreg-feedstock
+          aggregateR/r-reportroc-feedstock
+          aggregateR/r-reports-feedstock
+          aggregateR/r-reporttools-feedstock
+          aggregateR/r-represent-feedstock
+          aggregateR/r-represtools-feedstock
+          aggregateR/r-reqs-feedstock
+          aggregateR/r-request-feedstock
+          aggregateR/r-requirer-feedstock
+          aggregateR/r-rerefact-feedstock
+          aggregateR/r-resample-feedstock
+          aggregateR/r-resampledata-feedstock
+          aggregateR/r-reservoir-feedstock
+          aggregateR/r-resistorarray-feedstock
+          aggregateR/r-ress-feedstock
+          aggregateR/r-restimizeapi-feedstock
+          aggregateR/r-restorepoint-feedstock
+          aggregateR/r-rethinker-feedstock
+          aggregateR/r-retrodesign-feedstock
+          aggregateR/r-reval-feedstock
+          aggregateR/r-revealjs-feedstock
+          aggregateR/r-revecor-feedstock
+          aggregateR/r-revgeo-feedstock
+          aggregateR/r-reweight-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script15-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script16-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script16-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-rfacebook-feedstock
+          aggregateR/r-rfdsn-feedstock
+          aggregateR/r-rfgls-feedstock
+          aggregateR/r-rfinanceyj-feedstock
+          aggregateR/r-rfinterval-feedstock
+          aggregateR/r-rflights-feedstock
+          aggregateR/r-rflptools-feedstock
+          aggregateR/r-rfml-feedstock
+          aggregateR/r-rfoaas-feedstock
+          aggregateR/r-rfolding-feedstock
+          aggregateR/r-rforcecom-feedstock
+          aggregateR/r-rfordummies-feedstock
+          aggregateR/r-rformatter-feedstock
+          aggregateR/r-rfreak-feedstock
+          aggregateR/r-rfutilities-feedstock
+          aggregateR/r-rga-feedstock
+          aggregateR/r-rga4gh-feedstock
+          aggregateR/r-rgabriel-feedstock
+          aggregateR/r-rgammagamma-feedstock
+          aggregateR/r-rgcca-feedstock
+          aggregateR/r-rgdax-feedstock
+          aggregateR/r-rgeckoboard-feedstock
+          aggregateR/r-rgen-feedstock
+          aggregateR/r-rgendata-feedstock
+          aggregateR/r-rgenetics-feedstock
+          aggregateR/r-rgf-feedstock
+          aggregateR/r-rgift-feedstock
+          aggregateR/r-rglobi-feedstock
+          aggregateR/r-rgooddata-feedstock
+          aggregateR/r-rgoogleanalytics-feedstock
+          aggregateR/r-rgoogleanalyticspremium-feedstock
+          aggregateR/r-rgooglefit-feedstock
+          aggregateR/r-rgooglemaps-feedstock
+          aggregateR/r-rgoogleslides-feedstock
+          aggregateR/r-rgr-feedstock
+          aggregateR/r-rgrass7-feedstock
+          aggregateR/r-rgroovy-feedstock
+          aggregateR/r-rgw-feedstock
+          aggregateR/r-rh2-feedstock
+          aggregateR/r-rhandsontable-feedstock
+          aggregateR/r-rhealthdatagov-feedstock
+          aggregateR/r-rhmc-feedstock
+          aggregateR/r-rhnerm-feedstock
+          aggregateR/r-rhor-feedstock
+          aggregateR/r-rhosp-feedstock
+          aggregateR/r-rhpcbenchmark-feedstock
+          aggregateR/r-rhpcc-feedstock
+          aggregateR/r-rht-feedstock
+          aggregateR/r-rhymer-feedstock
+          aggregateR/r-ri-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script16-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script17-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script17-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-ridgefusion-feedstock
+          aggregateR/r-ridigbio-feedstock
+          aggregateR/r-ridit-feedstock
+          aggregateR/r-ridittools-feedstock
+          aggregateR/r-rifle-feedstock
+          aggregateR/r-rifs-feedstock
+          aggregateR/r-rimpact-feedstock
+          aggregateR/r-rintervaltree-feedstock
+          aggregateR/r-rintrojs-feedstock
+          aggregateR/r-risk-feedstock
+          aggregateR/r-riskportfolios-feedstock
+          aggregateR/r-riskr-feedstock
+          aggregateR/r-risksetroc-feedstock
+          aggregateR/r-riskyr-feedstock
+          aggregateR/r-rismed-feedstock
+          aggregateR/r-riverbuilder-feedstock
+          aggregateR/r-riverload-feedstock
+          aggregateR/r-rivernet-feedstock
+          aggregateR/r-riverplot-feedstock
+          aggregateR/r-rivervis-feedstock
+          aggregateR/r-rjazz-feedstock
+          aggregateR/r-rjdemetra-feedstock
+          aggregateR/r-rjsdmx-feedstock
+          aggregateR/r-rjsplot-feedstock
+          aggregateR/r-rjstat-feedstock
+          aggregateR/r-rjwsacruncher-feedstock
+          aggregateR/r-rjython-feedstock
+          aggregateR/r-rkeajars-feedstock
+          aggregateR/r-rkeeldata-feedstock
+          aggregateR/r-rkeeljars-feedstock
+          aggregateR/r-rkelly-feedstock
+          aggregateR/r-rklout-feedstock
+          aggregateR/r-rkmetrics-feedstock
+          aggregateR/r-rkt-feedstock
+          aggregateR/r-rkum-feedstock
+          aggregateR/r-rlab-feedstock
+          aggregateR/r-rlakeanalyzer-feedstock
+          aggregateR/r-rld-feedstock
+          aggregateR/r-rldcp-feedstock
+          aggregateR/r-rleafangle-feedstock
+          aggregateR/r-rleafmap-feedstock
+          aggregateR/r-rlinkedin-feedstock
+          aggregateR/r-rlmdatadriven-feedstock
+          aggregateR/r-rm2006-feedstock
+          aggregateR/r-rmaf-feedstock
+          aggregateR/r-rmake-feedstock
+          aggregateR/r-rmallow-feedstock
+          aggregateR/r-rmawgen-feedstock
+          aggregateR/r-rmcorr-feedstock
+          aggregateR/r-rmdfiltr-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script17-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script18-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script18-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-rmdplugr-feedstock
+          aggregateR/r-rmdshower-feedstock
+          aggregateR/r-rmea-feedstock
+          aggregateR/r-rmediation-feedstock
+          aggregateR/r-rmeta-feedstock
+          aggregateR/r-rmio-feedstock
+          aggregateR/r-rmisc-feedstock
+          aggregateR/r-rmixpanel-feedstock
+          aggregateR/r-rmoajars-feedstock
+          aggregateR/r-rmonad-feedstock
+          aggregateR/r-rmosek-feedstock
+          aggregateR/r-rmouse-feedstock
+          aggregateR/r-rmpw-feedstock
+          aggregateR/r-rmr-feedstock
+          aggregateR/r-rms.gof-feedstock
+          aggregateR/r-rmsfact-feedstock
+          aggregateR/r-rmthreshold-feedstock
+          aggregateR/r-rmtl-feedstock
+          aggregateR/r-rmtstat-feedstock
+          aggregateR/r-rnaseqwrapper-feedstock
+          aggregateR/r-rnassqs-feedstock
+          aggregateR/r-rnaturalearthdata-feedstock
+          aggregateR/r-rnavgraphimagedata-feedstock
+          aggregateR/r-rnavicell-feedstock
+          aggregateR/r-rnbp-feedstock
+          aggregateR/r-rncbieutilslibs-feedstock
+          aggregateR/r-rnd-feedstock
+          aggregateR/r-rndtexexams-feedstock
+          aggregateR/r-rnentropy-feedstock
+          aggregateR/r-rneos-feedstock
+          aggregateR/r-rnetlogo-feedstock
+          aggregateR/r-rngforgpd-feedstock
+          aggregateR/r-rnpn-feedstock
+          aggregateR/r-rnr-feedstock
+          aggregateR/r-rnumerai-feedstock
+          aggregateR/r-roauth-feedstock
+          aggregateR/r-robastrda-feedstock
+          aggregateR/r-robcor-feedstock
+          aggregateR/r-robrsvd-feedstock
+          aggregateR/r-robumeta-feedstock
+          aggregateR/r-robustrankaggreg-feedstock
+          aggregateR/r-robustx-feedstock
+          aggregateR/r-rocc-feedstock
+          aggregateR/r-roccv-feedstock
+          aggregateR/r-rocit-feedstock
+          aggregateR/r-rocnit-feedstock
+          aggregateR/r-rocwogs-feedstock
+          aggregateR/r-rodam-feedstock
+          aggregateR/r-rodbcdbi-feedstock
+          aggregateR/r-rode-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script18-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script19-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script19-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-rodm-feedstock
+          aggregateR/r-roi-feedstock
+          aggregateR/r-rollbar-feedstock
+          aggregateR/r-rolldown-feedstock
+          aggregateR/r-roloc-feedstock
+          aggregateR/r-rolr-feedstock
+          aggregateR/r-ronfhir-feedstock
+          aggregateR/r-rop-feedstock
+          aggregateR/r-rope-feedstock
+          aggregateR/r-ropendata-feedstock
+          aggregateR/r-ropendota-feedstock
+          aggregateR/r-ropenfigi-feedstock
+          aggregateR/r-ropensecretsapi-feedstock
+          aggregateR/r-ropenweathermap-feedstock
+          aggregateR/r-roperators-feedstock
+          aggregateR/r-roptimizely-feedstock
+          aggregateR/r-rose-feedstock
+          aggregateR/r-rosetteapi-feedstock
+          aggregateR/r-rotationforest-feedstock
+          aggregateR/r-rotor-feedstock
+          aggregateR/r-roughsetknowledgereduction-feedstock
+          aggregateR/r-roundhouse-feedstock
+          aggregateR/r-rowr-feedstock
+          aggregateR/r-rpaci-feedstock
+          aggregateR/r-rpart.plot-feedstock
+          aggregateR/r-rpart.utils-feedstock
+          aggregateR/r-rpartscore-feedstock
+          aggregateR/r-rpca-feedstock
+          aggregateR/r-rpclr-feedstock
+          aggregateR/r-rpensemble-feedstock
+          aggregateR/r-rpexe.rpext-feedstock
+          aggregateR/r-rphylip-feedstock
+          aggregateR/r-rpinterest-feedstock
+          aggregateR/r-rpipedrive-feedstock
+          aggregateR/r-rpivottable-feedstock
+          aggregateR/r-rplotengine-feedstock
+          aggregateR/r-rpmg-feedstock
+          aggregateR/r-rpmm-feedstock
+          aggregateR/r-rpnf-feedstock
+          aggregateR/r-rpoet-feedstock
+          aggregateR/r-rppairwisedesign-feedstock
+          aggregateR/r-rprime-feedstock
+          aggregateR/r-rprintf-feedstock
+          aggregateR/r-rprobsup-feedstock
+          aggregateR/r-rpsychi-feedstock
+          aggregateR/r-rpublica-feedstock
+          aggregateR/r-rpushbullet-feedstock
+          aggregateR/r-rqcc-feedstock
+          aggregateR/r-rrate-feedstock
+          aggregateR/r-rrblup-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script19-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script20-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script20-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-rrna-feedstock
+          aggregateR/r-rroad-feedstock
+          aggregateR/r-rromeo-feedstock
+          aggregateR/r-rrpp-feedstock
+          aggregateR/r-rrreg-feedstock
+          aggregateR/r-rrscale-feedstock
+          aggregateR/r-rsadbe-feedstock
+          aggregateR/r-rsampling-feedstock
+          aggregateR/r-rsarules-feedstock
+          aggregateR/r-rsatscan-feedstock
+          aggregateR/r-rsaucelabs-feedstock
+          aggregateR/r-rsca-feedstock
+          aggregateR/r-rscala-feedstock
+          aggregateR/r-rsdmx-feedstock
+          aggregateR/r-rse-feedstock
+          aggregateR/r-rseedcalc-feedstock
+          aggregateR/r-rsem-feedstock
+          aggregateR/r-rsfa-feedstock
+          aggregateR/r-rsitecatalyst-feedstock
+          aggregateR/r-rskey-feedstock
+          aggregateR/r-rslp-feedstock
+          aggregateR/r-rslurm-feedstock
+          aggregateR/r-rsm-feedstock
+          aggregateR/r-rsmartlyio-feedstock
+          aggregateR/r-rsocrata-feedstock
+          aggregateR/r-rsoi-feedstock
+          aggregateR/r-rspc-feedstock
+          aggregateR/r-rspde-feedstock
+          aggregateR/r-rspincalc-feedstock
+          aggregateR/r-rsps-feedstock
+          aggregateR/r-rsq-feedstock
+          aggregateR/r-rssop-feedstock
+          aggregateR/r-rstack-feedstock
+          aggregateR/r-rstackdeque-feedstock
+          aggregateR/r-rstantools-feedstock
+          aggregateR/r-rstata-feedstock
+          aggregateR/r-rstatscn-feedstock
+          aggregateR/r-rstorm-feedstock
+          aggregateR/r-rstripe-feedstock
+          aggregateR/r-rsubgroup-feedstock
+          aggregateR/r-rsurfer-feedstock
+          aggregateR/r-rsurrogate-feedstock
+          aggregateR/r-rsvd-feedstock
+          aggregateR/r-rt.test-feedstock
+          aggregateR/r-rt3-feedstock
+          aggregateR/r-rtape-feedstock
+          aggregateR/r-rtauchen-feedstock
+          aggregateR/r-rtaxometrics-feedstock
+          aggregateR/r-rtconnect-feedstock
+          aggregateR/r-rtde-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script20-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script21-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script21-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-rtematres-feedstock
+          aggregateR/r-rtensor-feedstock
+          aggregateR/r-rtephra-feedstock
+          aggregateR/r-rtexturemetrics-feedstock
+          aggregateR/r-rtf-feedstock
+          aggregateR/r-rticles-feedstock
+          aggregateR/r-rtika-feedstock
+          aggregateR/r-rtnmin-feedstock
+          aggregateR/r-rtorch-feedstock
+          aggregateR/r-rtrim-feedstock
+          aggregateR/r-rts-feedstock
+          aggregateR/r-rtson-feedstock
+          aggregateR/r-rtsplot-feedstock
+          aggregateR/r-rtwalk-feedstock
+          aggregateR/r-rtype-feedstock
+          aggregateR/r-runit-feedstock
+          aggregateR/r-runiversal-feedstock
+          aggregateR/r-runstats-feedstock
+          aggregateR/r-ruta-feedstock
+          aggregateR/r-rv-feedstock
+          aggregateR/r-rvcheck-feedstock
+          aggregateR/r-rvhpdt-feedstock
+          aggregateR/r-rviennacl-feedstock
+          aggregateR/r-rviewgraph-feedstock
+          aggregateR/r-rvtdt-feedstock
+          aggregateR/r-rwars-feedstock
+          aggregateR/r-rwc-feedstock
+          aggregateR/r-rweblogo-feedstock
+          aggregateR/r-rwekajars-feedstock
+          aggregateR/r-rwhois-feedstock
+          aggregateR/r-rwinsteps-feedstock
+          aggregateR/r-rwishart-feedstock
+          aggregateR/r-rworldxtra-feedstock
+          aggregateR/r-rxkcd-feedstock
+          aggregateR/r-rxnat-feedstock
+          aggregateR/r-rxseq-feedstock
+          aggregateR/r-rxshrink-feedstock
+          aggregateR/r-ryandextranslate-feedstock
+          aggregateR/r-rym-feedstock
+          aggregateR/r-ryoudaotranslate-feedstock
+          aggregateR/r-ryoutheria-feedstock
+          aggregateR/r-rzabbix-feedstock
+          aggregateR/r-rzeit2-feedstock
+          aggregateR/r-s20x-feedstock
+          aggregateR/r-sabarsi-feedstock
+          aggregateR/r-sac-feedstock
+          aggregateR/r-sacobra-feedstock
+          aggregateR/r-sadeg-feedstock
+          aggregateR/r-sae-feedstock
+          aggregateR/r-saemix-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script21-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script22-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script22-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-saery-feedstock
+          aggregateR/r-safd-feedstock
+          aggregateR/r-saic-feedstock
+          aggregateR/r-saltsampler-feedstock
+          aggregateR/r-salty-feedstock
+          aggregateR/r-sample.size-feedstock
+          aggregateR/r-samplesize-feedstock
+          aggregateR/r-samplesize4clinicaltrials-feedstock
+          aggregateR/r-samplesizecmh-feedstock
+          aggregateR/r-samplesizelogisticcasecontrol-feedstock
+          aggregateR/r-samplesizemeans-feedstock
+          aggregateR/r-samplesizeproportions-feedstock
+          aggregateR/r-samplingdatacrt-feedstock
+          aggregateR/r-sanon-feedstock
+          aggregateR/r-sarp.moodle-feedstock
+          aggregateR/r-sas7bdat-feedstock
+          aggregateR/r-sascii-feedstock
+          aggregateR/r-sasmarkdown-feedstock
+          aggregateR/r-sasmixed-feedstock
+          aggregateR/r-saspect-feedstock
+          aggregateR/r-sautomata-feedstock
+          aggregateR/r-saver-feedstock
+          aggregateR/r-saves-feedstock
+          aggregateR/r-sbf-feedstock
+          aggregateR/r-sbgcop-feedstock
+          aggregateR/r-sbl-feedstock
+          aggregateR/r-sbrect-feedstock
+          aggregateR/r-sbsdiff-feedstock
+          aggregateR/r-scagnostics-feedstock
+          aggregateR/r-scalreg-feedstock
+          aggregateR/r-scam-feedstock
+          aggregateR/r-scatterd3-feedstock
+          aggregateR/r-scatterplot3d-feedstock
+          aggregateR/r-scbmeanfd-feedstock
+          aggregateR/r-scdensity-feedstock
+          aggregateR/r-scdhlm-feedstock
+          aggregateR/r-scenario-feedstock
+          aggregateR/r-schoenberg-feedstock
+          aggregateR/r-schoolmath-feedstock
+          aggregateR/r-schorsch-feedstock
+          aggregateR/r-schumaker-feedstock
+          aggregateR/r-scico-feedstock
+          aggregateR/r-scientotext-feedstock
+          aggregateR/r-scifigure-feedstock
+          aggregateR/r-scina-feedstock
+          aggregateR/r-sciplot-feedstock
+          aggregateR/r-sciviews-feedstock
+          aggregateR/r-scma-feedstock
+          aggregateR/r-scoreggum-feedstock
+          aggregateR/r-scorer2-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script22-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script23-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script23-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-scoring-feedstock
+          aggregateR/r-scottknott-feedstock
+          aggregateR/r-scperf-feedstock
+          aggregateR/r-scrabblescore-feedstock
+          aggregateR/r-scraep-feedstock
+          aggregateR/r-scraper-feedstock
+          aggregateR/r-screenclean-feedstock
+          aggregateR/r-scrime-feedstock
+          aggregateR/r-scriptests-feedstock
+          aggregateR/r-scriptexec-feedstock
+          aggregateR/r-scriptname-feedstock
+          aggregateR/r-scripturs-feedstock
+          aggregateR/r-scrobbler-feedstock
+          aggregateR/r-scrselect-feedstock
+          aggregateR/r-scrt-feedstock
+          aggregateR/r-sdaa-feedstock
+          aggregateR/r-sdcspatial-feedstock
+          aggregateR/r-sddpack-feedstock
+          aggregateR/r-sdef-feedstock
+          aggregateR/r-sdm-feedstock
+          aggregateR/r-sdmvspecies-feedstock
+          aggregateR/r-sdt-feedstock
+          aggregateR/r-sdtoolkit-feedstock
+          aggregateR/r-sealasso-feedstock
+          aggregateR/r-searchable-feedstock
+          aggregateR/r-searcher-feedstock
+          aggregateR/r-seasic-feedstock
+          aggregateR/r-seasonal-feedstock
+          aggregateR/r-secret-feedstock
+          aggregateR/r-seeclickfixr-feedstock
+          aggregateR/r-seedcalc-feedstock
+          aggregateR/r-seedwater-feedstock
+          aggregateR/r-seer2r-feedstock
+          aggregateR/r-seermapper2010east-feedstock
+          aggregateR/r-seermapper2010regs-feedstock
+          aggregateR/r-seermapper2010west-feedstock
+          aggregateR/r-seermappereast-feedstock
+          aggregateR/r-seermapperregs-feedstock
+          aggregateR/r-seermapperwest-feedstock
+          aggregateR/r-segmented-feedstock
+          aggregateR/r-segregation-feedstock
+          aggregateR/r-seismic-feedstock
+          aggregateR/r-sejong-feedstock
+          aggregateR/r-selectapref-feedstock
+          aggregateR/r-selectiongain-feedstock
+          aggregateR/r-selectmeta-feedstock
+          aggregateR/r-selemix-feedstock
+          aggregateR/r-seleniumpipes-feedstock
+          aggregateR/r-selfingtree-feedstock
+          aggregateR/r-semid-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script23-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script24-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script24-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-seminr-feedstock
+          aggregateR/r-semipar-feedstock
+          aggregateR/r-semmodcomp-feedstock
+          aggregateR/r-semnetdictionaries-feedstock
+          aggregateR/r-sempls-feedstock
+          aggregateR/r-sempower-feedstock
+          aggregateR/r-semrushr-feedstock
+          aggregateR/r-semtools-feedstock
+          aggregateR/r-sendmailr-feedstock
+          aggregateR/r-sensemakr-feedstock
+          aggregateR/r-sensibo.sky-feedstock
+          aggregateR/r-sensitivity2x2xk-feedstock
+          aggregateR/r-sensitivitycasecontrol-feedstock
+          aggregateR/r-sensitivityfull-feedstock
+          aggregateR/r-sensitivitymult-feedstock
+          aggregateR/r-sensitivitymv-feedstock
+          aggregateR/r-sensitivitymw-feedstock
+          aggregateR/r-sensmediation-feedstock
+          aggregateR/r-sensory-feedstock
+          aggregateR/r-sensr-feedstock
+          aggregateR/r-sensrivastava-feedstock
+          aggregateR/r-senstrat-feedstock
+          aggregateR/r-separate-feedstock
+          aggregateR/r-separationplot-feedstock
+          aggregateR/r-seqalloc-feedstock
+          aggregateR/r-seqdesign-feedstock
+          aggregateR/r-seqicp-feedstock
+          aggregateR/r-seqmade-feedstock
+          aggregateR/r-seqmon-feedstock
+          aggregateR/r-seqrflp-feedstock
+          aggregateR/r-seqtest-feedstock
+          aggregateR/r-sequential-feedstock
+          aggregateR/r-serial-feedstock
+          aggregateR/r-serieslcb-feedstock
+          aggregateR/r-seroincidence-feedstock
+          aggregateR/r-servr-feedstock
+          aggregateR/r-sesem-feedstock
+          aggregateR/r-session-feedstock
+          aggregateR/r-setpath-feedstock
+          aggregateR/r-setrank-feedstock
+          aggregateR/r-setrng-feedstock
+          aggregateR/r-setter-feedstock
+          aggregateR/r-settest-feedstock
+          aggregateR/r-settings-feedstock
+          aggregateR/r-severity-feedstock
+          aggregateR/r-sfa-feedstock
+          aggregateR/r-sfinx-feedstock
+          aggregateR/r-sgb-feedstock
+          aggregateR/r-sgee-feedstock
+          aggregateR/r-sgmcmc-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script24-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script25-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script25-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-sgpdata-feedstock
+          aggregateR/r-sgr-feedstock
+          aggregateR/r-sgrsea-feedstock
+          aggregateR/r-shades-feedstock
+          aggregateR/r-shape-feedstock
+          aggregateR/r-shapechange-feedstock
+          aggregateR/r-shapefiles-feedstock
+          aggregateR/r-sharpr2-feedstock
+          aggregateR/r-shiftsharese-feedstock
+          aggregateR/r-shiny.i18n-feedstock
+          aggregateR/r-shiny.router-feedstock
+          aggregateR/r-shiny.semantic-feedstock
+          aggregateR/r-shinyace-feedstock
+          aggregateR/r-shinyaframe-feedstock
+          aggregateR/r-shinyalert-feedstock
+          aggregateR/r-shinyanimate-feedstock
+          aggregateR/r-shinybootstrap2-feedstock
+          aggregateR/r-shinybusy-feedstock
+          aggregateR/r-shinycustomloader-feedstock
+          aggregateR/r-shinydashboardplus-feedstock
+          aggregateR/r-shinydnd-feedstock
+          aggregateR/r-shinyeffects-feedstock
+          aggregateR/r-shinyfeedback-feedstock
+          aggregateR/r-shinyglide-feedstock
+          aggregateR/r-shinyhelper-feedstock
+          aggregateR/r-shinyjqui-feedstock
+          aggregateR/r-shinylp-feedstock
+          aggregateR/r-shinymaterial-feedstock
+          aggregateR/r-shinymatrix-feedstock
+          aggregateR/r-shinyshortcut-feedstock
+          aggregateR/r-shinytime-feedstock
+          aggregateR/r-shinytoastr-feedstock
+          aggregateR/r-shinytree-feedstock
+          aggregateR/r-shinywidgets-feedstock
+          aggregateR/r-ship-feedstock
+          aggregateR/r-shipunov-feedstock
+          aggregateR/r-shopifyr-feedstock
+          aggregateR/r-shotgroups-feedstock
+          aggregateR/r-showimage-feedstock
+          aggregateR/r-shuffle-feedstock
+          aggregateR/r-shutterstock-feedstock
+          aggregateR/r-si-feedstock
+          aggregateR/r-siebanxicor-feedstock
+          aggregateR/r-sier-feedstock
+          aggregateR/r-sieveph-feedstock
+          aggregateR/r-sievetest-feedstock
+          aggregateR/r-sig-feedstock
+          aggregateR/r-sigclust-feedstock
+          aggregateR/r-sightabilitymodel-feedstock
+          aggregateR/r-sigmanet-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script25-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script26-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script26-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-sigmoid-feedstock
+          aggregateR/r-signifreg-feedstock
+          aggregateR/r-signmedian.test-feedstock
+          aggregateR/r-sigoptr-feedstock
+          aggregateR/r-sigora-feedstock
+          aggregateR/r-sii-feedstock
+          aggregateR/r-simboot-feedstock
+          aggregateR/r-simcausal-feedstock
+          aggregateR/r-simcop-feedstock
+          aggregateR/r-simdistr-feedstock
+          aggregateR/r-simex-feedstock
+          aggregateR/r-simexaft-feedstock
+          aggregateR/r-simhaz-feedstock
+          aggregateR/r-similaritymeasures-feedstock
+          aggregateR/r-simile-feedstock
+          aggregateR/r-simml-feedstock
+          aggregateR/r-simms-feedstock
+          aggregateR/r-simphe-feedstock
+          aggregateR/r-simpleboot-feedstock
+          aggregateR/r-simplecache-feedstock
+          aggregateR/r-simplegraph-feedstock
+          aggregateR/r-simpleneural-feedstock
+          aggregateR/r-simplercache-feedstock
+          aggregateR/r-simplesetup-feedstock
+          aggregateR/r-simplicialcubature-feedstock
+          aggregateR/r-simsalapar-feedstock
+          aggregateR/r-simscrpiecewise-feedstock
+          aggregateR/r-simsem-feedstock
+          aggregateR/r-simsurv-feedstock
+          aggregateR/r-simtimer-feedstock
+          aggregateR/r-simulator-feedstock
+          aggregateR/r-simule-feedstock
+          aggregateR/r-sin-feedstock
+          aggregateR/r-sinaplot-feedstock
+          aggregateR/r-sinib-feedstock
+          aggregateR/r-sirad-feedstock
+          aggregateR/r-sisvive-feedstock
+          aggregateR/r-sitools-feedstock
+          aggregateR/r-sitree-feedstock
+          aggregateR/r-sizer-feedstock
+          aggregateR/r-sjdbc-feedstock
+          aggregateR/r-skeletor-feedstock
+          aggregateR/r-skellam-feedstock
+          aggregateR/r-skewt-feedstock
+          aggregateR/r-skmeans-feedstock
+          aggregateR/r-skywatchr-feedstock
+          aggregateR/r-slc-feedstock
+          aggregateR/r-sldassay-feedstock
+          aggregateR/r-sleekts-feedstock
+          aggregateR/r-sleepr-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script26-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script27-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script27-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-sleuth2-feedstock
+          aggregateR/r-sleuth3-feedstock
+          aggregateR/r-slickr-feedstock
+          aggregateR/r-slide-feedstock
+          aggregateR/r-slideview-feedstock
+          aggregateR/r-slim-feedstock
+          aggregateR/r-slippymath-feedstock
+          aggregateR/r-slouch-feedstock
+          aggregateR/r-smallarea-feedstock
+          aggregateR/r-smartsizer-feedstock
+          aggregateR/r-smatr-feedstock
+          aggregateR/r-smcfcs-feedstock
+          aggregateR/r-smco-feedstock
+          aggregateR/r-smcrm-feedstock
+          aggregateR/r-smcure-feedstock
+          aggregateR/r-smdata-feedstock
+          aggregateR/r-smfilter-feedstock
+          aggregateR/r-smirnov-feedstock
+          aggregateR/r-smithwilsonyieldcurve-feedstock
+          aggregateR/r-smloutliers-feedstock
+          aggregateR/r-smoother-feedstock
+          aggregateR/r-smoothhr-feedstock
+          aggregateR/r-smoothie-feedstock
+          aggregateR/r-smoothmest-feedstock
+          aggregateR/r-smpracticals-feedstock
+          aggregateR/r-smr-feedstock
+          aggregateR/r-sms-feedstock
+          aggregateR/r-smss-feedstock
+          aggregateR/r-smvar-feedstock
+          aggregateR/r-sn-feedstock
+          aggregateR/r-snakecase-feedstock
+          aggregateR/r-snakesandladdersanalysis-feedstock
+          aggregateR/r-snapshot-feedstock
+          aggregateR/r-snem-feedstock
+          aggregateR/r-snn-feedstock
+          aggregateR/r-snow-feedstock
+          aggregateR/r-snowflakes-feedstock
+          aggregateR/r-snpar-feedstock
+          aggregateR/r-snpmaxsel-feedstock
+          aggregateR/r-sns-feedstock
+          aggregateR/r-soar-feedstock
+          aggregateR/r-socialposition-feedstock
+          aggregateR/r-sodavis-feedstock
+          aggregateR/r-sofia-feedstock
+          aggregateR/r-softclustering-feedstock
+          aggregateR/r-softmaxreg-feedstock
+          aggregateR/r-soilhyp-feedstock
+          aggregateR/r-soilphysics-feedstock
+          aggregateR/r-soiltexture-feedstock
+          aggregateR/r-soilwater-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script27-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script28-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script28-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-sokoban-feedstock
+          aggregateR/r-solar-feedstock
+          aggregateR/r-solarpos-feedstock
+          aggregateR/r-solartime-feedstock
+          aggregateR/r-solomon-feedstock
+          aggregateR/r-solrad-feedstock
+          aggregateR/r-solverationalmatrixequation-feedstock
+          aggregateR/r-somebm-feedstock
+          aggregateR/r-somekfwer-feedstock
+          aggregateR/r-somemtp-feedstock
+          aggregateR/r-somplot-feedstock
+          aggregateR/r-sonar-feedstock
+          aggregateR/r-soniclength-feedstock
+          aggregateR/r-sopie-feedstock
+          aggregateR/r-soptdmaea-feedstock
+          aggregateR/r-soql-feedstock
+          aggregateR/r-sor-feedstock
+          aggregateR/r-sorptionanalysis-feedstock
+          aggregateR/r-sortablehtmltables-feedstock
+          aggregateR/r-sos-feedstock
+          aggregateR/r-sos4r-feedstock
+          aggregateR/r-sotkanet-feedstock
+          aggregateR/r-sotu-feedstock
+          aggregateR/r-sound-feedstock
+          aggregateR/r-source.gist-feedstock
+          aggregateR/r-sp23design-feedstock
+          aggregateR/r-spa3g-feedstock
+          aggregateR/r-spaa-feedstock
+          aggregateR/r-spacesrgb-feedstock
+          aggregateR/r-spacesxyz-feedstock
+          aggregateR/r-spacyr-feedstock
+          aggregateR/r-spaddins-feedstock
+          aggregateR/r-spader-feedstock
+          aggregateR/r-spaero-feedstock
+          aggregateR/r-spanel-feedstock
+          aggregateR/r-spanish-feedstock
+          aggregateR/r-spar-feedstock
+          aggregateR/r-sparkline-feedstock
+          aggregateR/r-sparkr-feedstock
+          aggregateR/r-sparktex-feedstock
+          aggregateR/r-sparql-feedstock
+          aggregateR/r-sparsebnutils-feedstock
+          aggregateR/r-sparsedc-feedstock
+          aggregateR/r-sparseeigen-feedstock
+          aggregateR/r-sparsegrid-feedstock
+          aggregateR/r-sparseindextracking-feedstock
+          aggregateR/r-sparsemdc-feedstock
+          aggregateR/r-sparsemse-feedstock
+          aggregateR/r-sparsemvn-feedstock
+          aggregateR/r-sparsepp-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script28-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
+- name: build_r_script29-on-linux_64
+  plan:
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: conda/c3i-linux-64
+          tag: latest
+      params:
+        GITHUB_TOKEN: ((common.recipe-repo-access-token))
+        GITHUB_USER: SA-PCR-RO
+      run:
+        path: sh
+        args:
+        - -exc
+        - conda update -y conda-build&& conda config --set add_pip_as_python_dependency
+          False&& conda config --add default_channels https://repo.anaconda.com/pkgs/main&&
+          conda config --add default_channels https://repo.anaconda.com/pkgs/r&& conda
+          info&& set +x&& echo machine github.com login $GITHUB_USER password $GITHUB_TOKEN
+          protocol https > ~/.netrc&& set -x &&
+          git clone https://github.com/AnacondaRecipes/aggregateR.git &&
+          cd aggregateR && git checkout latest_update && cd .. &&
+          conda update -y -n base conda && conda update -y --all &&
+          conda-build --no-anaconda-upload --error-overlinking --R 3.6.1 -c local -c r_test
+          --output-folder=output-artifacts --cache-dir=output-source --stats-file=stats/build_r_script29-on-linux_64_1564756033.json
+          --skip-existing --croot . -m ./aggregateR/conda_build_config.yaml
+          aggregateR/r-sparsestep-feedstock
+          aggregateR/r-spatest-feedstock
+          aggregateR/r-spatialacc-feedstock
+          aggregateR/r-spatialcovariance-feedstock
+          aggregateR/r-spatialml-feedstock
+          aggregateR/r-spcadjust-feedstock
+          aggregateR/r-spcalda-feedstock
+          aggregateR/r-spcavrp-feedstock
+          aggregateR/r-spcdanalyze-feedstock
+          aggregateR/r-spcov-feedstock
+          aggregateR/r-spd-feedstock
+          aggregateR/r-spdownscale-feedstock
+          aggregateR/r-spearmanci-feedstock
+          aggregateR/r-spec-feedstock
+          aggregateR/r-speccalt-feedstock
+          aggregateR/r-specdetec-feedstock
+          aggregateR/r-spectralgp-feedstock
+          aggregateR/r-spectrino-feedstock
+          aggregateR/r-spedinstabr-feedstock
+          aggregateR/r-speedglm-feedstock
+          aggregateR/r-speff2trial-feedstock
+          aggregateR/r-spelling-feedstock
+          aggregateR/r-spgrass6-feedstock
+          aggregateR/r-sphericalk-feedstock
+          aggregateR/r-spi-feedstock
+          aggregateR/r-spiassay-feedstock
+          aggregateR/r-spiders-feedstock
+          aggregateR/r-spikes-feedstock
+          aggregateR/r-spin-feedstock
+          aggregateR/r-spina-feedstock
+          aggregateR/r-spinyreg-feedstock
+          aggregateR/r-spiritr-feedstock
+          aggregateR/r-splines2-feedstock
+          aggregateR/r-splitfeas-feedstock
+          aggregateR/r-splitstackshape-feedstock
+          aggregateR/r-splot-feedstock
+          aggregateR/r-spls-feedstock
+          aggregateR/r-spongebob-feedstock
+          aggregateR/r-sporm-feedstock
+          aggregateR/r-sportsanalytics-feedstock
+          aggregateR/r-spreda-feedstock
+          aggregateR/r-sprsmdl-feedstock
+          aggregateR/r-sprt-feedstock
+          aggregateR/r-spsl-feedstock
+          aggregateR/r-spurs-feedstock
+          aggregateR/r-spyvsspy-feedstock
+          aggregateR/r-sqlrender-feedstock
+          aggregateR/r-sqlutils-feedstock
+          aggregateR/r-sqrl-feedstock
+          aggregateR/r-squash-feedstock
+          
+      outputs:
+      - name: output-artifacts
+      - name: output-source
+      - name: stats
+  - put: rsync_build_r_script29-on-linux_64
+    params:
+      rsync_opts:
+      - --archive
+      - --no-perms
+      - --omit-dir-times
+      - --verbose
+      - --exclude
+      - '"**/*.json*"'
+      - --exclude
+      - '"**/*.*ml"'
+      - --exclude
+      - '"**/.cache"'
+      sync_dir: output-artifacts
+    get_params:
+      skip_download: true
