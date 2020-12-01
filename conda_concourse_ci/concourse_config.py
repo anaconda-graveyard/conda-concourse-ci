@@ -54,7 +54,7 @@ class PipelineConfig:
         _source = {
                 'repository': 'conda/concourse-rsync-resource',
                 'tag': 'latest'
-            }
+                }
 
         if docker_user and docker_pass:
             _source.update({'username': docker_user, 'password': docker_pass})
@@ -137,7 +137,7 @@ class PipelineConfig:
         _source = {
                 'repository': 'conda/concourse-anaconda_org-resource',
                 'tag': 'latest'
-            }
+                }
         if config_vars.get('docker-user', None) and config_vars.get('docker-pass', None):
             _source.update({'username': config_vars.get('docker-user'),
                             'password': config_vars.get('docker-pass')})

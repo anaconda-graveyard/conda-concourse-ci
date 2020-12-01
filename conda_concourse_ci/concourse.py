@@ -105,13 +105,11 @@ class Concourse(AbstractContextManager):
             '--pipeline', pipeline,
         ])
 
-
     def pause_pipeline(self, pipeline):
         self._fly([
             'pause-pipeline',
             '--pipeline', pipeline,
         ])
-
 
     def unpause_pipeline(self, pipeline):
         self._fly([

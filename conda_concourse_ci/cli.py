@@ -307,7 +307,6 @@ def parse_args(parse_this=None):
                            default=cc_conda_build.get('matrix_base_dir'))
     pause_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
 
-
     unpause_parser = sp.add_parser('unpause', help='pause pipelines on the server')
     unpause_parser.add_argument('pipeline_names', nargs="+",
                            help=("Specify pipeline names on server to pause"))
