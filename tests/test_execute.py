@@ -121,15 +121,6 @@ def test_bootstrap(mocker, testing_workdir):
     assert os.path.isdir('frank/test_platforms.d')
 
 
-def test_get_current_git_rev(testing_workdir):
-    subprocess.check_call('git clone https://github.com/conda/conda_build_test_recipe'.split())
-    git_repo = 'conda_build_test_recipe'
-    assert execute._get_current_git_rev(git_repo) == '7e3525f4'
-    with execute.checkout_git_rev('1.21.0', git_repo):
-        assert execute._get_current_git_rev(git_repo) == '29bb0bd2'
-        assert execute._get_current_git_rev(git_repo, True) == 'HEAD'
-
-
 def test_compute_builds(testing_workdir, mocker, monkeypatch):
     monkeypatch.chdir(test_data_dir)
     output = os.path.join(testing_workdir, 'output')
