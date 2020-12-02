@@ -1,0 +1,4234 @@
+commit 8e52501e96f224211a3ea0490e1c9a310c2b2787
+Merge: b87a565 3c5156a
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Wed Nov 11 14:54:25 2020 -0600
+
+    Merge pull request #174 from cjmartian/docker-auth
+    
+    Docker auth
+
+commit 3c5156acc322c277cd848d79a87079574a97497d
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Nov 10 18:20:30 2020 -0600
+
+    use correct var
+
+commit 031c9df2ec369fe8be03db3fdcce94771cc42685
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Nov 10 17:49:54 2020 -0600
+
+    formatting remove unused func
+
+commit c06e89420032ca0c5a4e1376e920c04b55d43a4e
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Nov 10 15:18:37 2020 -0600
+
+    add docker auth
+
+commit b87a5650632e6292891e1f0c52f11e8a07ef91cb
+Merge: 36ea5ff ad3eb67
+Author: Paul Yim <paul.j.yim@gmail.com>
+Date:   Fri Nov 6 09:43:09 2020 -0500
+
+    Merge branch 'master' of https://github.com/conda/conda-concourse-ci
+
+commit 36ea5ff858397556412508574bccebd3b0c6fb9f
+Author: Paul Yim <paul.j.yim@gmail.com>
+Date:   Thu Nov 5 17:12:31 2020 -0500
+
+    Adding docker images for GPU builds (from Jonathan Helmus' personal repo)
+
+commit ad3eb67b192aade9c92a2618d895743d2691fb57
+Merge: 78c0241 7244d8c
+Author: Bill Batey <53618029+lumbrefrio@users.noreply.github.com>
+Date:   Tue Nov 3 09:41:29 2020 -0600
+
+    Merge pull request #173 from cjmartian/pause-unpause
+    
+    add pause and unpause
+
+commit 7244d8c75ee098a5a0efe53484b709a64dd84cd7
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Nov 3 09:33:43 2020 -0600
+
+    add pause and unpause
+
+commit 78c0241eb4e9216c98b09ffc7b1f7033e809754b
+Merge: de732f4 880c043
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Oct 20 11:52:42 2020 -0500
+
+    Merge pull request #171 from cjmartian/fix-test
+    
+    point at package for testing
+
+commit 880c043fa1a617d26f6adbeae46d400e8bf6a035
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Oct 20 10:35:09 2020 -0500
+
+    point at package for testing
+
+commit de732f49b4d527ab71bdd20e2f7d2589f842177c
+Merge: b2e918f 9c3453d
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Oct 19 14:09:44 2020 -0500
+
+    Merge pull request #170 from cjmartian/fix-tests
+    
+    fix tests
+
+commit 9c3453d98aacfa48ca074798e6b10677e308c83c
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Oct 19 14:06:08 2020 -0500
+
+    fix tests
+
+commit b2e918f702f1e329d73330ac04ca740c12b03249
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Sat Oct 17 00:43:59 2020 +0200
+
+    Add jinja2 support via a build-config.yml and/or command-line --build-config=VAR(.*)=VAL
+
+commit 3f7405c5da04b4c96b3ba85b9dce118b169348b0
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Sat Oct 17 00:40:06 2020 +0200
+
+    Add a todo comment
+
+commit cf1f55d0a2e49d062aee1718ef966edf6bb6f713
+Merge: 5c600ea 3019a71
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Oct 15 15:23:39 2020 -0500
+
+    Merge pull request #168 from mingwandroid/master
+    
+    A few fixes, important Windows worker fix for preventing autorun batch scripts
+
+commit 3019a71bd06b8a9ac1a283dd25ff4475a21a9dce
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Thu Oct 15 22:14:46 2020 +0200
+
+    Fallback to os.system cp -Rf if copytree fails
+    
+    I need this when hosting recipes from SMB
+
+commit 38ca13f42d8ab92f23aa87c5cf51b4cb74164a76
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Thu Oct 15 22:14:23 2020 +0200
+
+    Enable --error-overdepending by default, remove needless conditional
+
+commit 0b0650c3379529070d850c2fe7fa085456277291
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Thu Oct 15 22:13:56 2020 +0200
+
+    Pass /d also to cmd.exe /c to stop autorun scripts breaking things
+
+commit 5c600eab712edf6a00bdf064b53a0e78a8e8acfc
+Merge: f5efce5 f6061c4
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 22 11:33:10 2020 -0500
+
+    Merge pull request #166 from jjhelmus/fix_repo_access
+    
+    make repo access cmds go before build cmds
+
+commit f6061c4fe052fdddf9b89461edb14342f4e293e1
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 22 11:14:39 2020 -0500
+
+    make repo access cmds go before build cmds
+    
+    Repo access is needed when conda-build is run, therefore those commands
+    must be run before the build commands (but after the prefix commands)
+
+commit f5efce5cdc0f5930677488e778b041c8d4707d8d
+Merge: 4132861 6676bf4
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Sep 17 12:41:27 2020 -0500
+
+    Merge pull request #165 from cjmartian/skip-trigger
+    
+    fix error and skip certain jobs
+
+commit 6676bf4637341f525f68b1afd781e6b455a0194d
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Sep 17 09:58:39 2020 -0500
+
+    appease the flake8 gods
+
+commit bfccf702f07e5bff7fc6ba65e38e29e8cac84ba0
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Sep 17 09:50:22 2020 -0500
+
+    fix error and skip certain jobs
+
+commit 4132861ea999ae2f84d914900c5ab50a90ccce06
+Merge: 9288e7a 5804adc
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Sep 14 19:32:17 2020 -0500
+
+    Merge pull request #164 from jjhelmus/fix_arch_autobuild
+    
+    Use conda_build_config.yaml from rendered recipes in automated pipelines
+
+commit 5804adc42da284237538d936d2b823c51023cd0d
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Sep 14 16:15:46 2020 -0500
+
+    fix c3i trigger command
+
+commit 3b7c7d1721823ce010a10d772fb9b856f4e06cbd
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Sep 14 15:13:06 2020 -0500
+
+    add pull_recipes_resource argument
+    
+    Add a pull_recipes_resource argument to the get_build_task function for
+    specifying the name of the resource where a recipe to be built can be
+    found. For non-automated builds this is None.
+
+commit 685296351c7d6f1e62eed25587ab17ba86dd4b55
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Sep 14 14:57:01 2020 -0500
+
+    use combined_recipe in automated_pipeline
+    
+    For automated_pipeline builds use the recipe from the feedstock and the
+    conda-build-config.yaml file from the rendered recipes. These are
+    combined into a combined_recipe foldering during the build
+
+commit c70d385e9443fa7d531630c3154a626c1393bdef
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Sep 14 14:53:15 2020 -0500
+
+    include rsync-recipes resource in automated builds
+    
+    The conda_build_config.yaml files from the rsync-recipes
+    resource are needed in automated builds jobs. Include them in the
+    pipeline and jobs.
+
+commit c315593fc9141a3a055a4c2845d913afc7d60978
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 11 16:26:22 2020 -0500
+
+    move automated_pipeline logic into pline creation
+    
+    Move the logic in the build_automated_pipeline function directly into
+    the function reasonable for building the pipeline and job configuration.
+
+commit 9288e7a9fe207a1f376a09e98dac33077343336c
+Merge: 7fe0a31 50705d7
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 11 15:36:18 2020 -0500
+
+    Merge pull request #163 from jjhelmus/concourse_class
+    
+    Introduce Concourse class for interactions with concourse CI server
+
+commit 50705d7e6a0b0abe0cdd18bf8aae689102bc4dfb
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 11 13:41:26 2020 -0500
+
+    add --non-interactive to set-pipeline cmd
+
+commit 3750278fbf74934c0f8f53d22381b9ccf3aee514
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 11 13:36:43 2020 -0500
+
+    add --non-interactive to destroy-pipeline fly cmd
+
+commit 5b4c8aaa479656a304890107c8bb488cc8d0a600
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 11 13:19:03 2020 -0500
+
+    use Concourse class to interact with server
+    
+    Add a the Concourse class that is used for interacting with a Concourse
+    CI instance.
+
+commit 653d8f1c1af7918f8c781209da6014818726f2da
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 11 13:11:39 2020 -0500
+
+    rename concourse module to concourse_config
+    
+    The classes in the concourse_config module represent configurations for
+    Concourse objects not the objects themselves.
+
+commit 7fe0a31ada167ce43e76f450863957b4a7598598
+Merge: b74a069 3962799
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Sep 10 15:57:13 2020 -0500
+
+    Merge pull request #162 from jjhelmus/rm_examine
+    
+    remove examine sub-command
+
+commit b74a0690741ac8709028032c93bee427729a2ca8
+Merge: 3884eab 77d74e2
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Sep 10 14:29:12 2020 -0500
+
+    Merge pull request #161 from jjhelmus/concourse_classes
+    
+    Refactor to introduce classes for Concourse objects
+
+commit 3962799d28366f184ee623fac3398d2ac3db0a8b
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 8 18:14:47 2020 -0500
+
+    clean up the collect_task function
+
+commit 3869e2356d7350608b429ebd5c6cf4d6116fc15e
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 8 17:08:44 2020 -0500
+
+    remove examine subcommand
+    
+    Remove the "examine" subcommand and related logic
+
+commit 77d74e24815c7806455f84791676bddc0c397a5f
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 8 14:56:40 2020 -0500
+
+    add BuildStep class
+    
+    Add a BuildStep class to facilitate creating a step in a concourse jobs
+    that does package building. This class is used in get_build_task to put
+    together the step piece-by-piece
+
+commit ac0f8423b00a03513fa4580b99054800c4707251
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 8 11:11:41 2020 -0500
+
+    remove used classes from concourse module
+
+commit 3884eabf8c717deb6b19328ed7a8d9f5d4821a16
+Merge: 3d7b6e1 a897d26
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 8 10:11:26 2020 -0500
+
+    Merge pull request #160 from jjhelmus/rm_unused
+    
+    Remove unused lock pool and source clear task
+
+commit 2a2a07bd36b485727c3b05525594f3f4085c4a19
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Sep 7 09:32:10 2020 -0500
+
+    move post pipeline jobs to concourse module
+    
+    Move the following functions as method on the Pipeline class
+    * add_pr_merged_resource
+    * add_upload_job
+    * add_push_branch_job
+    * add_destroy_pipeline_job
+
+commit 7d437498ee55c93c61c1668d1295e5535668f30c
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Sun Sep 6 18:08:10 2020 -0500
+
+    refactor get_build_task function
+    
+    Refactor the get_build_task function in the execute module in
+    preparation for moving it to the concourse module.
+
+commit dfe8825577a1f105777c4c50325161cf530e9aaf
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Sun Sep 6 11:54:12 2020 -0500
+
+    remove unused helper functions
+    
+    Remove _resource_type_to_dict and _resource_to_dict as they are no
+    longer used.
+
+commit 1d07ae733e2e235a65bf13c89cc88cc72fca092a
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Sun Sep 6 11:48:18 2020 -0500
+
+    move tasks to concourse module
+    
+    Move the consolidate_task and convert_task logic to the concourse
+    module.
+
+commit 60be2962170d7593c530cb17ea2cd809fe2bd2c4
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Sat Sep 5 07:47:55 2020 -0500
+
+    fuse loops
+
+commit b5d41620378fc7aa870306c5fe95100d43183824
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 4 23:27:13 2020 -0500
+
+    move job logic into Job class
+
+commit 774e00a3538cc3da99d4ee6c5a97be33061666c7
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 4 22:21:43 2020 -0500
+
+    move resource adding to pipeline class
+
+commit a8f7e63e78186f595cd9166b90cc9d07c8bfb096
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 4 21:14:18 2020 -0500
+
+    extract portions of graph_to_plan_with_jobs
+    
+    Extract portions of the graph_to_plan_with_jobs function into the
+    _add_resources_and_types, _add_anaconda_upload and _add_repo_v6_upload
+    function.
+
+commit 93f397bab03afd1a36f37f7fd1ee1efb5ea8b762
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 4 18:49:46 2020 -0500
+
+    set junit_family in setup.cfg to avoid warning
+
+commit a9ba79dd3a3273721c2e84a5b804073d7d5d668e
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 4 18:39:51 2020 -0500
+
+    Use Pipeline class to build the concourse pipeline
+    
+    Add a Pipeline class which is used to build the pipeline submitted to
+    concourse.
+
+commit a897d263c1dd867fada6e456a4d7a873b5a63659
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 4 10:14:26 2020 -0500
+
+    remove soureclear task
+    
+    Remove the sourceclean task and related logic. Source clear is no longer
+    used.
+
+commit ac0f27098a997b736ca9f8108ffb62ad2c543ef6
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Sep 4 10:02:51 2020 -0500
+
+    remove --use_lock_pool argument
+    
+    Git based lock pools did not provide an acceptable method to implement a
+    queue. Remove the option and the corresponding logic.
+
+commit 3d7b6e10f0a76ca278ca2cc9808710d8661b3584
+Merge: 30c0a4e bf3ee0e
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Sep 3 13:54:31 2020 -0500
+
+    Merge pull request #159 from jjhelmus/dryrun
+    
+    add --dry-run option to c3i one-off subcommand
+
+commit bf3ee0ec26e15efb7a974029e8730ecf512eb5c0
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Sep 3 13:06:58 2020 -0500
+
+    add --dry-run option to c3i one-off subcommand
+
+commit 30c0a4ee7abf65dfc76d4b52a5f1aa34a11c2586
+Merge: 1311743 fac36b9
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 31 13:08:39 2020 -0500
+
+    Merge pull request #157 from cjmartian/write-pr-file
+    
+    write pr number to file
+
+commit fac36b97767d178f6ed1ece9478e2c09d76b38da
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 31 12:57:10 2020 -0500
+
+    write file to src dir instead
+
+commit 4daefbdb1f3e77675122079772d20afce3dbe6c7
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Fri Aug 28 12:06:33 2020 -0500
+
+    write pr number to file
+
+commit 131174302beb3309e7ea2653e83bcc446ea4d328
+Merge: a08d2b5 f6cf69d
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 17 15:22:12 2020 -0500
+
+    Merge pull request #156 from cjmartian/rm-post-pr-status
+    
+    remove post-pr-status job
+
+commit f6cf69d492e3dca814bddc72179fb3ad2689ad46
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 17 13:09:29 2020 -0500
+
+    remove post pr status stuff
+
+commit ee34c3c4d162782b845abb3a2fdf123bd759c05b
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 17 10:34:56 2020 -0500
+
+    rm configs
+
+commit dac9b17c2845d43b59b01060c2cde95e285da00c
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 17 10:31:10 2020 -0500
+
+    get rid of unused resources
+
+commit 2b722aede36ff57dc51ad69af14a1e0b82fa9cfe
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 17 09:53:16 2020 -0500
+
+    remove post-pr-status job
+
+commit a08d2b54c072dcc80fcd21769bb930c77a776950
+Merge: 10bf17a 40d4929
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Aug 4 14:05:19 2020 -0500
+
+    Merge pull request #155 from cjmartian/clean-pipeline
+    
+    destroy pipeline flag
+
+commit 40d4929c7fdf338660ca4e3fd681ecf52ee6b7af
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 3 16:48:29 2020 -0500
+
+    refrence to the correct key
+
+commit 0896d143b4b36e0a098e6605ca36f42aa7d63c7e
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Aug 3 15:32:33 2020 -0500
+
+    destroy pipeline flag
+
+commit 10bf17a1b5601bfabb9eba133d844b84252993af
+Merge: ad7a2fc 39f00ef
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Wed Jul 15 14:10:24 2020 -0500
+
+    Merge pull request #154 from cjmartian/status
+    
+    Windows and change comment
+
+commit ad7a2fc4f6f06d1c4d09f75a3a29f064751f7a9b
+Merge: 5d49ff6 d8183a8
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Jul 9 15:57:22 2020 -0500
+
+    Merge pull request #153 from jjhelmus/fix_race
+    
+    stage packages for upload before branch push
+
+commit 39f00ef5e46b98cf9c53a2817a0740bf0ac8c202
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Jul 9 15:29:42 2020 -0500
+
+    appease the flake8 gods
+
+commit 77965a0826c7c63e454b8e6cea9c189c7a5022d8
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Jul 9 15:16:36 2020 -0500
+
+    fix win and change comment
+
+commit d8183a89d31e385da679c82c624d8279da97b472
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Jul 9 15:10:36 2020 -0500
+
+    stage packages for upload before branch push
+    
+    When triggered from the pr-merged resource, run the the stage_for_upload job
+    prior to push_branch_to_<package>-feedstock jobs. This avoids a race
+    condition between these jobs where the artifacts are deleted prior to
+    staging if the push_branch_... jobs are run first.
+
+commit 79d90142a7260b371b107a1df7da23605a1c3cdb
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Jul 9 14:15:24 2020 -0500
+
+    fix win command
+
+commit a6c3ffbf6f492dbfb275f13cbf66ca777903f219
+Merge: 5015d05 5d49ff6
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Jul 9 10:21:40 2020 -0500
+
+    fix merge
+
+commit 5d49ff69ce0912c44d3eca8ba4ceeca5e06975a0
+Merge: 15be573 0a82246
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Wed Jul 8 17:42:37 2020 -0500
+
+    Merge pull request #152 from jjhelmus/cleanup
+    
+    Remove sync-...-after-PR-merge job, disable build status reporting
+
+commit 15be573d6c1f99063987dadc09b058334af89994
+Merge: 82f9815 297a7c9
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Wed Jul 8 17:17:45 2020 -0500
+
+    Merge pull request #151 from jjhelmus/pr_trigger
+    
+    trigger upload and branch push via PR merge
+
+commit 0a82246a2932031a186ae178dfb011cbd839e7dd
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Jul 8 16:51:18 2020 -0500
+
+    disable build status reporting
+    
+    Disable the job responsible for report the build status to the linked PR
+    and associated resources. This job was not operating correctly and
+    will be replaced with another method of reporting the build status at a
+    later time.
+
+commit 35d07a7e8caf21861f6b9efb047c7ba30db89bb8
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Jul 8 16:47:44 2020 -0500
+
+    remove sync-...-after-PR-merge jobs
+    
+    Remove the sync-<folder>-after-PR-merge job and related resources.
+    This functionality is now handled by the pr-merged job.
+
+commit 297a7c9522b83c90c35c95cff938af37377f6513
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Jul 8 14:57:13 2020 -0500
+
+    trigger upload and branch push via PR merge
+    
+    Trigger the stage_for_upload and push_branch_... jobs when the file
+    specified in the --pr-file command line option appears in the git
+    repository specified in the pr-repo configuration option. The
+    expectation is that when this file appears when the PR for the
+    particular pipeline is merged.
+
+commit 5015d05283d8896d11c2bedda6fe36862db378d5
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Jul 7 13:25:19 2020 -0500
+
+    replace linux command for win
+
+commit 82f9815a00aca9e9d499853885370a3510f67551
+Merge: ea3aed1 f6b3f65
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Mon Jul 6 14:07:18 2020 -0500
+
+    Merge pull request #150 from conda/push_branch
+    
+    cli option to add push-branch job
+
+commit f6b3f6563f294809ff3c126f1ac4fe27df7ebb40
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Jul 6 14:02:55 2020 -0500
+
+    flake8
+
+commit ffd1b85fc33bd295281071ae5e426c2f0a32fb09
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Jul 6 13:54:30 2020 -0500
+
+    add push_branch to test_submit_one_off
+
+commit e842acf3ee1b96bbde8f7696be9fa792495ced39
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Jun 5 14:48:01 2020 -0500
+
+    cli option to add push-branch job
+    
+    Add a command line option to add a job to the concourse pipeline
+    responsible for pushing a named branch to master. The actual logic for
+    the push is defined in the push-branch-config section of the
+    configuration file.
+    
+    Example usage:
+    c3i one-off prefix_sphinx --automated-pipeline --branches test --push-branch --stage-for-upload --commit-msg "sphinx 3.0.4" sphinx-feedstock
+
+commit ea3aed1f6d3809722988d51a318881694e4d7fb0
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue May 12 13:32:24 2020 -0500
+
+    Status (#149)
+    
+    Report build status in github PR
+
+commit bb1063831df77b75fc9786143c023f4861b600b9
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue May 12 10:28:04 2020 -0500
+
+    fix removal of key file
+
+commit c93c7646cf21c0e743c925c3e1b7bb6c35b69764
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue May 12 10:25:19 2020 -0500
+
+    remove scripts
+
+commit ea8868911f1948da8056dab531507f34c2f59629
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu May 7 14:24:14 2020 -0500
+
+    remove break
+
+commit 1e27a55354a03bc17c08d21fcb58b80dae91fa6b
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu May 7 14:12:36 2020 -0500
+
+    remove server and private repo
+
+commit b81b47529085e861a9a47dabcab5d785efb42c03
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon May 4 11:02:37 2020 -0500
+
+    fix tests
+
+commit 70e7c1e33c77d2cc72bba5875ba93070c4f11c64
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon May 4 10:54:42 2020 -0500
+
+    flake8
+
+commit 88a7d2b203dd2c8d2f3536fc5af98e12b18d50e6
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon May 4 10:49:37 2020 -0500
+
+    look at master
+
+commit 5da9e58a6ffddf86eb52a20130c100ff90600549
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon May 4 09:26:17 2020 -0500
+
+    post concourse status
+
+commit 975446c427940e5561647eea90219b74ea375de5
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Apr 30 18:18:55 2020 -0500
+
+    make  more general
+
+commit e5919517e13a09ccb46451a67374d9507e399861
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Apr 30 18:07:31 2020 -0500
+
+    first pass at building status job
+
+commit 0d775ae037187ed0979843a426cc42be6e34e4a7
+Merge: 45b4d43 f9d8940
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Apr 30 16:00:58 2020 -0500
+
+    Merge pull request #146 from jjhelmus/upload_job
+    
+    add optional stage_for_upload job
+
+commit 45b4d43e02620404fe055a17ff5fa43a2a4c3076
+Merge: 17ea9ea f06ad55
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Apr 30 16:00:38 2020 -0500
+
+    Merge pull request #148 from katietz/inter_channel
+    
+    Inter channel
+
+commit f06ad55064df037ca6321f288352c397891ff160
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Apr 30 15:56:52 2020 -0500
+
+    require networkx > 2 on travis
+
+commit 2accad5bfff36a95de45e4760ef2a08b18a324a3
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Apr 30 15:56:25 2020 -0500
+
+    flake8
+
+commit f9d89406e83e488bb2faa1ebb4ec29b5fb3e99a0
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Apr 30 15:27:31 2020 -0500
+
+    --stage-for-upload requires --commit-msg
+
+commit b0962a81697285c9e1f2a3aab19bdee66ebabf9e
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Thu Apr 30 13:33:01 2020 +0200
+
+    Avoid TypeError for method
+
+commit 5ab8bc3007b78c3f19e38425f2f0da3c4766e550
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Thu Apr 30 13:31:40 2020 +0200
+
+    Adjust function signature for submit_one_off, and submit_batch
+
+commit 806e481946b53610d2785c07665b344ed972e608
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Thu Apr 30 11:14:01 2020 +0200
+
+    Ensure nodes is present
+
+commit ac7934de3149db5e1c065027da207131818f4408
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 29 16:47:42 2020 -0500
+
+    adjust variables passed to upload job
+
+commit caa91a0436d9ae5ca0efcf5df3421e3f6bdd3cf0
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Tue Apr 28 17:55:32 2020 +0200
+
+    Adjusted tests for digraph update
+
+commit 6b914689d11f2f584bb3cd0f71be06d6ed12bd0e
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Tue Apr 28 17:53:23 2020 +0200
+
+    Adjusted node to nodes for digraph
+
+commit 8713543d94963320d197188d57da98f5a55772bc
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Apr 28 10:37:52 2020 -0500
+
+    fixup test_submit_one_off to account cli options
+
+commit 17bc19eb93a41749f4f4ba2362c0037c624862dc
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Apr 28 10:30:25 2020 -0500
+
+    add optional resource for upload job
+    
+    Add git resource for stage_for_upload job when stage-for-upload-repo is
+    defined in the configuration file.
+    
+    Refactor upload logic into a single function.
+
+commit 812390214584e59f196531a7235cc7a27e0126b8
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Tue Apr 28 15:49:39 2020 +0200
+
+    Fixed typo
+
+commit 0eaae5c05702e76a0c4a7a7cef5c5e8d087eb770
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Tue Apr 28 15:46:56 2020 +0200
+
+    Fixed node vs nodes in graphs
+
+commit b96b9d8676c9dfd0c56b730a4a5542f4be9076dd
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Tue Apr 28 15:46:24 2020 +0200
+
+    Adjust upload command
+
+commit fb15dab535c1bddd024181f93d7613470845e9bf
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Tue Apr 28 15:05:53 2020 +0200
+
+    Add staging channel option
+
+commit 4bff6247e48b5148a535bcc6c1b9da86de678ea1
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Fri Aug 23 18:17:42 2019 +0200
+
+    Revert "Do conda update before starting build"
+    
+    This reverts commit d13cee155b33ae52b9898c612a9045cf7d2c55f8.
+
+commit 301c7395b3cb022461dfa9016cdc5be9fcbcc56a
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Fri Aug 23 18:17:38 2019 +0200
+
+    Revert "Do conda update before starting build"
+    
+    This reverts commit 9513b93fa6358ef4265879c9d575ad17fcb33a50.
+
+commit 4b71e2ef5ab151923d29f0734d6b8677a51455fb
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Fri Aug 23 11:57:54 2019 +0200
+
+    Do conda update before starting build
+
+commit 4080371b766c14555ee6d03055304c03fd596487
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Fri Aug 23 11:55:48 2019 +0200
+
+    Do conda update before starting build
+
+commit 6016cf78498e36c97b8e80c7adeaa78ec240757e
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Apr 27 16:02:13 2020 -0500
+
+    add optional stage_for_upload job
+    
+    Add an optional "stage_for_upload" jobs to pipelines which executes the
+    task defined in the stage_for_upload_config section of the configuration
+    with the artifact directory passes in via the ARTIFACT_DIR environment
+    variable. This job is created when the --stage-for-upload option is
+    specified on the command line.
+    
+    Additionally, adds a --commit-msg command line option where a git commit
+    message can be specified that is passed to the the upload job via the
+    GIT_COMMIT_MSG environment variable.
+
+commit 17ea9ea654dfc5c98d37ef4d2736957961db3116
+Merge: 08e7657 67aa81a
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 22 15:05:12 2020 -0500
+
+    Merge pull request #145 from cjmartian/passable-branches
+    
+    add branches flag
+
+commit 67aa81aa3f7cfea9a39f8d0a8318247714efc3b0
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 22 14:25:13 2020 -0500
+
+    add pipeline_label to --branches help text
+
+commit a48c5bc70bd1585bfce1dd4eb7c55bb1bd61d105
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 22 14:22:33 2020 -0500
+
+    flake8
+
+commit d1f4adade65a0e92b5ad2a401f30fea3e4105616
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 22 14:22:04 2020 -0500
+
+    use None for branches default
+
+commit db50690523a52d104c319fb40c4ec8cd97c726cc
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 22 14:21:44 2020 -0500
+
+    expand documentation on --branches argument
+
+commit 58abc545dba48d6b55f51e11c0486c5cf7ac5e3d
+Merge: d75c574 08e7657
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Apr 21 16:49:02 2020 -0500
+
+    fix merge conflict
+
+commit d75c57428715f1be2a6ed043f7c51ee082fa61d1
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Apr 21 16:44:36 2020 -0500
+
+    ability to pass multiple branches/recipes
+
+commit 08e765770ad0262f2dea1d39c6d1455749016c3e
+Merge: c0670fb eaeeed9
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Fri Apr 17 11:04:56 2020 -0500
+
+    Merge pull request #144 from cjmartian/pull-recipe-only
+    
+    remove everything except for the recipe
+
+commit c2302c26be35d4a2022ab9cbf10c68904360287c
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Apr 16 14:55:51 2020 -0500
+
+    fix test
+
+commit d45dce7af9835c0c9d5dfc1501f82eda1e095002
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Apr 16 14:18:17 2020 -0500
+
+    add branches flag
+
+commit eaeeed9db434b4f36d4b879c399c5a99b1ea1ade
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Thu Apr 16 13:24:30 2020 -0500
+
+    remove everything except for the recipe
+
+commit c0670fbc5bd747619234e11422016fa433b7441f
+Merge: 7acb6f4 6c53b9b
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Mon Apr 13 15:53:06 2020 -0500
+
+    Merge pull request #142 from jjhelmus/ci_fixup
+    
+    Drop Python 2.7 support, fixup tests
+
+commit 6c53b9b39fb9d1adf746c1902132bb3c4cbc3137
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Apr 13 15:47:44 2020 -0500
+
+    escape string to avoid warnings
+
+commit 81ae884694e45af9ebc5918aed9cf1539ab4e099
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Apr 13 15:39:25 2020 -0500
+
+    use yaml.safe_load rather than yaml.load
+
+commit aada17cf507ba1fc0d4347c22a4ed03d9bfa879e
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Apr 13 15:38:32 2020 -0500
+
+    flake8
+
+commit e913b7cd5dc47e74cf6208388641d3a732b77008
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Apr 13 15:27:33 2020 -0500
+
+    remove support for python 2.7
+    
+    * Require python>=3.6
+    * Test of Python 3.6 and 3.7.
+
+commit 7756fe89ccabf4bf1a4bae1ff6667ea350237811
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Apr 13 15:25:01 2020 -0500
+
+    fixup test_submit_one_off test
+
+commit 7acb6f43d20a2f7df7edd5c55d814c3e96079d1a
+Merge: 959ac51 b2e39ed
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Mon Apr 13 15:19:13 2020 -0500
+
+    Merge pull request #141 from cjmartian/automated-pipeline
+    
+    Automated pipeline flag
+
+commit b2e39ed3284a1df706955f2b76bb980587ca4582
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Fri Apr 10 10:23:04 2020 -0500
+
+    reset
+
+commit efe0a2e772b88d0bc0e66168c175365cddc78f35
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Apr 6 15:13:32 2020 -0500
+
+    get rid of OrderedDicts
+
+commit 12e003986c8dd7e6963b528a2c3fee8f63b22926
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Fri Apr 3 15:10:33 2020 -0500
+
+    make noarch work
+
+commit edcb41011dac15bcae4b403e85c40a0de453a1ff
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Wed Apr 1 14:15:01 2020 -0500
+
+    working for arch specific builds
+
+commit d84e7bc6ad489184539ed94b68eea094d7cf874b
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Tue Mar 31 14:58:00 2020 -0500
+
+    first pass at creating a automated yaml
+
+commit 959ac51ec659927c2b3612115f020e43048ce2f5
+Merge: aa1c9e3 7c69b6c
+Author: myancy-anaconda <58443900+myancy-anaconda@users.noreply.github.com>
+Date:   Thu Mar 26 15:28:49 2020 -0500
+
+    Merge pull request #140 from jjhelmus/fix_circular
+    
+    allow submission of recipe dependent outputs
+
+commit 7c69b6c09b6b7ebee09709a6acd36e9979a93e78
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Mar 26 15:22:59 2020 -0500
+
+    pin networkx to <2
+
+commit baa0029d2934c952d24103ba50d0fd9585f1ad15
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Mar 26 15:13:46 2020 -0500
+
+    allow submission of recipe dependent outputs
+    
+    Allow the submission of recipe which have outputs which dependent on
+    each other. All dependencies with a name that matches one of the outputs
+    of the recipe is ignored when examining the intradependencies of the
+    submission.
+
+commit 5b47f3617afafb329239dee18096865724682e50
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Mar 23 17:51:12 2020 -0500
+
+    remove pdb
+
+commit 21d0757bdf12a86f3125f638b193c9f2db0e6610
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Mar 23 17:48:32 2020 -0500
+
+    resources and resource types
+
+commit 47ea54363680558ab7a9cec7e5c6ed58b46aebc0
+Author: Connor Martin <connormartin7@gmail.com>
+Date:   Mon Mar 23 15:58:36 2020 -0500
+
+    add the automated pipeline flag
+
+commit aa1c9e35910270ca8d241c7e2e6dba4818f028ff
+Merge: 7d13287 6354ce8
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 11 14:15:21 2019 -0600
+
+    Merge pull request #137 from conda/repo_v6
+    
+    add repo v6 resource upload
+
+commit 7d1328704d8cef5f5b51d77d68fb160a5e4f13d5
+Merge: 42cf61b 654a0d6
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 11 13:43:49 2019 -0600
+
+    Merge pull request #138 from conda/loner_conda
+    
+    replace packed env with standalone conda for win/mac
+
+commit 42cf61b92b256fa8d48680052a0b5d2f5b312d89
+Merge: 113738a d2fae99
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 11 12:07:11 2019 -0600
+
+    Merge pull request #139 from jjhelmus/skip_overlink_win
+    
+    overlinking check does not error on windows
+
+commit d2fae9948470dd8302e48bcb9186f68f51e59185
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Nov 11 11:41:25 2019 -0600
+
+    overlinking check does not error on windows
+    
+    Do not error out when the overlinking check fails on Windows. Currently
+    conda-build's overlinking check is case-sensitive on Windows which
+    causes numerous false positives.
+    
+    This should be re-enabled once conda-build has better overlinking check
+    behavior on Windows.
+
+commit 654a0d699a9249f18d301dbef8a52f5ff3a67081
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 11 11:26:08 2019 -0600
+
+    replace packed env with standalone conda for win/mac
+
+commit 6354ce860c7074e3f5d35b25a896326f90717a90
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 4 10:16:54 2019 -0600
+
+    add repo v6 resource upload
+
+commit 113738a353d2729beeb96af700f9ec9765f171ff
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 11 17:30:53 2019 -0500
+
+    only convert artifacts for build jobs (not test jobs)
+
+commit 49af97d8621c5d187f3f65e373482953d107328e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 11 14:12:34 2019 -0500
+
+    add a pkgs folder in the base env when using standalone
+
+commit d89bfdc973818e61ca5d073ca23d313e7648b616
+Merge: 84bd209 a7e27a7
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 11 13:55:58 2019 -0500
+
+    add conversion to .conda step (#136)
+    
+    add conversion to .conda step
+
+commit a7e27a7d4d5083392fd6e6f8d38f5bfba5f47742
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 11 13:50:36 2019 -0500
+
+    use standalone conda to bootstrap
+
+commit 6f07fe675a1785d8b9dc1fa51a383051d78d61cb
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 11 13:31:05 2019 -0500
+
+    add conversion to .conda step
+
+commit 84bd2090dbb9d123745838807c1da9967a8600df
+Merge: 657b267 ce7a2e2
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Tue Aug 20 09:38:43 2019 -0500
+
+    Merge pull request #134 from katietz/master
+    
+    Added .gitattributes file for nl translation
+
+commit ce7a2e28ad6a3294ac8c201e89ecff1f645c1491
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Tue Aug 20 11:15:18 2019 +0200
+
+    Added .gitattributes file for nl translation
+
+commit 657b267c49b5a7fe94ac5f78fc0ca87a0bcc6803
+Merge: b168da3 c64a8d6
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Mon Aug 19 09:58:00 2019 -0500
+
+    Merge pull request #133 from katietz/master
+    
+    Modify c3i rm to use abort before removing (DSNC-1479)
+
+commit c64a8d6f7bbd082be7b59b5dedd52d2a449d2187
+Merge: 28075d7 c7a00de
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Mon Aug 19 16:42:54 2019 +0200
+
+    Merge branch 'master' of github.com:katietz/conda-concourse-ci
+
+commit 28075d7c50b0221f2abefc053c043b14854364d8
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Mon Aug 19 16:42:40 2019 +0200
+
+    Fixed typo
+
+commit c7a00de4beeebc37172f4fab2847427eda702b11
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Mon Aug 19 09:16:45 2019 -0500
+
+    Fix typo in function name
+
+commit 082f08ed24d52fee8e17553835f7994d42e8885d
+Author: Kai Tietz <ktietz@anaconda.com>
+Date:   Mon Aug 19 13:46:17 2019 +0200
+
+    Modify c3i rm to use abort before removing (DSNC-1479)
+
+commit b168da33ad8c8cfda163352bef7dabfca81dea3b
+Merge: d2011b6 dcf6f16
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Fri Jul 26 14:08:34 2019 -0500
+
+    Merge pull request #132 from jjhelmus/new_defaults
+    
+    Better c3i batch defaults and help text
+
+commit dcf6f16dfd7184627fd99e36c9e4abc8a4d1d45e
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Jul 26 13:59:48 2019 -0500
+
+    update test_cli.py for new c3i batch defaults
+
+commit 5f9a7e485dae5533a891f62fc1f67bb2c7c5e33a
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Jul 26 13:49:43 2019 -0500
+
+    add text discouraging --use_lock_pool
+
+commit 213687c3aa582dc64548f16ea15b40801efadec6
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Jul 26 13:48:11 2019 -0500
+
+    set max-builds to 6, mention defaults in help text
+    
+    Set the max-builds to 6 from an extremely too large 36.  6-12 works
+    well. Mention the batch defaults in the cli help text.
+
+commit d2011b6d264e488c0e382e92c45473e3999d4925
+Merge: d9c35f5 6d0886f
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Jun 6 10:02:20 2019 -0500
+
+    Merge pull request #130 from jjhelmus/netrc_behind_arg
+    
+    add --use-repo-access arg to one-off and batch
+
+commit 6d0886fa16e311c9ef6f4163870005ce690f42a5
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Jun 6 09:13:28 2019 -0500
+
+    add --use-repo-access arg to one-off and batch
+    
+    Add the --use-repo-access argument to the one-off and batch subcommands.
+    This argument conditionally enables the repo access credentials
+    (username and token) to be passed to the build jobs. By default these
+    are not passed.
+    
+    Writing the _netrc/.netrc can stall workers if another job is accessing or
+    writing the file at the same time. This effects windows especially. The
+    argument will not write these files unless they are specifically
+    required and requested by the user.
+
+commit d9c35f5f0434a77fe5cbebd1bd97dfb28a4ac400
+Merge: 6d7cce7 628ea67
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Jun 6 09:17:01 2019 -0500
+
+    Merge pull request #129 from jjhelmus/batch_locks
+    
+    c3i batch accepts --use_lock_pool
+
+commit 628ea67eafa3d16cbf329223acb8d951671209db
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Jun 6 08:55:39 2019 -0500
+
+    fix test_submit_batch to include use_lock_pool argument
+
+commit e0898db9a276cd7add1edb433ed74599e2beb5c2
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Jun 5 17:27:44 2019 -0500
+
+    c3i batch accepts --use_lock_pool
+    
+    c3i batch does not check the number of outstanding jobs if
+    the --use_lock_pool argument is passed as the pool resource is used to
+    limit concurrent jobs.
+
+commit 6d7cce767e41a309d64135027287a2d2a210a0ba
+Merge: 0bb3567 dc81304
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Fri May 31 11:10:01 2019 -0500
+
+    Merge pull request #128 from jjhelmus/worker_locks
+    
+    Use a pool of locks to limit the number of concurrent build on each platform
+
+commit dc8130467ed31e571e67b582485b2eb74df7ae2b
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu May 30 11:59:44 2019 -0500
+
+    refactor out _add_lock_pool_resources
+    
+    Refactor out the logic to add lock pool resources into its own function.
+
+commit 8c7b626ccfe68d225affc82251b19b02b9ae2be2
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu May 30 11:16:44 2019 -0500
+
+    add tests for lock_pool functionality
+
+commit 9bb8a5e8fbf401926044a31cffa0c80d5d155a51
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu May 30 10:37:58 2019 -0500
+
+    test_submit_one_off should check use_lock_pool
+
+commit 57713874ffba8c7495e57d08d791702c288ab44f
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu May 30 10:28:33 2019 -0500
+
+    lock pool repo can be auth via user/pass or key
+    
+    Access to the lock pool repository can be done via a private key, a
+    username and password, or using no authentication.  Private key auth is
+    preferred and will be used when the configuration file contain a
+    lock-pool-private-key entry.  Username and password is used when a no
+    private key is specified but a lock-pool-username entry is present.
+
+commit 20487488cf57571d8246f0817e5d46cd417e0c62
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed May 29 17:50:45 2019 -0500
+
+    use pool name in worker config
+
+commit cf7cbea0e0e24683738cc2f9fb429ca61ae41921
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed May 29 17:33:41 2019 -0500
+
+    optional use of a pool of locks to limit builds
+    
+    Optionally use a pool of locks to limit the number of parallel builds.
+    A lock for a particular platform is aquired prior to performing the
+    build task.  This lock is released regardless of the success of the
+    build.
+    
+    Relevant documentation:
+    pool-resource: https://github.com/concourse/pool-resource
+    ensure: https://concourse-ci.org/ensure-step-hook.html
+
+commit 0bb3567e61c8f25c21d12ba9ee15e5c4d805eea6
+Merge: 97569a2 d21edad
+Author: Sophia Castellarin <scastellarin@anaconda.com>
+Date:   Tue May 7 17:03:33 2019 -0500
+
+    Merge pull request #126 from forrestwaters/master
+    
+    add ability to use private channels for c3i builds
+
+commit d21edadf16486675592c38b7d2d154765d945a1b
+Author: Forrest Waters <fwaters@0609.local>
+Date:   Mon May 6 15:37:37 2019 -0500
+
+    add option for private channels to c3i builds
+
+commit 97569a2081ad51ab4eff720190ef16d5df24864c
+Merge: c0a53f8 fa7d647
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Apr 19 09:13:55 2019 -0500
+
+    Merge pull request #125 from nehaljwani/master
+    
+    Fix: rsync-build-pack (not) on linux & recipe-in-a-git-repo assumption
+
+commit fa7d647c2d7a6174edd52665f6e7cdda3b71cd4f
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Fri Apr 19 06:33:30 2019 -0500
+
+    Don't error out if recipe not in a git repo
+
+commit 5ba32f50efa07bd12b6181f9c7fe1bd0017f7b98
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Fri Apr 19 06:19:40 2019 -0500
+
+    Fix rsync-build-pack: 'resource is not used' error
+    
+    Concourse doesn't like when a resource is defined and not used. The fly tool
+    exits straight away. A very simple way to trigger this is to spawn a pipeline
+    with the argument: '-p linux-*'. This patch fixes this bug by restricting the
+    resource definition to the case when the pipeline is supposed to run on atleast
+    one of osx, win.
+
+commit c0a53f8dc2398962600d463a0c1bcbdd29fca802
+Merge: 7a0f1af 9ee43c3
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Apr 12 11:09:13 2019 -0500
+
+    Merge pull request #124 from jjhelmus/another_netrc_fix
+    
+    Another _netrc writing fix on Windows
+
+commit 7a0f1af3f60d9dd24e6b548f05afa712adbecb7f
+Merge: a7b3a02 3826cf6
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Fri Apr 12 11:07:43 2019 -0500
+
+    Merge pull request #123 from soapy1/set-system-config
+    
+    Set system config
+
+commit 9ee43c33995ddcebd6db641e1c9e08e2bea5ba08
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Fri Apr 12 11:01:30 2019 -0500
+
+    Another _netrc writing fix on Windows
+    
+    This has been tested and gives good results.
+    
+    For reference:
+    "cmd1 || cmd2" will execute cmd2 if cmd1 has a non-zero errorlevel
+    "cmd1 && cmd2" will execute cmd2 if cmd1 has a zero errorlevel
+    "cmd1 & cmd2" will always xecute cmd2
+    
+    Commands submitted to concourse are joined with &&. Grouping the netrc
+    writing commands and exit 0 with () is needed for the || to have its intended
+    effect.
+
+commit 3826cf69694e51ff2fdc55849fa8745dc698dbae
+Author: Sophia Castellarin <scastellarin@anaconda.com>
+Date:   Fri Apr 12 10:55:26 2019 -0500
+
+    Set system config
+
+commit a7b3a0282dd01e3444a3198cbec4157809b3f230
+Merge: cb0192b d56cb68
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Apr 11 13:34:46 2019 -0500
+
+    Merge pull request #122 from jjhelmus/revert_120
+    
+    correct issue with exit logic
+
+commit d56cb68b3e9c48a1a604a461b5becce16f3254b5
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu Apr 11 13:03:13 2019 -0500
+
+    correct issue with exit logic
+
+commit cb0192b4b8073efa1688e2cc0ad891a734a997fb
+Merge: 4bb74fd 14e957a
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 10 16:21:12 2019 -0500
+
+    Merge pull request #120 from jjhelmus/netrc_not_fail
+    
+    do not fail job if _netrc is not written
+
+commit 14e957a3670c25a5a00720e03ad9304a77cd9c1b
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 10 15:37:31 2019 -0500
+
+    do not fail job if _netrc is not written
+    
+    Writing to the _netrc file can create a race condition if multiple builds are
+    scheduled on the same worker. Failing to write this file should not fail the
+    build although will result in private repositories not being accessable.
+
+commit 4bb74fdd7a9821975637cdaf187dfcf5e9953288
+Merge: 2abb1c6 12fbd4f
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Apr 10 15:29:47 2019 -0500
+
+    Merge pull request #119 from jjhelmus/srcclr_not_fail
+    
+    sourceclear failures are allowed
+
+commit 12fbd4f6771b68a4132022d5927a1ccf46a734e9
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Apr 10 15:27:56 2019 -0500
+
+    sourceclear failures are allowed
+    
+    Sourceclean failures should not fail the entire job
+
+commit 2abb1c6ab286348b270f0cf9596c49d927b06f36
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Wed Mar 27 07:25:20 2019 -0500
+
+    Add commands: c3i trigger; c3i abort
+    
+    c3i trigger : Can be used to re-trigger (failed?) pipelines
+    c3i abort   : Can be used to abort running builds without nuking the pipeline
+    
+    Resolves #89
+
+commit b72a79506f80d41d108f4d0c9797a581d96c56c8
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Wed Mar 27 07:17:56 2019 -0500
+
+    Introduce utility functions _ensure_login_and_sync and _filter_existing_pipelines
+    
+    This removes code duplicacy across various modules
+
+commit b7421975817b59bb3d2609d6507c887db808e453
+Merge: 2aa7d46 eabb9fb
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Mar 22 10:47:44 2019 -0500
+
+    Merge pull request #117 from soapy1/conda-pack-bootstrap
+    
+    Conda pack bootstrap
+
+commit eabb9fb7f9b5cc417305240b83df7f33d9a58762
+Author: Sophia Castellarin <scastellarin@anaconda.com>
+Date:   Fri Mar 15 16:43:39 2019 -0500
+
+    Fix tests
+
+commit a07b43dddfde9ac8f1f185930dd35c5e0770fbad
+Author: Sophia Castellarin <scastellarin@anaconda.com>
+Date:   Fri Mar 15 15:53:02 2019 -0500
+
+    flake8
+
+commit c82e685abfa38376ebee9ea70f1af884028f7268
+Author: Sophia Castellarin <scastellarin@anaconda.com>
+Date:   Fri Mar 15 10:54:12 2019 -0500
+
+    Rsync down build pack
+
+commit 70c6107c737f49d22d9fe9d97c4ef5d34d00500f
+Author: Sophia Castellarin <scastellarin@anaconda.com>
+Date:   Thu Mar 14 14:45:32 2019 -0500
+
+    Job to create build env packs
+
+commit 2aa7d462cce3a039287174c39580a1e317305088
+Merge: 8cd7de3 ea506f3
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Mar 11 10:46:29 2019 -0500
+
+    Merge pull request #116 from soapy1/use-secrets-from-vault
+    
+    Use intermediate key from vault
+
+commit ea506f382e96d6256c9651a55663cbbe7cb5d792
+Author: Sophia Castellarin <scastellarin@anaconda.com>
+Date:   Wed Mar 6 18:22:49 2019 -0600
+
+    Use intermediate key from vault
+
+commit 8cd7de37f27fb7ec3c1ab3b485a0c0c5d2e1743c
+Merge: 3c7bd5c 5ee6f36
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 26 15:40:49 2019 -0600
+
+    Merge pull request #115 from jjhelmus/no_trailing_spaces
+    
+    no trailing space when joining prefix/suffix cmds
+
+commit 5ee6f36971bb40b33d30a3c552a9e165c8a5d126
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Feb 26 15:28:02 2019 -0600
+
+    no trailing space when joining prefix/suffix cmds
+    
+    Join prefix and suffix commands using "&& ", do not use a trailing space.
+    In some scriping languages, such as batch, a trailing space can change the
+    behavior of a command.  The particular cases where this was observed was in the
+    command "set TEMP=%CD%".  When joined with a trailing space the space was added
+    to the TEMP variable.
+    
+    See: https://superuser.com/questions/57723
+
+commit 3c7bd5c70c495444b9fb8ded9fd8d246875e537f
+Merge: d592031 302217d
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Feb 13 22:44:21 2019 -0600
+
+    Merge pull request #114 from jjhelmus/noarch
+    
+    Add support for building noarch: python packages
+
+commit 302217dc2303016c1496a4004022ee8eb0b8c240
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 16:25:12 2019 -0600
+
+    cast in/out_edges to tuples
+    
+    The in_edges and out_edges methods return iterators which should cannot be
+    modified during use.  Case these to tuples to avoid issues.
+
+commit 8bdd283e5b7659d3d77a16312a86a813ae80db52
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 16:03:26 2019 -0600
+
+    mark test_collapse_noarch_python as serial test
+
+commit 3403dace94d6d55e2895a9ca6cb29f428487b1bd
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 14:34:46 2019 -0600
+
+    flake8
+
+commit 8939fa2bf8cd59f1b3692ba45771f487246d43b1
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 14:44:58 2019 -0600
+
+    fix failing test_submit_batch test
+
+commit 125db7130be841e85d08bb23a8a094aaa950032f
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 15:47:33 2019 -0600
+
+    simplify CI setup
+    
+    Install all dependencies via conda.
+    Use released conda-build
+
+commit c62d89c66e6e6d789db619792d1875f39b6a720c
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 15:29:16 2019 -0600
+
+    expand noarch support
+    
+    Support noarch: generic and "True" packages.
+
+commit d592031f66454927323acdc52902db351d5bed5e
+Merge: 6475172 7c1899a
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Feb 13 15:24:39 2019 -0600
+
+    Merge pull request #108 from jjhelmus/add_types
+    
+    add types to batch cli arguments
+
+commit 7c1899a42eafbcc7eb3f3aff0658e7521190699f
+Merge: 606c87b 6475172
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Feb 13 15:24:13 2019 -0600
+
+    Merge branch 'master' into add_types
+
+commit f690c647b87d96d8d406e6b4c63dcc58f4ab2b56
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 14:07:39 2019 -0600
+
+    test noarch python packages on all platforms
+    
+    Test noarch python packages built on the linux-64 platform on all other
+    platforms.
+
+commit 4c7bc489d400cf59d9ba86a43904a8c604cb2bed
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 11:52:36 2019 -0600
+
+    add tests for noarch python functions
+    
+    Add tests and test data for handeling noarch: python recipes.
+
+commit a486933c61af96e5a63dd34ac749d274cf514b5c
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 10:39:23 2019 -0600
+
+    build noarch python packages on a single platform
+    
+    Build noarch: python packages only on the linux-64 platforms. If the package is
+    needed as a dependency for other packages the edges to these nodes are adjusted
+    to depend linux-64 build.
+    
+    Add testing of the noarch: python package after building on other platform is
+    still needed.
+
+commit 6475172642a94a5cff47c1681c12cab1dd2de712
+Merge: 980530d 7258928
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Wed Feb 13 14:11:09 2019 -0600
+
+    Merge pull request #113 from msarahan/filter_more_intermediaries
+    
+    filter more stuff from rsync intermediaries (index output)
+
+commit 72589289a67e0a2b06c7cde15d698fc91495d9b6
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Feb 13 12:14:13 2019 -0600
+
+    filter more stuff from rsync intermediaries (index output)
+
+commit 980530d22816eef8a2abf240b62646eb79e56c27
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Jan 31 10:50:51 2019 -0600
+
+    [c3i batch] sort batch_items before processing
+
+commit 171bf27a033ab73aee311cb526cea05aad0f5986
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Wed Jan 23 18:48:12 2019 -0600
+
+    [c3i batch] specify default types for maxbuild, poll-time
+
+commit a90d94bd2aa4d5880034642b1f455f606e913869
+Merge: d8c656b 9894a6f
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Dec 14 09:20:12 2018 -0600
+
+    Merge pull request #110 from msarahan/srcclr_integration
+    
+    use conda-debug (to be released in conda-build 3.17.0)
+
+commit 9894a6f7f3a9b96cbaa1778770e31f654b31b9f5
+Merge: 9af36b2 d8c656b
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Dec 14 08:55:43 2018 -0600
+
+    Merge branch 'master' into srcclr_integration
+
+commit 9af36b2d8b88e0dd8a1b75f8dcc1597caec7fa42
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Dec 14 08:42:45 2018 -0600
+
+    srcclr running fixes (shell script stuff)
+
+commit d48fcf3a15aa5f2a0ec66dc017a57aac45c11db3
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Dec 6 15:26:46 2018 -0600
+
+    fix running srcclr.  Move it after rsync-artifact, so even if it fails, artifacts are on bremen
+
+commit af39271e996dfcbd9cc047a92f656588d672fe1b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Nov 14 20:00:36 2018 -0600
+
+    use conda-debug (to be released in conda-build 3.17.0
+
+commit d8c656be77a02f560c2d093a586c7bdbd5644f76
+Merge: 4d7ee2e a3a8084
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Nov 13 11:01:34 2018 -0600
+
+    Merge pull request #109 from conda/config-variants
+    
+    Add variant key to platform config
+
+commit a3a80849fe74dcd5eee2f950b0a14f4ab53bd8d3
+Author: soapy1 <scastellarin@anaconda.com>
+Date:   Mon Nov 12 17:07:24 2018 -0600
+
+    Don't upload canary packages
+
+commit dba9e8f9dc34d01cae0d384740f04889ae47c1c9
+Author: soapy1 <scastellarin@anaconda.com>
+Date:   Mon Nov 12 15:02:38 2018 -0600
+
+    Allow jobs with same platform + arch + different labels
+
+commit bf5d455de9d6ba5fcfa6bd5182ddd9595ca6b3a3
+Author: soapy1 <scastellarin@anaconda.com>
+Date:   Mon Nov 5 16:32:24 2018 -0600
+
+    Add variant key to platform config
+    
+    ignore some flake8 suggestions
+    W504: line break after binary operator
+    W605: invalid escape sequence '\_'
+
+commit 606c87be5e96720de1463b5f0de1825278d2afcf
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Oct 30 22:04:14 2018 -0500
+
+    add types to batch cli arguments
+
+commit 4d7ee2e4121d33fb74b3b2df3dc2859301e48885
+Merge: f5c5724 d30b937
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Oct 26 07:07:20 2018 -0500
+
+    Merge pull request #105 from conda/chrpath
+    
+    Add chrpath, needed to delete RUNPATHs when binary repackaging
+
+commit f5c57245ba9780f68e52ddd27183fa2156e9b18c
+Merge: 62a1cf3 794dc0c
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Oct 26 07:06:47 2018 -0500
+
+    Merge pull request #107 from conda/pam
+    
+    We need PAM system libs for pamela
+
+commit 794dc0c5db41855833b64db9c8b4feaf489ca716
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Fri Oct 26 10:39:30 2018 +0100
+
+    We need PAM system libs for pamela
+    
+    (Not my wife, she does not have much time for geeky stuff).
+
+commit 62a1cf33f03262693ed447eee8860ea9e934adb7
+Merge: 3850ef0 478a62c
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Oct 8 08:31:42 2018 -0500
+
+    Merge pull request #106 from msarahan/srcclr_integration
+    
+    implement sourceclear scan integration
+
+commit 478a62c61662780ff35230fd3a5cdb069c11e56f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Oct 8 08:13:06 2018 -0500
+
+    implement sourceclear scan integration
+
+commit d30b937b58ee5a6ac3cb9b35b8177b0a57d9fac7
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Tue Oct 2 23:24:04 2018 +0100
+
+    Add chrpath, needed to delete RUNPATHs when binary repackaging
+
+commit 3850ef0284855846f86a9ad21cae1eba76598cd5
+Merge: 516ae2b 41bad1f
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Sep 20 12:21:38 2018 -0500
+
+    Merge pull request #103 from msarahan/simplify_index
+    
+    simplify indexing for conda-build 3.14's new indexing
+
+commit 41bad1fb87d9c83a806faa093400a4120958a6c3
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Sep 13 13:26:32 2018 -0500
+
+    simplify indexing for conda-build 3.14's new indexing
+
+commit 516ae2be2fb3e40fa9243db0b878fe2e021df9bf
+Merge: 522a5d9 06b6a54
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Sep 7 11:31:04 2018 -0500
+
+    Merge pull request #101 from msarahan/record_recipe_history
+    
+    Record recipe history
+
+commit 06b6a54a52df5a76c2829b21636fb43ab3102444
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Sep 7 10:24:45 2018 -0500
+
+    record recipe git repo history to recipe_log.txt
+
+commit 2903f8712512db099fee7927a1cdf5b94c47bb20
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Sep 7 09:44:55 2018 -0500
+
+    add .pytest_cache to gitignore
+
+commit 522a5d98a7c0cd505f26ae96ffe8feff8836c078
+Merge: 8a43159 0734bc5
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Sep 7 09:43:51 2018 -0500
+
+    Merge pull request #100 from jjhelmus/batch
+    
+    add batch sub-command
+
+commit 0734bc591cfb195ccf6388ec215cd0bc2f406420
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 4 16:04:16 2018 -0500
+
+    fix split for Python 2.7
+
+commit 560e71ff61e56dab0f0da0a122ef142abac1a41e
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Tue Sep 4 15:50:55 2018 -0500
+
+    add tests for batch command
+
+commit e10a4b6ca27fe261d65778ea175ee22b36cdc472
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Aug 29 14:49:28 2018 -0500
+
+    correct typo
+
+commit 07212bbb40242ff88a5ee7d9775d321e65629b64
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Wed Aug 29 14:36:58 2018 -0500
+
+    add batch sub-command
+    
+    c3i batch can be used to submit a batch of one-off jobs which are submitted
+    only when the number of activate jobs is below a given threshold
+
+commit 8a43159098a7f192a379109132f7c3ead6c500a7
+Merge: 8b0541f d844383
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Aug 28 09:34:39 2018 -0500
+
+    Merge pull request #99 from msarahan/add_cli_passthrough
+    
+    add pass-through to cb for args not recognized by c3i
+
+commit d844383a37d6f5f257a404181dc7da5c145cf0ca
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Aug 28 09:03:49 2018 -0500
+
+    add pass-through to cb for args not recognized by c3i
+
+commit 8b0541f6527ad952bc5dfd2fc4c853bcdbbaf11c
+Merge: f458562 2c9711f
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Aug 7 08:29:37 2018 -0500
+
+    Merge pull request #97 from msarahan/no_local_built_check
+    
+    ignore local packages when checking is_package_built
+
+commit f458562dd1acfb0a9aa484f18108410ba4f3bb66
+Merge: ea81e66 28a667a
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Aug 2 14:55:06 2018 -0500
+
+    Merge pull request #98 from nehaljwani/private_gh
+    
+    Use ~/.netrc for storing github credentials
+
+commit 28a667ac9dad9281f8638818c4fda58d47ff498a
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 2 07:48:56 2018 -0500
+
+    Make flake8 happy
+
+commit 297bf8fc778350df6f9dee388ac29d04ef36a7e5
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 2 07:48:13 2018 -0500
+
+    Fix test: drop base_name from call to get_build_task()
+
+commit 59dcb1b773811107a5963b159e7f74bc0969056a
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 2 02:42:45 2018 -0500
+
+    Use ~/.netrc for storing github credentials
+    
+    This is required for cloning private repositories on Github
+
+commit 2c9711f9deb4cf84aa55619c232621c403186ad0
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jul 27 12:04:24 2018 -0500
+
+    ignore local packages when checking is_package_built
+
+commit ea81e66bbcabfb01932f649ad5adc9d0a8f3a532
+Merge: b3a640e d19ed70
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Jul 23 14:47:51 2018 -0500
+
+    Merge pull request #90 from nehaljwani/x_libs
+    
+    Add libXScrnSaver to conda/c3i-linux-64
+
+commit b3a640e0701278071d163ab976990a2dbd8dbfa6
+Merge: 3284c40 24eb6d9
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Jul 23 14:07:51 2018 -0500
+
+    Merge pull request #96 from msarahan/override_noarch
+    
+    skip existing; implement append/clobber files
+
+commit 24eb6d969f685d8fe495c8b860256b1d113952e5
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Jul 23 12:35:09 2018 -0500
+
+    skip existing; implement append/clobber files
+
+commit 3284c400a89cc8f8bcfeff5bcf2048e86f338366
+Merge: cd0912f eacfdfb
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 14 07:28:21 2018 -0500
+
+    Merge pull request #95 from conda/do-not-remove-edges-from-graphs-while-it-over-them
+    
+    No idea when I made this change, but looks sane?
+
+commit eacfdfbe98f0570e7b3cb330c5ad299cb4e5d4cb
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Thu Jun 14 12:44:57 2018 +0100
+
+    No idea when I made this change, but looks sane?
+
+commit cd0912fb6b9ccb11e9636e519c4ecfae67aba18f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 1 07:37:32 2018 -0500
+
+    fix loop over edges copy; copy syntax was not valid with networkx 2
+
+commit 29f048948feb75b533df5cc6f5fa1c0ba841918f
+Merge: e18a0d6 c72c44d
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu May 31 10:11:01 2018 -0500
+
+    Merge pull request #94 from msarahan/fix_subpackage_dep_collapsing
+    
+    fix subpackages depending on earlier builds losing their edges
+
+commit c72c44d5d52ace8b51869b58bc3bde1ae817b417
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu May 31 09:52:32 2018 -0500
+
+    fix subpackages depending on earlier builds losing their edges in the graph
+
+commit e18a0d66d1c7e0b465dd6342c4b8cb5218cfd19e
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sun May 27 15:47:00 2018 -0400
+
+    Add pkg: 'file' to ppc64le docker image
+
+commit bd8faa716d2fbc5a5f0beb9762a893f75ace58d6
+Merge: a73d104 4d2a297
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri May 25 14:34:47 2018 -0500
+
+    Merge pull request #92 from msarahan/transfer_rsync_image
+    
+    transfer concourse-rsync-resource image to conda org
+
+commit 4d2a297f0d3db5683034f9465fa03939338224a0
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri May 25 14:21:00 2018 -0500
+
+    transfer concourse-rsync-resource image to conda org
+
+commit a73d104362492537079b860e9638dafb2a458dab
+Merge: 1d49805 3dd22f7
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu May 24 13:15:55 2018 -0500
+
+    Merge pull request #91 from jjhelmus/no_space
+    
+    ensure the package_key does not contain spaces
+
+commit 3dd22f735c07b7decd55e115aaac210a7ba99eb1
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu May 24 13:09:58 2018 -0500
+
+    handle empty test field gracefully
+
+commit 52b270096fa5a998ee8d9582d3da61f63cd9c21f
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Thu May 24 12:15:37 2018 -0500
+
+    ensure the package_key does not contain spaces
+
+commit d19ed7085ab6b22e8423a602df946e2637589456
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sun May 13 22:39:26 2018 +0530
+
+    Add libXScrnSaver to conda/c3i-linux-64
+
+commit 1d4980577c11b903aea767301e6d98c964ccdbc5
+Merge: 97a0220 ec115bc
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sun May 13 03:00:22 2018 +0530
+
+    Merge pull request #88 from nehaljwani/x_libs
+    
+    conda/c3i-linux-64: add more X libs
+
+commit ec115bcb000318094f00598a778431de962df221
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Tue May 8 17:43:08 2018 -0500
+
+    conda/c3i-linux-64: add more X libs
+    
+    xref: https://github.com/ContinuumIO/anaconda-issues/issues/9270
+
+commit 97a0220febdbbdfec14268d2bc0d285e31c1cbac
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue May 1 12:42:32 2018 -0500
+
+    pass error text from rendering through better.  Fix linux64 docker
+
+commit ee95a7b9d26e236100389a01b840de39b59f1cb6
+Merge: 860ccb0 6db918f
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Apr 26 20:49:57 2018 -0500
+
+    Merge pull request #86 from conda/master-fix-cycle-output
+    
+    Fix cycle output
+
+commit 6db918f7620a990c926342ec7bfb533b2d5d769b
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Thu Apr 26 23:42:03 2018 +0100
+
+    Fix cycle output
+
+commit 860ccb01506517029ecf811e9522a47502b6eea9
+Merge: 688e590 f8d2d18
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Apr 26 14:08:29 2018 -0500
+
+    Merge pull request #85 from msarahan/improve_dep_matching
+    
+    use conda-build's used variable knowledge to match up dependent jobs
+
+commit f8d2d186a52a3e2b7b5a4ceefba667f0da264b8b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Apr 26 13:30:01 2018 -0500
+
+    use conda-build's used variable knowledge to match up dependent jobs better
+
+commit 688e590ed1876e20f901ec03cea7c543795023bf
+Merge: e9a882a 6af52f4
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Wed Apr 4 23:25:05 2018 +0100
+
+    Merge pull request #84 from msarahan/add_error_overlinking
+    
+    add --error-overlinking flag to error out when deps need fixing
+
+commit 6af52f472e5b4ba69391ef2982f650b50417fd5b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Apr 4 17:05:33 2018 -0500
+
+    add --error-overlinking flag to error out when deps need fixing
+
+commit e9a882a37f521a3696de84b9a295bcc19bacbfaf
+Merge: c62df06 004f379
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Apr 4 13:28:42 2018 -0500
+
+    Merge pull request #83 from nehaljwani/ppc64le
+    
+    Add which to c3i-linux-ppc64le
+
+commit 004f3792c97a09b7c4c4f5585b689db0bb442761
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Wed Apr 4 14:24:28 2018 -0400
+
+    Add which to c3i-linux-ppc64le
+
+commit c62df0637343f0edca2b79ac610bd30f695510a9
+Merge: 027f7f8 8565312
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Apr 4 08:20:28 2018 -0500
+
+    Merge pull request #82 from nehaljwani/networkx2.x
+    
+    Add workaround for networkx 2.x
+
+commit 8565312248b469de26ad29fa57fccd13abbd47a6
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Tue Apr 3 21:57:30 2018 -0500
+
+    Add workaround for networkx 2.x
+
+commit 027f7f8cce5af34a1db211a9cc264fb7ee8deff7
+Merge: bc66a15 cfd4177
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Apr 2 10:56:09 2018 -0500
+
+    Merge pull request #81 from msarahan/add_gettext_docker
+    
+    add gettext to docker image
+
+commit cfd4177494253145e6ae8f1fc5107c2caf047d5a
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Apr 2 10:54:27 2018 -0500
+
+    add gettext to docker image
+
+commit bc66a155cc857b9a62d741f9b3873a2afd6f43d7
+Merge: 5d77bc5 1f8e3bd
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Mar 29 10:38:29 2018 -0500
+
+    Merge pull request #80 from msarahan/rm_wildcards
+    
+    allow wildcards in c3i rm
+
+commit 5d77bc54bb68935de5fff9089e833867182cefcb
+Merge: 0cc3dd5 1e34aae
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Mar 29 10:15:09 2018 -0500
+
+    Merge pull request #79 from msarahan/add_worker_tag_passthrough
+    
+    use extra/worker_tags field in meta.yaml to set tags for target workers
+
+commit 1f8e3bdd5ce9c295fe8333ad9ef7a75f44b9720d
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Mar 29 09:59:58 2018 -0500
+
+    allow wildcards in c3i rm
+
+commit 1e34aae0761fdb9cd8332de02b67d02ad4ee06c1
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Mar 29 08:56:22 2018 -0500
+
+    add cli option for applying tag to all submitted jobs
+
+commit e598fc0c70054f14607304a385af637c8599bef5
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Mar 29 08:12:48 2018 -0500
+
+    use extra/worker_tags field in meta.yaml to set tags for target workers
+
+commit 0cc3dd5506f96f14d9b71ad384a96c52e4c4a973
+Merge: d120446 4248106
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Mar 29 08:44:23 2018 -0500
+
+    Merge pull request #77 from msarahan/add_rm
+    
+    add c3i rm command to make pipeline cleanup faster
+
+commit 42481063b1151ee1eafa4f8f159a61fa06f45457
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Mar 23 09:23:39 2018 -0500
+
+    add c3i rm command to make pipeline cleanup faster
+
+commit d1204462fb54839e292f7cc7ba6ffe0a9a5e48c1
+Merge: 3559302 8773a2c
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Tue Mar 13 07:31:14 2018 +0530
+
+    Merge pull request #76 from jjhelmus/ppc64le_local
+    
+    set locale in ppc64le docker container
+
+commit 8773a2c882be023ce3ec8cf9a5f04aaeb9d78e7a
+Author: Jonathan Helmus <jjhelmus@gmail.com>
+Date:   Mon Mar 12 14:39:59 2018 -0500
+
+    set locale in ppc64le docker container
+    
+    Some Python 3 command line utilities, including those which use click, require
+    that a unicode supporting locale be set.
+
+commit 3559302f205e832a9fa207e2a55a7a7ea48f959b
+Merge: bce8522 01d3fbe
+Author: Jonathan J. Helmus <jjhelmus@gmail.com>
+Date:   Thu Mar 8 08:50:06 2018 -0600
+
+    Merge pull request #75 from nehaljwani/linux-ppc64le
+    
+    Add Dockerfile for c3i-linux-ppc64le
+
+commit 01d3fbea2f2c3e7862de954c5e671294d986674c
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Wed Mar 7 20:39:50 2018 -0600
+
+    Add Dockerfile for c3i-linux-ppc64le
+
+commit bce85227fe6506e1c3f7b5b0355dcdfadeac2324
+Merge: e83b481 c5ec5ef
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Wed Mar 7 21:16:05 2018 +0530
+
+    Merge pull request #74 from nehaljwani/ppc64le
+    
+    Add support for linux-ppc64le worker
+
+commit c5ec5efcb55d3e649fab7b62dab493b803ec358e
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Mon Mar 5 22:37:42 2018 -0600
+
+    Add support for linux-ppc64le worker
+    
+    xref: https://github.com/ContinuumIO/automated-build/pull/3
+
+commit e83b4818d150c36412ac2040fb4aae586561ffbe
+Merge: b9928a3 04cb6b9
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 27 22:09:15 2018 -0600
+
+    Merge pull request #72 from isuruf/finalize
+    
+    Option for finalize=True
+
+commit b9928a3b1bac7b32a9b62a5f81500cd495eee42a
+Merge: 26e58c1 40cecfb
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 27 22:06:39 2018 -0600
+
+    Merge pull request #73 from isuruf/nx
+    
+    Workaround for newer networkx
+
+commit 04cb6b92a71580738b0625cca27ec70322856bd8
+Author: Isuru Fernando <isuruf@gmail.com>
+Date:   Tue Feb 27 22:05:49 2018 -0600
+
+    Fix formatting
+
+commit 40cecfbbd6b32f1b36982fe7ae1ca93753062de2
+Author: Isuru Fernando <isuruf@gmail.com>
+Date:   Tue Feb 27 22:00:58 2018 -0600
+
+    Workaround for newer networkx
+    
+    topological_sort(reverse=True) is removed
+
+commit 6ed11de0fcbd360c2285a23d414632c08c184808
+Author: Isuru Fernando <isuruf@gmail.com>
+Date:   Tue Feb 27 21:50:30 2018 -0600
+
+    Fix tests
+
+commit 25fee93d3de9c38d121fb3dd7f02a554aadbed28
+Author: Isuru Fernando <isuruf@gmail.com>
+Date:   Tue Feb 27 21:10:21 2018 -0600
+
+    Option for finalize=True
+
+commit 26e58c1f8f87963ea3e821e1b774a6d2ef7c3166
+Merge: e3a4392 7ea3bca
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Feb 21 11:49:29 2018 -0600
+
+    Merge pull request #68 from msarahan/record_stats
+    
+    record and upload stats; remove hard-coded prefix commands
+
+commit 7ea3bca21db59401dc0e2e06e253a9192da64a03
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Feb 21 11:32:53 2018 -0600
+
+    record and upload stats; remove hard-coded prefix commands
+
+commit e3a4392fe06b837026ed4d23080b8585fdddeb63
+Merge: 525e5f1 7f5c8eb
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Feb 21 11:34:23 2018 -0600
+
+    Merge pull request #66 from msarahan/use_cb3_key_used_vars
+    
+    fix loss of variables due to unfinalized data omitting hash from keys
+
+commit 525e5f176f6a8399ee581ee872b945cf6ecde339
+Merge: 7f053b3 cdced0b
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 20 12:27:19 2018 -0600
+
+    Merge pull request #67 from msarahan/better_platform_spec
+    
+    allow storage of config dir; specify platform names with glob pattern
+
+commit cdced0b8612dac0f3771e4ede8789114790cc7ca
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 20 11:53:44 2018 -0600
+
+    allow storage of config dir; specify platform names with glob pattern
+
+commit 7f5c8ebc6f5a79523dcb1abfb669ed6ffd379d47
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Jan 29 15:47:04 2018 -0600
+
+    fix loss of variables due to unfinalized data omitting hash from keys
+
+commit 7f053b38031d7981c22a3e3655e7700515b365d5
+Merge: 2898411 1e80f83
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Jan 10 13:23:56 2018 -0600
+
+    Merge pull request #65 from conda/xvfb-run
+    
+    Add xorg-x11-server-Xvfb for xvfb-run in tests
+
+commit 1e80f8344f7d16c8cb2e8ee03f25ec76a8b13ccf
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jan 10 13:20:28 2018 -0600
+
+    fix None values in tests that conda 4.4 no longer allows
+
+commit 1ea139c23469651151da1d17dbac20f983044d22
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Wed Jan 10 17:11:54 2018 +0000
+
+    Add xorg-x11-server-Xvfb for xvfb-run in tests
+
+commit 2898411ccd53fc5d70eb10644bd1d009135082c4
+Merge: 4863efe cd0b264
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Dec 21 10:21:19 2017 -0600
+
+    Merge pull request #64 from msarahan/fix_identification_of_main_recipe
+    
+    fix identification of 'master' recipe for collapsing subpackages
+
+commit 4863efe402a8d513fb032dc7912e43afd834aa3c
+Merge: 0de8968 7c0ce1c
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Dec 21 10:20:29 2017 -0600
+
+    Merge pull request #63 from msarahan/add_build_prefix_suffix
+    
+    add build prefix & suffix command parsing from .yml files
+
+commit cd0b264f83de51c0291b449ced8a2f05cca11c22
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Dec 21 10:14:27 2017 -0600
+
+    fix identification of 'master' recipe for collapsing subpackages
+
+commit 7c0ce1c1100087830acb0b90b25325bf01c0e478
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Dec 19 11:46:25 2017 -0600
+
+    add build prefix & suffix command parsing from .yml files, for args to conda-build
+
+commit 0de896860939ff34ebfd0f624ee99ed24bb791ca
+Merge: 1e4f0b8 aec6492
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Dec 19 11:28:06 2017 -0600
+
+    Merge pull request #61 from nehaljwani/32-on-64
+    
+    Add support for compiling 32-bit packages on 64-bit container
+
+commit aec64929c383e1c8d9806b2cf9efad9aaef15ba1
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 12:03:52 2017 +0530
+
+    Relax E111 for task_dict in consolidate_task()
+    
+    Add #NOQA for long lines
+
+commit 506b2967fbc990b6866ef9da46d0c7d723f6b216
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 12:02:56 2017 +0530
+
+    E722: Do not use a bare except
+
+commit e9dae2ad4790aeb903723d095f9efc4614700b65
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 12:02:24 2017 +0530
+
+    E111: Fix indentation to multiple of 4
+
+commit 8ec84d491776e8061b43274c41e68f5623d8ce36
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 11:53:29 2017 +0530
+
+    pytest: don't recurse into tests/data directory
+    
+    The --ignore option of pytest takes path as parameter and not a glob or
+    pattern. So, although run_test.py has been specifically specified in the
+    ignore list, it still picks up tests/data/selector_run/run_test.py .
+    
+    This patch asks pytest to not peek into the tests/data directory itself.
+
+commit 27f0eab1284b0138924bd248cb25f53f1a49d281
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 11:32:28 2017 +0530
+
+    Make recipe tests of test_run_deps_with_selector work
+    
+    lru_cache has to be imported from functools32 and not functools for py27
+
+commit 2dc7eb9a4b63260ea183dec70c4bcedd6461b219
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 10:26:15 2017 +0530
+
+    Replace conda-verify with docker-images
+    
+    The conda-verify repository has a recipe folder in it now, but the
+    docker-images repository doesn't, so it suffices our test needs.
+
+commit a45a7aea60107a058d6dc4ca1892212da1c0f23d
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 10:12:50 2017 +0530
+
+    Explicitly specify python as a build requirement
+    
+    This is required so that conda-build builds the package with multiple
+    python variants. See https://github.com/conda/conda-build/issues/2525
+
+commit 56ddd0c56814bfc27609f662960cebb6cdd21300
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 01:15:01 2017 +0530
+
+    Fix package name in test
+    
+    CB >=3.1 doesn't use hashes aggresively now.
+
+commit 137b57577a445bb8303e0406315700b06c6ef236
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 00:59:41 2017 +0530
+
+    Restrict version of networkx
+
+commit 2203bd80f058e365492cf5514ce4c7dadb444468
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Dec 9 00:11:00 2017 +0530
+
+    Bye Bye c3i-linux-32
+    
+    This was never used anyway. Now we compile 32 bit packages on 64
+    container.
+
+commit 33b59f1a8bc8e7552ffae8ac77a04e64204d1fc9
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Fri Dec 8 23:50:06 2017 +0530
+
+    Add support for compiling 32-bit packages on 64-bit container
+
+commit 1e4f0b8b9c6830e66ff809e3dabb6bbd2c33414c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Nov 28 10:08:44 2017 -0600
+
+    use 'latest' miniconda3 installer in docker image
+
+commit 943efa35976e88a2ef0035ed4a88af9c1d93b16c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Nov 28 09:41:49 2017 -0600
+
+    add linux compilers to docker image, so that they're cached
+
+commit d5af3a63d164722cac346d623adf6140d9b4567f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Nov 3 13:46:40 2017 -0500
+
+    support noarch artifacts used later through the pipeline
+
+commit c0f4fa9704719adb0780c27537ae10f061b0c3cc
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Oct 3 15:37:54 2017 -0500
+
+    improve peer job matching (needs conda-build > 3.0.23 or master)
+
+commit 03304b0f1011d8202a551f0684249b99ae6c7e50
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Oct 2 09:06:23 2017 -0500
+
+    update all packages when building docker image
+
+commit 569decdc32f1b9e59c99dda86d74be96754442d8
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 27 21:52:44 2017 -0500
+
+    fix url for pip install
+
+commit 2d79206159cb4e60ea965e3cfd079ad8a7921edb
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 27 21:46:19 2017 -0500
+
+    install c3i in docker using pip
+
+commit 80450ec7a7d247b28d78451c73232b303777384a
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 27 21:39:30 2017 -0500
+
+    match peers better by considering only used vars
+
+commit dadb7f29582e6e8f9866eaba1db43537bcf4c84e
+Merge: 4b65b01 f6f6c8a
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 27 16:38:41 2017 -0500
+
+    Merge pull request #59 from conda/nehaljwani-patch-1
+    
+    Point to the new installer, remove test channels
+
+commit 4b65b018a29a95103cbf912cf74e3f0a1b9d7105
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 27 16:36:23 2017 -0500
+
+    move only matching subdirs into indexed artifacts
+
+commit f6f6c8a2b50940c3863a7434a0d9a4d11f0da84e
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Sep 28 02:59:12 2017 +0530
+
+    Point to the new installer, remove test channels
+
+commit 1a4e28d93b321cd51fed43f8f540810a9b06189d
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 20 09:56:46 2017 -0500
+
+    don't return from graph building on first skip instance
+
+commit 4749fddf8c9fb74861fa0b97e4e0beabba2bb770
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Sep 19 23:01:16 2017 -0500
+
+    match variants better across builds in pipeline, simplify resources
+
+commit 7ff8d55cb28db8306a72c3f1c2499aa8fd798097
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Sep 19 11:53:16 2017 -0500
+
+    add ability to pass channel and variant config files as args to examine and one-off
+
+commit 5798bf37e4ba32a6691c1f948e997a060bc3ea3c
+Merge: bb60eae b9a6292
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Sep 19 09:13:12 2017 -0500
+
+    Merge pull request #58 from kalefranz/add-main
+    
+    add __main__.py
+
+commit b9a629266b81716bb66d27aca15912994c6adeb4
+Author: Kale Franz <kfranz@continuum.io>
+Date:   Mon Sep 18 15:28:21 2017 -0500
+
+    add __main__.py
+
+commit bb60eae2324ddc01c7b7356c096a9d0864cf1129
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Sep 13 14:26:17 2017 -0500
+
+    add test deps to resolution ordering, add c3i_test2 channel to top
+
+commit 6ed300f07bd8487d43070adb3fe0365e82247f98
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Sep 11 09:45:37 2017 -0500
+
+    bypass env checking in render; improve support for linux32 worker
+
+commit 3817a2a56faf331d8008042f04af42472c2893a7
+Merge: eef04d7 8cfd185
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Sep 11 09:42:43 2017 -0500
+
+    Merge pull request #57 from conda/also_make_recipe_dir_order
+    
+    Also make output_order_recipes_ file
+
+commit 8cfd185966f08f41e0a28a8a1d47c70a90bc79f3
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Mon Sep 11 15:39:21 2017 +0100
+
+    Also make output_order_recipes_ file
+
+commit eef04d7cb53e3dd20950c4dd53f445790d0fbcde
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Aug 28 14:42:34 2017 -0500
+
+    add worker name and conda info to build log. raise error on bad folder path.
+
+commit 62d447f793ede6ed367bd875fe1c463c3dc1e498
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sun Aug 27 02:02:22 2017 -0500
+
+    Locales are part of base image now
+
+commit 0253417061847b4b072942df50010f7c1eaf139b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Aug 26 17:56:05 2017 -0500
+
+    skip download of source after rsync to remote
+
+commit f9f5c0e8e4bda836b2b4a2ea6f36d55012af2d6a
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Aug 26 17:55:47 2017 -0500
+
+    change to conda/c3i-linux-64 from continuumio/conda-concourse-ci
+
+commit 15b9710370cbac60122002f87d59d19cdbe9b7f6
+Merge: 1d21b18 111e4e5
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 24 14:10:10 2017 -0500
+
+    Merge pull request #56 from nehaljwani/linux-32
+    
+    Various fixes for c3i-linux{32,64} images
+
+commit 111e4e5c34c0260346ac7682a209f9d0909e150e
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 24 13:07:33 2017 -0500
+
+    COPY op is not needed anymore
+
+commit 4e0ffb5da0f1ffcf751b14d75bd57524470b57da
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 24 13:21:58 2017 -0500
+
+    Remove conda-tracker; Install packages quietly
+
+commit 1d21b1820ca0bb6b91ac02c41d3de2516a4987c2
+Merge: feee95b b382167
+Author: Kale Franz <kalefranz@users.noreply.github.com>
+Date:   Thu Aug 24 13:03:47 2017 -0500
+
+    Merge pull request #54 from nehaljwani/linux-64
+    
+    Change installdir to /opt/conda; curl the installer
+
+commit b382167167c4fc76cf32e4c0473b888b45a897c7
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 24 13:02:19 2017 -0500
+
+    Change installdir to /opt/conda; curl the installer
+
+commit feee95b61aac3db4d586c7f1d1fc083b9564d636
+Merge: 20982fb c981fbf
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 24 12:36:22 2017 -0500
+
+    Merge pull request #47 from nehaljwani/linux-32
+    
+    Add Dockerfile for concourse-ci linux-32
+
+commit c981fbfce0a15592c9c7b6ee2dabbaaa9ad77c91
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Aug 19 05:01:39 2017 -0500
+
+    Add Dockerfile for concourse-ci linux-32
+
+commit 7f6ea6f87300d7367efcc4132ad7fd3258ec2bf9
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Thu Aug 24 12:16:07 2017 -0500
+
+    Move linux-64 docker image to c3i-linux-64 subdir
+
+commit 20982fbef78a8d93300bf75196764decbb5cac3f
+Merge: 705209d 9cdb69b
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Aug 23 13:17:21 2017 -0500
+
+    Merge pull request #53 from msarahan/omit_json
+    
+    omit json files from rsync of artifacts and source
+
+commit 9cdb69bc7ab7f3cfc2486e23bf4a69c2f8079748
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Aug 23 10:56:18 2017 -0500
+
+    omit json files from rsync of artifacts and source
+
+commit 705209d1b069fbe61de28c1a4813c3e6fd724a2c
+Merge: 514d8ef 0e27fcd
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Aug 23 10:01:08 2017 -0500
+
+    Merge pull request #52 from conda/ray_build_order
+    
+    Ray build order
+
+commit 514d8ef5ec02c66cdff9b4e41b6185a514ad9798
+Merge: 86fa1d0 5b5d93d
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Aug 23 10:00:38 2017 -0500
+
+    Merge pull request #46 from nehaljwani/add-libX11-devel
+    
+    Make runtime deps of CDT pkgs part of the container
+
+commit 86fa1d05d9bbf94d573a981e3a63787adccd81b2
+Merge: e76c044 a004a06
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Aug 23 10:00:09 2017 -0500
+
+    Merge pull request #49 from msarahan/simplify_config
+    
+    simplify config; display target platform info
+
+commit 0e27fcde0e0cd4c4839a38be3342ab359e528cfc
+Author: Ray Donnelly <mingw.android@gmail.com>
+Date:   Tue Aug 22 21:57:20 2017 +0100
+
+    Report cycles in reverse orientation only
+
+commit ef1f286d024dd53a5d0a032050b10101aaf2a6dd
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Aug 22 10:04:59 2017 -0500
+
+    output files with build order (flat) with output recipes
+
+commit a004a064c18d2772dfd0191e5ca1a1e30ac7a70e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Aug 19 10:40:52 2017 -0500
+
+    simplify config; display target platform info
+
+commit 5b5d93df534768980a65a5fae13be53f282d3728
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Fri Aug 18 17:56:35 2017 +0000
+
+    Make runtime deps of CDT pkgs part of the container
+
+commit e76c0440099a2d956394149ffb5585a686cfb66a
+Merge: 22636df 5226619
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Sat Aug 19 10:12:55 2017 -0500
+
+    Merge pull request #48 from nehaljwani/rsync-fix
+    
+    Specify rsync options correctly
+
+commit 52266194c4bd8aa91a6a8e3ca9c2188162892f03
+Author: Nehal J Wani <nehaljw.kkd1@gmail.com>
+Date:   Sat Aug 19 10:04:20 2017 -0500
+
+    Specify rsync options correctly
+    
+    Specifying rsync_opts explicitly overrides the default ones. In this case,
+    --omit-dir-times replaced -Pav, which caused no artifacts to be synced.
+    What we want, is a combination of both. Plus, since the source folder
+    could be a shared folder across multiple users, disable preservation of
+    permissions too.
+
+commit 22636df9c2180cb33dae67795f87f3f4f1417dbe
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Aug 14 15:19:13 2017 -0500
+
+    bug fixes from 2017-08-14 workshop
+
+commit d54a45f524c415e9a292e78dfd491e439f628093
+Merge: d984a2a 2d8fb97
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Aug 7 07:52:09 2017 -0500
+
+    Merge pull request #45 from msarahan/one-off
+    
+    initial implementation of one-off command
+
+commit 2d8fb973e869218cd18fd3517d12b2eb5ed76bee
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Aug 7 08:35:14 2017 -0400
+
+    add test for one-off functionality
+
+commit 43b8d084d577cbb59a7f2a022c5e065a4937a50c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Aug 6 12:59:15 2017 -0500
+
+    fix notion of what is used in recipe to account for jinja2
+
+commit 111d584c883426706a5fd1be9a8397f36b2d2b3d
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Aug 4 14:29:03 2017 -0500
+
+    initial implementation of one-off command
+
+commit d984a2af0c305f12d209bf770767f20fb6e0607a
+Merge: 683a21d 91e47ba
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Aug 3 10:25:51 2017 -0500
+
+    Merge pull request #43 from msarahan/add_source_caching
+    
+    implementation of source caching as build step
+
+commit 683a21def193da14980f00309d89512e7dbf1a4f
+Merge: 9542cb7 0ad1b49
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Aug 3 10:25:22 2017 -0500
+
+    Merge pull request #44 from mandeep/submodule-tracking
+    
+    Add bash scripts to package_data in setup.py and add pytest-mock as test requirement in meta.yaml
+
+commit 0ad1b49df405aa14096b50fc41e23c5d16786e36
+Author: mandeep <mbhutani@continuum.io>
+Date:   Thu Aug 3 10:19:22 2017 -0500
+
+    Add bash scripts to package_data in setup.py and add pytest-mock as test requirement in meta.yaml
+
+commit 91e47baf557e3d273f1a4c67f9acf6691c13addb
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Aug 3 09:42:12 2017 -0500
+
+    fix task count in downstream limit.  Fix resource count test.
+
+commit 4af0f395db52220eb3336da7e32d838f5c6888df
+Merge: 17d1999 88a8d10
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Aug 2 09:58:44 2017 -0500
+
+    Merge pull request #1 from mandeep/add_source_caching
+    
+    Add rsync-output resource with related config to execute.py and config.yml
+
+commit 88a8d101e041145073bc036c9673b2ae52c6bcda
+Author: mandeep <mbhutani@continuum.io>
+Date:   Wed Aug 2 09:53:12 2017 -0500
+
+    Remove base-name directory path from intermediate-source-folder
+
+commit ba098d4817c550e343ea2129d48ebbbf83826e9b
+Author: mandeep <mbhutani@continuum.io>
+Date:   Wed Aug 2 09:43:41 2017 -0500
+
+    Add rsync-output resource with related config to execute.py and config.yml
+
+commit 17d1999942b43473f5bddebf5b0726680ceba336
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Aug 2 09:31:58 2017 -0500
+
+    partial implementation of source caching as build step
+
+commit 9542cb7e40990fc522dbbf35358cf1c9d2071d0f
+Merge: 1a1e259 bf10877
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Jul 21 16:29:03 2017 -0500
+
+    Merge pull request #39 from mandeep/submodule-tracking
+    
+    Added a way to examine submodule changes
+
+commit bf108773f1d2f104ea5a487977366a2b46400f09
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jul 21 16:05:33 2017 -0500
+
+    restore tests for git file functionality
+
+commit 6affecf623d54507c9b98c368b63c07fc41132d9
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jul 21 16:01:44 2017 -0500
+
+    add setuptools as runtime dep for pkg_resources
+
+commit dc2304b31545b035b2e05d6c215e26f649b7f5cf
+Author: mandeep <mandeep@users.noreply.github.com>
+Date:   Fri Jul 21 15:37:26 2017 -0500
+
+    Add git_rev and stop_rev to submodule functions and fix relevant tests
+
+commit 213755ea9cb62604bf63bf6dc3f1d1235c0349aa
+Author: mandeep <mandeep@users.noreply.github.com>
+Date:   Fri Jul 21 15:36:27 2017 -0500
+
+    Replaced HEAD~1 in git command with command line arg
+
+commit 86305ad2ab8505ded5b5a8bc1e32d283e8d7f363
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jul 21 12:21:51 2017 -0500
+
+    remove git file change detection; change tests accordingly
+
+commit d492df097e5ee96234eea757dfa163a67908f26c
+Author: mandeep <mbhutani@continuum.io>
+Date:   Fri Jul 21 11:59:22 2017 -0500
+
+    Added docstrings to submodule tests
+
+commit 1a1e259e3ec2ae8908e6aed349848cb3e1093710
+Merge: d26adbc 5a1deac
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Jul 21 11:37:48 2017 -0500
+
+    Merge pull request #42 from conda/fix_version_association
+    
+    trigger plan director when config changes
+
+commit 5a1deac0d31d1f0462eb3d80de24a7f41e7b3cad
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jul 21 11:27:30 2017 -0500
+
+    trigger plan director when config changes
+
+commit 16dc483f8a93dbcedc8dd3ecccd8f020b841985e
+Author: mandeep <mbhutani@continuum.io>
+Date:   Thu Jul 20 14:30:42 2017 -0500
+
+    Uses HEAD~1 in other scripts and added commits in tests
+
+commit 372980541601d702f06663194f992ba615f900eb
+Author: mandeep <mbhutani@continuum.io>
+Date:   Thu Jul 20 10:43:30 2017 -0500
+
+    Changed new-submodule script to compare to previous commit and added relevant test
+
+commit d22509f0c7ded4aaa2d5c19e748dce06f6e4d889
+Author: mandeep <mbhutani@continuum.io>
+Date:   Thu Jul 20 08:49:08 2017 -0500
+
+    Added double quotes around expansion to prevent word splitting
+
+commit d415bff3c5a87af2d678042318b0df7829ad5242
+Author: mandeep <mbhutani@continuum.io>
+Date:   Wed Jul 19 01:03:47 2017 -0500
+
+    Removed double quotes so that files changed appear on same line as submodule
+
+commit 424c9514bbcfa04eda7c1f70ce01cbeb75bab41a
+Author: mandeep <mbhutani@continuum.io>
+Date:   Tue Jul 18 23:19:12 2017 -0500
+
+    Fixed flake8 issues in compute_build_graph.py
+
+commit 9870ac8e6c5ccbb24eb234f814385cf641db4008
+Author: mandeep <mbhutani@continuum.io>
+Date:   Tue Jul 18 22:18:33 2017 -0500
+
+    Refactored script so that only submodules with changes show
+
+commit e108ad41eb9cea14c7e979c932c766cb9ef92e53
+Author: mandeep <mbhutani@continuum.io>
+Date:   Tue Jul 18 16:16:57 2017 -0500
+
+    Added ability to check for new submodules and added a related unit test
+
+commit be14ecd2bbbe5b4418905604b2e00a6e23d686ab
+Author: mandeep <mbhutani@continuum.io>
+Date:   Tue Jul 18 14:13:46 2017 -0500
+
+    Fixed shellcheck issues in diff-script.sh
+
+commit 21d049b6631ed0bbb0451328f5643aa5fdeb10b3
+Author: mandeep <mbhutani@continuum.io>
+Date:   Tue Jul 18 13:21:34 2017 -0500
+
+    Fixed indentation issues in diff-script.sh
+
+commit fe533f32418c0b43e4420eb93324bfdb672b770e
+Author: mandeep <mbhutani@continuum.io>
+Date:   Mon Jul 17 13:00:06 2017 -0500
+
+    Added a way to track submodule changes
+    
+    Switched from set to list for submodules changes
+
+commit d26adbc4a15af224e9a8b13cb787d112d0416e6c
+Merge: 517fb32 db89fdf
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Jul 20 08:46:26 2017 -0500
+
+    Merge pull request #41 from msarahan/fix_version_association
+    
+    refactor _buildable to better handle boolean expression specs
+
+commit db89fdfc74b06dbc90855e3f8520e9baaf120b1c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jul 20 08:38:24 2017 -0500
+
+    refactor _buildable to better handle boolean expression specs
+
+commit 517fb3247f32ba9362d304feabb792a1da6ca317
+Merge: 7530405 7b5755f
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Jul 19 22:58:12 2017 -0500
+
+    Merge pull request #40 from msarahan/fix_version_association
+    
+    fix version association among packages
+
+commit 7b5755fc8ffbcfca5e4798057dae203fda69bda3
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jul 19 13:56:40 2017 -0500
+
+    pin pytest-xdist
+
+commit c2ee20de6d32e0c0ac0ef60c90ed43545ba9c962
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jul 19 13:50:51 2017 -0500
+
+    fix version association among packages
+
+commit 7530405d740cf296c369f9c8aa9c1f8f4297c4db
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jul 18 11:16:32 2017 -0500
+
+    set locale in build container
+
+commit aeda69e185ec9ee34e5b53bbf10502deab8598eb
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jul 14 15:13:41 2017 -0500
+
+    name actual build task just 'build'
+
+commit f962e2c8624c8e4daf4885da2299395de7219e3e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jul 11 18:15:39 2017 -0500
+
+    change docker image targets to continuumio
+
+commit 97f75856f5d31b731c5c0f446be1aa35d8e35b51
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jul 11 17:59:04 2017 -0500
+
+    HACK: ignore nodes without 'meta' key
+
+commit cb1aa5821d442402d202a157af27a9c7dc1bcbd1
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jul 11 13:38:50 2017 -0500
+
+    fix Miniconda installer copying in docker image
+
+commit d09cc1abaa8f3820967f1b05ad3f4dc0ec9d15c5
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jul 11 13:14:23 2017 -0500
+
+    point docker and anaconda.org at official channels
+
+commit d1552152aee99502dd32a76012a3c4a4880f57d3
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Jul 3 14:33:46 2017 -0500
+
+    remove update all step from docker setup
+
+commit 0563bd39fc48136fb38cbca1cc33f3047598f432
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Jul 2 12:01:37 2017 -0500
+
+    add wget and patch to base image
+
+commit 2e6fcc722c4f84eb1ab74392a09ee5255c43541b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Jul 2 11:40:28 2017 -0500
+
+    fix tests.  try to skip finalization for speed.  add rsync to docker.
+
+commit 19e94ec7d33d0925777508b316b251283adb85f7
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Jul 2 11:19:08 2017 -0500
+
+    install ssh with yum
+
+commit 5035a427092f14d41afcdc4d73e2d37e67514dcb
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 18:39:11 2017 -0500
+
+    run docker as root
+
+commit 08a97c54e143b98c1778efb86a5190f6fa2bc915
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 18:20:53 2017 -0500
+
+    move conda config setting into install script
+
+commit 0e0446008653bf4a123f17e01ee811f0bb0fcac6
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 18:08:01 2017 -0500
+
+    set PATH in dockerfile
+
+commit 896cc4a6703e804c54e59b5df392258b4fceaf9b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 18:05:32 2017 -0500
+
+    remove tini from dockerfile
+
+commit 167059b4b84c60118129e46bbdbb14cae4cec2b4
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 17:54:58 2017 -0500
+
+    another try at PATH for conda
+
+commit 3f7a22177a6f31de2939b285aaafe4d0033dcc2c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 17:51:21 2017 -0500
+
+    source bashrc after setting PATH
+
+commit ddeaffcb068dde8ec4a790861d2229ac678baf0c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 17:46:14 2017 -0500
+
+    install util-linux for getopt
+
+commit e1e3057888aa5b04e4e63913dd92c628658dc91e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 17:25:50 2017 -0500
+
+    exec install with bash
+
+commit 048af2320f18da4355fc8ba7ec76b62e0ee12346
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 17:16:52 2017 -0500
+
+    remove set -e -x
+
+commit 8b39526184dee7b9e70471c1930ee56c42ed845b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 17:14:46 2017 -0500
+
+    try to remove newlines from installer path
+
+commit dadcc626bf52a835c1c600572af7b5f77e5a8619
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 16:59:54 2017 -0500
+
+    debug install command
+
+commit 0262d614f63be2f4bfc5b42e8d41db7b4b10867a
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 16:55:52 2017 -0500
+
+    debug install command
+
+commit dce0b3721a9c9a47232c5110ef1d101cb985e735
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 16:48:56 2017 -0500
+
+    debug install command
+
+commit 7eb354922187e55721432478d0fcb36405fa6e17
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 16:46:37 2017 -0500
+
+    debug install command
+
+commit 35e9946618a2367d7337de06ef6aa292a6c732aa
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 16:44:24 2017 -0500
+
+    more tries on install miniconda script
+
+commit 861d0c7fae169aef0c414d599c88defe73172f1e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 16:34:43 2017 -0500
+
+    set -e -x
+
+commit 6f7fecdbbb0b73f50c5461e4bac0f1a3af7e0ef0
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 16:17:53 2017 -0500
+
+    call bash differently
+
+commit d07863908e6f6d3fda5415341e3f9ffeca54de0f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 16:12:32 2017 -0500
+
+    run install script differently
+
+commit 13ccaa47ff8d12e77ca4ea40b07f575c6a9c3b65
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 15:52:43 2017 -0500
+
+    echo install to debug fname
+
+commit 49a2b1095ba22ebca322656129f471fcf358d3fb
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 15:48:57 2017 -0500
+
+    add dev user, not newuser
+
+commit 8cde996bd42b9e65fb665f256442b8109d43156f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 15:26:17 2017 -0500
+
+    user add dev
+
+commit e01d9314bb50cbcf8ff759b0b5bf6d6a6d9653fe
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 15:07:57 2017 -0500
+
+    tweak miniconda install script
+
+commit 397918928a092e8636c4ad9a538a0f54c32e7751
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 14:58:06 2017 -0500
+
+    debug miniconda install
+
+commit a6665d6bd69a671cdd7b5aeb8e4176f330797945
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 14:54:54 2017 -0500
+
+    ls is not s, it's ls.
+
+commit 89379b2850c4569c3f2297f1109d501eab9219e0
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 14:53:27 2017 -0500
+
+    fix miniconda location
+
+commit 9ea6c1b1b28573c0526e5a226f97d58442130f05
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 14:14:01 2017 -0500
+
+    tweak copy of miniconda
+
+commit 981afdb33b8ed7fd4f59b4859d611d1196bfc727
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 14:11:17 2017 -0500
+
+    tweak copy of miniconda
+
+commit 9b9d479d2522a683330bb55f8d1cb9122a5742d5
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 14:08:01 2017 -0500
+
+    tweak copy of miniconda
+
+commit a2c22e30876db4692f238da79bce1a62d5d3ab8e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Jul 1 14:03:39 2017 -0500
+
+    tweak docker build to use locally downloaded miniconda
+
+commit 448f3913879cb7780d1ae0aae3c4c8defe3c1421
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 23:17:13 2017 -0500
+
+    move arg to top of dockerfile
+
+commit f082c0eb6746c248cbc50725cc0ed5a59c521578
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 23:07:14 2017 -0500
+
+    put ARG back in dockerfile
+
+commit cb761121ed9cf4c6c5d67daec5edb65174803570
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 23:03:39 2017 -0500
+
+    moar token debug
+
+commit cf709a91907f26f33b3b995f841c1c547c5ca3c5
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 22:58:28 2017 -0500
+
+    move build_args to put params in dockerfile
+
+commit cb1aac4536e3e3726cd0de26570d39e0fe3ff6cd
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 22:37:55 2017 -0500
+
+    add ARG back in, but without arg for arg
+
+commit a2e771d2b92699955d5cfd273dbfcbcf9ce0c6f1
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 22:23:39 2017 -0500
+
+    remove ARG from dockerfile
+
+commit 5044b7eea4aeae33e827f77bc9026648bd1cb789
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 22:21:32 2017 -0500
+
+    debug token passing
+
+commit 82ef0813e93c2cc6a66c2393fb4361b0cf81b51f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 21:57:18 2017 -0500
+
+    remove docker dir from copy, keep WORKDIR for build_scripts
+
+commit ac009e02683bf0ced79f8487e2039ad2aafa7ede
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 21:48:28 2017 -0500
+
+    tweak dockerfile install script path
+
+commit 6bc59977c9b3d71a79883e25d601f96aa12fed07
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 21:38:09 2017 -0500
+
+    move conda commands after conda install (derp)
+
+commit 2cbb3637a43dfa2d2599420f8565d9f3a0a990a3
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 30 21:34:37 2017 -0500
+
+    try docker image with (private) experimental miniconda
+
+commit 7ae49464da2c330ae39de71113725ed48c2a5a82
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 28 15:26:52 2017 -0500
+
+    handle splitting and merging of multiple-output recipes
+
+commit 4cc2eb38b72b0bee0dbeb22c2a45e513a52d8ace
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Jun 25 15:35:13 2017 -0500
+
+    | didn't work in index command.  Try without.
+
+commit ab7af30ab1c249fd5089650c23f3abe706f5d30e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Jun 25 15:16:12 2017 -0500
+
+    different way of doing index that might work
+
+commit 4f7ea1552ca7a093ce5e44a0346a5912b14b223e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Jun 25 14:54:30 2017 -0500
+
+    fix args for update index note being list
+
+commit 351ba913d3419df74f95b66962ccde3cd9d54334
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Jun 25 14:26:57 2017 -0500
+
+    add task to update index for artifacts folder
+
+commit 2ed7f91e48462ed91989b7bc4c137c45aa2925b9
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 23 21:24:23 2017 -0500
+
+    fix wrong reference to rsync-intermediary
+
+commit 400e5ffe350e6348bdf35f82f0aab92c35da545a
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 23 21:21:47 2017 -0500
+
+    split out intermediate folders more
+
+commit f9a1d09202b0cb1413a5079287948324a42acd35
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 23 18:09:40 2017 -0500
+
+    use msarahan customized rsync resource
+
+commit 32cbce1beed84fd1e2a5e8d680177520ddcee949
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 23 14:51:17 2017 -0500
+
+    fix plan naming and tests
+
+commit e0daec58402463b64751090a2bab594fa4c5aedc
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 22 15:16:13 2017 -0500
+
+    fix recipe output for simplified structure
+
+commit 436bc7f8f4e62267ebc5c53ebb6f0c33b8936b2b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 22 14:58:10 2017 -0500
+
+    remove stupid ipdb
+
+commit ea9c44d2cbeb2ab6cc10521c96420b40a7e91717
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 22 14:50:45 2017 -0500
+
+    simplify build runs & dependencies
+
+commit 41b89346acbe406f7b92334988e812d4079e1b28
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 22 12:11:08 2017 -0500
+
+    clean up passed package input logic
+
+commit febce07724d00d4eef67b69327796bdb271c6dd9
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 22 09:16:42 2017 -0500
+
+    fix build output path
+
+commit d9a3639b15f871d67496eb6fa0b02b95a60f131d
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 22 09:15:39 2017 -0500
+
+    fix build rsync path
+
+commit f1eaeccfe206b0f71f74891d0539a71b7bf94b53
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 22 09:02:20 2017 -0500
+
+    properly add rsync-artifacts input only when used
+
+commit d16fb80c624ae6609bf830ba0e672d55195f69d6
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Jun 22 08:24:30 2017 -0500
+
+    remove rsync-artifacts when no artifact deps exist
+
+commit c30fc3a59dd965e6cb5a4ff57a31558ba26fdb25
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 17:41:39 2017 -0500
+
+    fix triggering for artifacts
+
+commit aa262acd92f79d4147a9ce0346738d5f3f732be3
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 17:05:58 2017 -0500
+
+    fix wrong rsync-artifacts name
+
+commit cc7c385ceaf258f6feb55133bd9cfa70b46009a5
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 16:48:38 2017 -0500
+
+    shuffle artifacts to a slightly different rsync place, to avoid recursive triggering
+
+commit 40b31d2e13713170ac431f9957007cb5bd759f0a
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 15:55:29 2017 -0500
+
+    disable uploads temporarily (still rsync artifacts)
+
+commit 9e4946a14747c1ada55cba70d78c84de6a15007f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 15:40:58 2017 -0500
+
+    try to rearrange output folder so that rsync resource puts artifacts on rsync server
+
+commit d58346d848ad8c68a7551fe22df7f9072607b23f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 15:31:09 2017 -0500
+
+    fix input to upload tasks
+
+commit 526aa2109cb0064f2bad47ec599e326734113cba
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 15:18:44 2017 -0500
+
+    fix test directly raising wrong error
+
+commit 7a12408e2db52d32bfc2020a15c85d1849a7ba4b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 15:09:57 2017 -0500
+
+    test directly with build
+
+commit f762c5edecb02cefe78aab04bafb7d020371a082
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 14:55:34 2017 -0500
+
+    shift to using inputs/outputs within a job
+
+commit 7cc727962bbeb537509b5831141fb86cae49e480
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 14:52:27 2017 -0500
+
+    fix missing 'builds' in build paths
+
+commit f94781af5469db609cfb86eb044d8a0163800af0
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 14:33:18 2017 -0500
+
+    add make to docker image
+
+commit dd02f02dda29897c7e4d8843dc80f77addaa13c7
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 14:12:23 2017 -0500
+
+    disable version path when getting rsync - otherwise incomplete contents pulled
+
+commit 0488377f74c09db9750a9e6076037f0001fa4741
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 21 12:27:27 2017 -0500
+
+    consolidate build/test/upload jobs into single job per package
+
+commit b2cdca221fe0055b9e7f7f1de801eb9cd55661ba
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 20 12:53:20 2017 -0500
+
+    more path fixing for rsync
+
+commit 1d3604495c0f06d08d88dd0eabb01981ea29137a
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 20 11:56:47 2017 -0500
+
+    fix git identifier differing between examine and submit
+
+commit 90d0c5721a8565a53832d360b47bf8317b43c014
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 20 11:39:31 2017 -0500
+
+    more fixes for output handling with new rsync
+
+commit 639f644aa8b027675a5f8a31b348f5e8b4d42ceb
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 20 09:52:36 2017 -0500
+
+    fill in pipeline file template
+
+commit c75ae7f26b55aba766399469a303751d16c6dcd4
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 20 09:27:47 2017 -0500
+
+    fixup rsync file output
+
+commit 2fc1af5ad7785e8753201c002109a59e7d7d9cc2
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Jun 19 19:03:22 2017 -0500
+
+    prevent codecov from commenting on PRs
+
+commit 061b45849d804752a5b4443139de10c9e107a42e
+Merge: 786e3b3 9e2d5b7
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Jun 19 19:00:22 2017 -0500
+
+    Merge pull request #38 from msarahan/use_rsync_instead_of_s3
+    
+    use rsync as intermediary rather than s3
+
+commit 9e2d5b79d30819b6e896575aa9608e0c9696456d
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Jun 19 15:21:08 2017 -0500
+
+    use rsync as intermediary rather than s3
+
+commit 786e3b3404ed9b217724f2090753e3c971601326
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 16 20:38:04 2017 -0500
+
+    fix extract getting filtered out
+
+commit 20ce5856938d682c945d199fb66c13d2715e7e8f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 16 16:07:46 2017 -0500
+
+    simplify nesting; fix too much replacing of 'test'
+
+commit 670e3da35bc9e258e8a066486c2fa9955290c235
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 16 14:08:05 2017 -0500
+
+    fix consistency of edge direction
+
+commit 73f83b28be2685d02058eb860b8a763962a92ee8
+Merge: 3c18873 0981c7a
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 16 09:26:36 2017 -0500
+
+    Merge pull request #37 from msarahan/fix_hierarchy
+    
+    deduplicate tasks.  add forgotten intradep test files
+
+commit 0981c7aea098ac0a6a3d6c293502ec34e6cf8727
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Jun 16 09:14:24 2017 -0500
+
+    deduplicate tasks.  add forgotten intradep test files
+
+commit 3c18873ef4f5298d40b5aa407c66832ef52405f8
+Merge: 111469a b82c9e7
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 14 17:56:11 2017 -0500
+
+    Merge pull request #36 from msarahan/fix_hierarchy
+    
+    fix extra dependency edges not making it into the yaml expression
+
+commit b82c9e702b040e5459c2a6a7f17bf2f0870d3a29
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 14 17:55:41 2017 -0500
+
+    fix extra dependency edges not making it into the yaml expression
+
+commit 111469aa7bbdc687772d2c1ee9c15c8f7c0a81d9
+Merge: 49f4123 298d689
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 14 16:17:12 2017 -0500
+
+    Merge pull request #34 from msarahan/restructure_docker
+    
+    restructure dockerfile for more up-to-date fly and speed
+
+commit 298d689bde6d0349fbd1d614d44b9b431761340d
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 14 16:16:52 2017 -0500
+
+    restructure dockerfile for more up-to-date fly and speed
+
+commit 49f4123091cfe57ead8103aa50e52fce185a2dba
+Merge: fd7b95d 5e15a46
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 14 15:45:23 2017 -0500
+
+    Merge pull request #33 from msarahan/fix_config_file_location_conda_forge
+    
+    fix conda_build_config.yaml being written to the wrong place
+
+commit 5e15a46f7c29b18930adc548ca49b0013de586db
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Jun 14 14:18:10 2017 -0500
+
+    fix conda_build_config.yaml being written to the wrong place
+
+commit fd7b95d357250ab02d662eebf2d867f8286705f0
+Merge: b7a2244 789ca77
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 16:07:15 2017 -0500
+
+    Merge pull request #32 from msarahan/fix_config_output_dir
+    
+    fix where conda_build_config.yaml is saved
+
+commit 789ca7715f0ac4eaf3e248fd86991436ad55a7a4
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 16:06:30 2017 -0500
+
+    fix where conda_build_config.yaml is saved
+
+commit b7a2244653fe032f8e081c85c2ab98a8359a1148
+Merge: 7808fdd e9b7842
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 15:36:42 2017 -0500
+
+    Merge pull request #31 from msarahan/add_intradependency_edges
+    
+    add intradependencies for builds within a batch
+
+commit e9b78420a0a80eb7cbaae1219ee00db17289cf06
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 15:05:02 2017 -0500
+
+    add intradependencies for builds within a batch, even if they are not strictly necessary to build
+
+commit 7808fdd24bdf2adf075fe97996179a5413a3c48a
+Merge: da5662b b695460
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 14:16:23 2017 -0500
+
+    Merge pull request #30 from msarahan/add_rdonnelly_channel
+    
+    add rdonnelly to anaconda.org channels
+
+commit b695460601aecc9e4454cead73580e2487225c97
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 14:14:30 2017 -0500
+
+    add rdonnelly to anaconda.org channels
+
+commit da5662b6b6466d1d5709b9ac553be47204a1bb92
+Merge: 86b6990 5a293e7
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 14:01:57 2017 -0500
+
+    Merge pull request #29 from msarahan/fix_get_build_index_cb3
+    
+    fix incorrect get_build_index call
+
+commit 5a293e714abce6b7ddd2467d10f24a9eb87cb445
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 14:01:29 2017 -0500
+
+    fix incorrect get_build_index call
+
+commit 86b699078e59b829e0eb6f3c7f010939711f18a0
+Merge: 5a4d4aa 746ee83
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 13:49:08 2017 -0500
+
+    Merge pull request #28 from msarahan/fix_output_recipes_containing_variant
+    
+    fix output paths and tweak tests for CB 3.0.0
+
+commit 746ee8316424962d3c8f5ccb0699221cc82865a1
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Jun 13 11:49:52 2017 -0500
+
+    install conda-build from conda-build master
+
+commit 3d01affaea7295c4802ece3b97250ff012a88051
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Jun 12 15:13:08 2017 -0500
+
+    fix output paths and tweak tests for CB 3.0.0
+
+commit 5a4d4aacbcb90d3a00a446849972ca968899cb9d
+Merge: 5e61204 f7b3257
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu May 25 14:55:38 2017 -0500
+
+    Merge pull request #26 from msarahan/fix_output_path
+    
+    fix output relative path
+
+commit f7b3257a3098ab6cf50187d7d17166f9802fed7c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu May 25 14:01:23 2017 -0500
+
+    fix output relative path
+
+commit 5e612044624254bc1f78a23b0f815195f4c6afbf
+Merge: 9f5d550 6534d12
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu May 25 12:00:53 2017 -0500
+
+    Merge pull request #25 from msarahan/improve_coverage
+    
+    provide more info when package is not installable
+
+commit 6534d1274fb37a70bad2b86cf5bfbb490f341b3c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu May 25 11:51:26 2017 -0500
+
+    fix tests for conda-build 3.0.0rc1
+
+commit e4b451189bd38d0a61bd68c993e0257e2eda9754
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu May 25 10:15:25 2017 -0500
+
+    provide more info when package is not installable
+
+commit 9f5d5508e5f0ed93d6f9fc1aa39feda79dea984c
+Merge: 2a3455e 77e8f4d
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon May 22 19:03:24 2017 -0500
+
+    Merge pull request #24 from msarahan/improve_coverage
+    
+    improve test coverage.  Restore channels based on uploads
+
+commit 77e8f4d41b064fd3eaae43fe119a023e02e597af
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon May 22 18:22:59 2017 -0500
+
+    improve test coverage.  Restore channels based on uploads
+
+commit 2a3455e11ad78dfe0ec58526cf73e3a3fe2e81f7
+Merge: 4dc1da2 a447fed
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu May 18 09:13:57 2017 -0500
+
+    Merge pull request #23 from msarahan/remove_env
+    
+    remove env - use conda build variants for any env vars
+
+commit a447fed50b5cb564922da95b2867a8377aca6391
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu May 18 09:10:24 2017 -0500
+
+    remove env - use conda build variants for any env vars
+
+commit 4dc1da2f0426d375b47933ae3d1a97a30bc8d41d
+Merge: c604bd9 a3b4129
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed May 17 22:26:33 2017 -0500
+
+    Merge pull request #22 from msarahan/fix_version_not_found
+    
+    fix version not being picked up due to cwd change
+
+commit a3b4129a20004d9c0f80427d161217c768540e27
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed May 17 21:59:16 2017 -0500
+
+    fix version not being picked up due to cwd change
+
+commit c604bd9d322f6be0e87edab5903f87f055860f0b
+Merge: c8a5f5c c2d64d0
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed May 17 15:54:46 2017 -0500
+
+    Merge pull request #20 from msarahan/remove_old_config
+    
+    remove old config from matching name when pushing new config
+
+commit c2d64d0185bff0fca99d63e1a2cc1350b44e6c1b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed May 17 15:00:34 2017 -0500
+
+    fix build string from placeholder metadata yielding unsatisfiable packages
+
+commit 7a2f81e95179700623ea04641ddbc0e5254d534f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed May 10 12:45:04 2017 -0500
+
+    remove old config from matching name when pushing new config
+
+commit c8a5f5cb06ec0cc4b269143e0ba2c9b315c1e08f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed May 10 11:46:58 2017 -0500
+
+    add version in notice about inability to install/build dep
+
+commit 3ac46320a0644708b90f39471813d2e8b7133690
+Merge: aa117d9 80969ba
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed May 10 11:01:55 2017 -0500
+
+    Merge pull request #19 from msarahan/fix_channel_usage
+    
+    fix improper handling of return from conda-build get_build_index
+
+commit 80969ba08624705b9cd156bd442f3a85336df6ed
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed May 10 10:58:56 2017 -0500
+
+    fix improper handling of return from conda-build get_build_index
+
+commit aa117d945b9a156f462342efc298cb3e1cfbbfd1
+Merge: 2634249 909055d
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed May 10 10:46:21 2017 -0500
+
+    Merge pull request #18 from msarahan/fix_channel_usage
+    
+    use conda-build's get_build_index function rather than conda's get_index
+
+commit 909055ddc1ec1ab791855fc7ee69e0786c003ca8
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed May 10 10:25:12 2017 -0500
+
+    use conda-build's get_build_index function rather than conda's get_index
+
+commit 263424919468c26ae3b3bb246e407cffc024705f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon May 1 10:19:32 2017 -0500
+
+    update gitignore
+
+commit 3dde698178e13d27d058aadbe0216e059182403c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Apr 28 09:54:13 2017 -0500
+
+    experiment with Concourse building c3i docker images
+
+commit b70cdee47cde8802776aa08a836c566bf8b08fd5
+Merge: a05fafa 0245f7a
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Apr 25 15:33:06 2017 -0500
+
+    Merge pull request #15 from msarahan/master
+    
+    remove pin on pyflakes from travis
+
+commit 0245f7a8d182a23a3468da6af74c206c7e0a8543
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Apr 25 15:26:07 2017 -0500
+
+    remove pin on pyflakes from travis
+
+commit a05fafaafae24bb0609b3923efa8ed875a7aa8b4
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Apr 25 14:56:59 2017 -0500
+
+    fix expand_run_all_steps - was exiting loop early.
+
+commit 69bf753f0c2de25a5c6b3294b4c2eef6143a090e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Apr 25 13:44:45 2017 -0500
+
+    change conda-build version req to allow pre-release 3.0 builds
+
+commit ceeb1d8b3890026509e2ea66767ae1f04b38a44c
+Merge: 0e6b4ce a7661c3
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Tue Apr 25 11:04:15 2017 -0500
+
+    Merge pull request #14 from msarahan/rework_pipeline_submit
+    
+    Rework pipeline submit; add conda-build 3 support
+
+commit a7661c35b98db0ece896d0afdabaf56aa519b294
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Apr 24 17:47:24 2017 -0500
+
+    fix test_expand_run_all_steps_down not going all steps
+
+commit c600e110f9aba781e79722ad5ff8e2f658d59882
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Apr 21 15:58:46 2017 -0500
+
+    try to fix bad platform in mock resolve data
+
+commit 64685b2f8c70d74dee9d7fefdd2207a542cc53a0
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Apr 21 15:14:33 2017 -0500
+
+    install conda-build 3.0 from conda-canary until it is released
+
+commit fbb62d480a54a11b91be8a5fdffb418f5576a00d
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Apr 19 15:34:17 2017 -0500
+
+    conda 4.3 compatibility
+
+commit 8ed64412a4a6dc73df28683d81a55fe3e0e1a0d5
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 28 22:13:27 2017 -0600
+
+    fix hash stuff from conda-build 3
+
+commit 1199942dd97ecd59b10ebef058d4bdeb80d4c806
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 28 14:11:26 2017 -0600
+
+    rework for conda-build 3.  Fix missing subdirs in folder paths.
+
+commit 45c3fc0a9ae1d84387b23cbf8b2f8954a12fb4ee
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 7 14:00:56 2017 -0600
+
+    impose conda<4.3 constraint for now
+
+commit a5be9c8930edf16265e651bf6195018dfe6dc5f5
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 7 13:31:29 2017 -0600
+
+    python3 test fixes
+
+commit be90f52e7b916317f8ea67efea3c9b16f8dbd4a1
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 7 12:56:16 2017 -0600
+
+    create a noarch output folder if none exists in consolidate_packages
+
+commit 05fe02beea7e2ddccbe10733cd02361ead64d670
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Feb 7 12:55:42 2017 -0600
+
+    fix infinite recursion when no version specified for step dependency
+
+commit 0e6b4cec59469b39d426e83037c5d21be95b073c
+Merge: a7acf94 f324f54
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Dec 12 22:06:19 2016 -0600
+
+    Merge pull request #12 from msarahan/rework_pipeline_submit
+    
+    use c3i to submit execute pipelines, for unique names
+
+commit f324f546341cd6c4032e503a752c2bfeab3f6cae
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Dec 12 20:30:07 2016 -0600
+
+    fix py35 tests - called_once not exists
+
+commit c83616bcae4719bc8fc028b8fed0db19cf1fe179
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Dec 12 19:56:23 2016 -0600
+
+    fix debug test.  Fix branch name length.
+
+commit 390c651264edd6de017bc768ea3a996f7d7bc244
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Dec 12 17:16:24 2016 -0600
+
+    fix loss of branch tracking with getting git rev
+
+commit b773153176c3675915a441bc57f7da3a25293209
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Dec 12 17:08:36 2016 -0600
+
+    fix up upload channels
+
+commit e5760debb0e8c3ce8006b0b3d3f49f08190f64f3
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Dec 4 22:12:29 2016 -0600
+
+    add upload channels to build/test channels.  Fix lots.
+
+commit 67f9074a44f9b8780e8af31986ba6ccc748804b7
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Dec 1 15:07:11 2016 -0600
+
+    fix some regex tests
+
+commit dd033382e059e7e8cf3c4e3ef4bbba77471fabed
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Dec 1 14:30:49 2016 -0600
+
+    submit second job with c3i
+
+commit 91c8ea829d984c90497072d9ed620f4cf33f581c
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Nov 29 11:35:03 2016 -0600
+
+    use c3i to submit execute pipelines, for unique names
+
+commit a7acf94b94ba586170fd4d92287210d1dfa0b584
+Merge: da10413 9f20235
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 28 10:27:49 2016 -0600
+
+    Merge pull request #9 from msarahan/fix_public
+    
+    fix public argument.  Add test for s3-archive regexp
+
+commit 9f20235dfe9b0c1556d7a169e35ffbb8c99a7953
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 28 10:25:05 2016 -0600
+
+    fix public argument.  Add test for s3-archive regexp
+
+commit da10413edac2b7e5d7ff7bc424d31cece117bac6
+Merge: 8441273 4524d84
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Sun Nov 27 17:29:54 2016 -0600
+
+    Merge pull request #2 from msarahan/upload_config
+    
+    add upload configurability
+
+commit 4524d84aa81753801bdb1240423c016547c4d946
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Nov 27 17:28:17 2016 -0600
+
+    attempt to fix indeterminate ordering in test
+
+commit 86badd5b6e06b0b307f18a31d8260f5d63a1a33a
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Nov 27 17:09:18 2016 -0600
+
+    style
+
+commit 82599381b6ef2d2807d915ce4f5e32a7496c3206
+Merge: 1f700fc 8441273
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Nov 27 17:06:42 2016 -0600
+
+    Merge branch 'master' of github.com:conda/conda-concourse-ci into upload_config
+
+commit 1f700fced6183fa6e4cde798c0bc117f5d374d1b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Nov 27 17:05:19 2016 -0600
+
+    improve test coverage
+
+commit 961ea6c2ac5a1819b43fa30223bceebdc3668fd6
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Nov 27 12:12:07 2016 -0600
+
+    fix output of upload data in generated plan
+
+commit 395034be9ef267baa5df045306a60a7a1952871b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sat Nov 26 22:51:21 2016 -0600
+
+    refactor to use jobs rathern than one job and many tasks
+
+commit ef347741b17c101d112fb788783c5e2e1824eade
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Nov 23 11:39:41 2016 -0600
+
+    add support for more than one project per server (new argument req'd)
+
+commit 108044a5da84fff98557b31174d4043ec1e44d5d
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 21 21:17:01 2016 -0600
+
+    work on SCP upload config
+
+commit f2df5400243cec8446d056d84abc3d71c8c07f54
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Nov 16 15:46:02 2016 -0600
+
+    fix up anaconda upload, plumb copying output file from task to task
+
+commit 844127351b0d18e36e236f24abcf5f4772335122
+Merge: 80e6ea4 b134b2e
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Wed Nov 16 09:00:16 2016 -0600
+
+    Merge pull request #3 from msarahan/setup_travis
+    
+    setup Travis CI
+
+commit b134b2e7fcedca53cdd082da5a4de44d2a03956f
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Nov 16 08:47:41 2016 -0600
+
+    add test config.yml
+
+commit 2ccef1cceff86052aa58d4627d1720e3ab378139
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Nov 16 08:45:04 2016 -0600
+
+    add missing boto3, flake8
+
+commit ceee9b4e8fbce253229b30e117c9a43c58b998cc
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Wed Nov 16 08:41:26 2016 -0600
+
+    setup Travis CI
+
+commit aea654ae52629afebcc78e8a0b8c67bc5b5c7ac6
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Nov 15 21:23:00 2016 -0600
+
+    add upload configurability
+
+commit 80e6ea484936e4a771d216ce0102e0fab626773b
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 14 15:12:05 2016 -0600
+
+    fix recipe folder command in build
+
+commit 2b81ae48b2185c06406ed2f01ae877969b182587
+Merge: 1bf8d2f f121822
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 14 09:09:50 2016 -0600
+
+    Merge branch 'master' of github.com:msarahan/conda-concourse-ci
+
+commit 1bf8d2f2ed449553cf5894b3faa5c073ca5e661e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 14 09:09:25 2016 -0600
+
+    try to make platform more standard
+
+commit f121822d7973cdefff040cd2ce2ed5fc972a9da6
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Nov 10 10:02:49 2016 -0600
+
+    document common s3 problem in readme
+
+commit 4925d52d15b0e52036c411763b1e779ea9b067db
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Tue Nov 8 08:41:03 2016 -0600
+
+    move bootstrap to file copying; clean up
+
+commit 34b340d6d3ca410014ba7745e3e973dd9b221cdd
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Mon Nov 7 11:18:25 2016 -0600
+
+    implement bootstrap and submit cli
+
+commit 443b1dfed4996755d4a7e0b18c8377d1a9d9b0a2
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Nov 6 21:51:40 2016 -0600
+
+    fix up CLI, fix grouping in graph to plan
+
+commit f4b8a999b797ab430c0b8583eeb565633876c726
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Sun Nov 6 14:42:19 2016 -0600
+
+    fix support for build strings.  Fix kinks with graphs.
+
+commit 6f11e21d986b3a58df72d9353ad4af81914f02a2
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Thu Nov 3 18:58:04 2016 -0500
+
+    port partially from conda-gitlab-ci
+
+commit 27b37cb012ef15b5f69e6da4f8629bbd6305804e
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Oct 28 11:40:48 2016 -0500
+
+    try more tasks
+
+commit 78a79dee86bb68dc17b8f05c73de719e5f4a5a25
+Author: Michael Sarahan <msarahan@gmail.com>
+Date:   Fri Oct 28 08:39:39 2016 -0500
+
+    testing dependent tasks
+
+commit 9a265a456e3eaabb293219438b5a97d6531164bc
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Oct 27 20:28:51 2016 -0500
+
+    Update LICENSE for continuum customization
+
+commit 875b3f0fe34cdc744d5db9184b640d4fee0cd8b2
+Author: Mike Sarahan <msarahan@gmail.com>
+Date:   Thu Oct 27 20:28:24 2016 -0500
+
+    Initial commit

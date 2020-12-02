@@ -17,7 +17,7 @@ def test_base_task():
 
 
 def test_upload_anaconda():
-    tasks = uploads.upload_anaconda('steve', 'abc')
+    tasks = uploads.upload_anaconda('steve', {}, 'abc')
     assert len(tasks) == 1
     task = tasks[0]
     assert task['config']['run']['path'] == 'anaconda'
@@ -25,17 +25,17 @@ def test_upload_anaconda():
 
 
 def test_upload_anaconda_with_user():
-    tasks = uploads.upload_anaconda('steve', 'abc', user="llama")
+    tasks = uploads.upload_anaconda('steve', {}, 'abc', user="llama")
     assert {'--user', 'llama'}.issubset(set(tasks[0]['config']['run']['args']))
 
 
 def test_upload_anaconda_with_label():
-    tasks = uploads.upload_anaconda('steve', 'abc', label='dev')
+    tasks = uploads.upload_anaconda('steve', {}, 'abc', label='dev')
     assert {'--label', 'dev'}.issubset(set(tasks[0]['config']['run']['args']))
 
 
 def test_upload_anaconda_with_user_and_label():
-    tasks = uploads.upload_anaconda('steve', 'abc', user='llama', label='dev')
+    tasks = uploads.upload_anaconda('steve', {}, 'abc', user='llama', label='dev')
     assert {'--user', 'llama', '--label', 'dev'}.issubset(set(tasks[0]['config']['run']['args']))
 
 
@@ -109,8 +109,9 @@ def test_get_upload_tasks(mocker, testing_graph):
                              config_vars, commit_id='abc123')
     subdir = conda_interface.subdir
     uploads.upload_anaconda.assert_called_once_with(
-        'output-artifacts/abc123/{}/b-1.0-0.tar.bz2'.format(subdir),
-        token='abc')
+        package_path='output-artifacts/abc123/{}/b-1.0-0.tar.bz2'.format(subdir),
+        token='abc',
+        config_vars=config_vars)
     uploads.upload_scp.assert_called_once_with(
         package_path='output-artifacts/abc123/{}/b-1.0-0.tar.bz2'.format(subdir),
         worker=default_worker, config_vars=config_vars, server='localhost')
