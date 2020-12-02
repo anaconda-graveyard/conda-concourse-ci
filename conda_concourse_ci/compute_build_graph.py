@@ -193,7 +193,7 @@ def add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                         recipes_dir=None, config=None, finalize=False):
     try:
         rendered = _get_or_render_metadata(recipe_dir, worker, config=config, finalize=finalize)
-    except (IOError, SystemExit) as e:
+    except (IOError, SystemExit, RuntimeError) as e:
         log.warn('invalid recipe dir or other recipe issue: %s - skipping.  Error was %s',
                  recipe_dir, e)
         return None
@@ -321,6 +321,8 @@ def collapse_subpackage_nodes(graph):
             subgroup = group.get(HashableDict(meta.config.variant), {})
             if master:
                 if 'master' in subgroup:
+                    print(f'tried to set {node} as master but {subgroup.get("master")} already is master.')
+                    continue
                     raise ValueError("tried to set more than one node in a group as master")
                 subgroup['master'] = node
             else:
@@ -388,6 +390,9 @@ def _write_recipe_log(path):
         log.warn("Unable to produce recipe git log for %s. Error was: %s",
                  path, e)
         pass
+    except FileNotFoundError as e:
+        log.warn(f"File {path} does not exist. Error was {e}. Skipping.")
+        pass
 
 
 def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
@@ -413,6 +418,10 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
                                       git_root=recipes_dir)
 
     graph = nx.DiGraph()
+    print('starting to render the recipes')
+    folders_len = len(folders)
+    count = 0
+    print(f'need to render {folders_len} folders')
     for folder in folders:
         recipe_dir = os.path.join(recipes_dir, folder)
 
@@ -423,9 +432,15 @@ def construct_graph(recipes_dir, worker, run, conda_resolve, folders=(),
             raise ValueError("Specified folder {} does not exist".format(recipe_dir))
         add_recipe_to_graph(recipe_dir, graph, run, worker, conda_resolve,
                             recipes_dir, config=config, finalize=finalize)
-
+        count += 1
+        print(f'rendered {count} out of {folders_len} folders')
+    print('rendered all folders')
+    print('adding intradependencies')
     add_intradependencies(graph)
+    print('successfully added intradependencies!')
+    print('collapsing subpackage nodes')
     collapse_subpackage_nodes(graph)
+    print('successfully collapsed subpackage nodes!')
     return graph
 
 
