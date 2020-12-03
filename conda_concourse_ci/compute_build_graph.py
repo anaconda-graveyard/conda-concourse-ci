@@ -383,6 +383,7 @@ def _write_recipe_log(path):
     if not os.path.exists(os.path.join(path, "meta.yaml")):
         path = os.path.join(path, "recipe")
     try:
+        from conda_build.os_utils.external import find_executable
         git = find_executable('git')
         if not git:
             log.error("Could not find a git executable")
