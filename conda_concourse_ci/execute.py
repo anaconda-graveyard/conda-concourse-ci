@@ -447,6 +447,25 @@ def _filter_existing_pipelines(con, pipeline_patterns):
     return filtered_pipelines
 
 
+def _filter_pipelines_by_time(con, pipelines, days):
+    """
+    Will return pipelines that are older than the number of days specified.
+    """
+    # for each pipeline in pipelines we should get their builds
+    # if the most recent build is older than $days old then we should add it to
+    # the list of things to remove.
+    from datetime import datetime
+    filtered_pipelines = []
+    now = datetime.now()
+    for pipeline in pipelines:
+        builds = con.get_builds(pipeline)
+        most_recent_build = max([datetime.fromtimestamp(build.get('end_time', build.get('start_time')))
+                          for build in builds])
+        if most_recent_build and (now - most_recent_build).days > days:
+            filtered_pipelines.append(pipeline)
+    return filtered_pipelines
+
+
 def submit(pipeline_file, base_name, pipeline_name, src_dir, config_root_dir,
            public=True, config_overrides=None, pass_throughs=None, **kw):
     """submit task that will monitor changes and trigger other build tasks
@@ -910,9 +929,11 @@ def _get_activate_builds(concourse_url, limit):
     return len(running)
 
 
-def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, **kwargs):
+def rm_pipeline(pipeline_names, config_root_dir, do_it_dammit=False, pass_throughs=None, days=None, **kwargs):
     con = _ensure_login_and_sync(config_root_dir)
     pipelines_to_remove = _filter_existing_pipelines(con, pipeline_names)
+    if days:
+        pipelines_to_remove = _filter_pipelines_by_time(con, pipelines_to_remove, int(days))
     print("Removing pipelines:")
     for p in pipelines_to_remove:
         print(p)
