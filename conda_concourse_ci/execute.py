@@ -454,7 +454,7 @@ def _filter_pipelines_by_time(con, pipelines, days):
     # for each pipeline in pipelines we should get their builds
     # if the most recent build is older than $days old then we should add it to
     # the list of things to remove.
-    from datetime import datetime, timedelta
+    from datetime import datetime
     filtered_pipelines = []
     now = datetime.now()
     for pipeline in pipelines:
