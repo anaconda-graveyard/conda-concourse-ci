@@ -298,6 +298,7 @@ def parse_args(parse_this=None):
                            help="path containing config.yml and matrix definitions",
                            default=cc_conda_build.get('matrix_base_dir'))
     rm_parser.add_argument('--do-it-dammit', '-y', help="YOLO", action="store_true")
+    rm_parser.add_argument('--days', help='only remove specified packages older than n days', action='store')
 
     pause_parser = sp.add_parser('pause', help='pause pipelines on the server')
     pause_parser.add_argument('pipeline_names', nargs="+",
