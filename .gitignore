@@ -88,6 +88,12 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# VS code project settings
+.vscode/
+
+# PyCharm project settings
+.idea/
+
 # unit test results
 junit.xml
 
