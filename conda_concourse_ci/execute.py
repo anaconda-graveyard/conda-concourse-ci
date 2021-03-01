@@ -459,8 +459,11 @@ def _filter_pipelines_by_time(con, pipelines, days):
     now = datetime.now()
     for pipeline in pipelines:
         builds = con.get_builds(pipeline)
+        # we filter out pending because sometimes pipelines get hung up.
+        # when they get hung, they don't have a end_time or start_time so
+        # the following line will fail.
         most_recent_build = max([datetime.fromtimestamp(build.get('end_time', build.get('start_time')))
-                          for build in builds])
+                          for build in builds if build.get('status') != 'pending'])
         if most_recent_build and (now - most_recent_build).days > days:
             filtered_pipelines.append(pipeline)
     return filtered_pipelines
