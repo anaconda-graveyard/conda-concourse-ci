@@ -23,7 +23,7 @@ RUN yum install -y \
     patch \
     tar
 
-RUN wget https://graviton-rpms.s3.amazonaws.com/installers/build_AR_1/Miniconda3-py38_4.9.2-Linux-aarch64.sh && \
+RUN wget https://graviton-rpms.s3.amazonaws.com/installers/build_AR_3/Miniconda3-py38_4.9.2-Linux-aarch64.sh && \
     bash Miniconda3-py38_4.9.2-Linux-aarch64.sh -bfp /opt/conda && \
     /opt/conda/bin/conda config --set show_channel_urls True && \
     /opt/conda/bin/conda config --set add_pip_as_python_dependency False && \
