@@ -467,8 +467,6 @@ def _filter_pipelines_by_time(con, pipelines, days):
           except TypeError:
              continue
         most_recent_build = max(times) 
- #       most_recent_build = max([datetime.fromtimestamp(build.get('end_time', build.get('start_time')))
- #                         for build in builds])
         if most_recent_build and (now - most_recent_build).days > days:
             filtered_pipelines.append(pipeline)
     return filtered_pipelines
