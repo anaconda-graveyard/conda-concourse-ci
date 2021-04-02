@@ -459,8 +459,16 @@ def _filter_pipelines_by_time(con, pipelines, days):
     now = datetime.now()
     for pipeline in pipelines:
         builds = con.get_builds(pipeline)
-        most_recent_build = max([datetime.fromtimestamp(build.get('end_time', build.get('start_time')))
-                          for build in builds])
+        times = []
+        for build in builds:
+          try:
+             curtime=datetime.fromtimestamp(build.get('end_time', build.get('start_time')))
+             times.append(curtime)
+          except TypeError:
+             continue
+        most_recent_build = max(times) 
+ #       most_recent_build = max([datetime.fromtimestamp(build.get('end_time', build.get('start_time')))
+ #                         for build in builds])
         if most_recent_build and (now - most_recent_build).days > days:
             filtered_pipelines.append(pipeline)
     return filtered_pipelines
