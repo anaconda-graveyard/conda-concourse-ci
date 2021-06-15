@@ -123,6 +123,11 @@ def parse_args(parse_this=None):
         help="The PR number on which to make a comment when using the automated pipeline"
     )
     one_off_parser.add_argument(
+        "--feedstock-pr-num",
+        action="store",
+        help="The PR number of the feedstock pull request."
+    )
+    one_off_parser.add_argument(
         "--repository",
         action="store",
         help="The git repo where the PR lives. This should look like: Org/Repo"

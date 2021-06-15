@@ -671,7 +671,7 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
         else:
             stage_job_name = None
         plconfig.add_push_branch_job(
-            config_vars, folders, kw['branches'], pr_merged_resource, stage_job_name)
+            config_vars, folders, kw['branches'], kw['feedstock_pr_num'], pr_merged_resource, stage_job_name)
     if kw.get('destroy_pipeline', False):
         # TODO move this
         if 'destroy-pipeline-config' not in config_vars:
