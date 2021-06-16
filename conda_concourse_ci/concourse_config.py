@@ -229,6 +229,7 @@ class PipelineConfig:
             config_vars,
             folders,
             branches,
+            pr_num,
             pr_merged_resource,
             stage_job_name):
         plan = []
@@ -259,6 +260,7 @@ class PipelineConfig:
             params = config.get('params', {})
             params['BRANCH'] = branch
             params['FEEDSTOCK'] = folder
+            params['PR_NUMBER'] = pr_num
             config['params'] = params
             plan.append({
                 'task': 'push-branch',
