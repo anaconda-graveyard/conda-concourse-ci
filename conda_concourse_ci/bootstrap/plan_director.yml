@@ -1,6 +1,7 @@
 resource_types:
 - name: rsync-resource
   type: docker-image
+  check_every: 1h
   source:
       repository: conda/concourse-rsync-resource
       tag: latest
@@ -50,6 +51,7 @@ jobs:
           - name: recipe-repo-source
         image_resource:
           type: docker-image
+          check_every: 1h
           source:
             repository: conda/c3i-linux-64
             username: ((common.dockerhub-user))
@@ -70,6 +72,7 @@ jobs:
           - name: recipe-repo-source
         image_resource:
           type: docker-image
+          check_every: 1h
           source:
             repository: conda/c3i-linux-64
             username: ((common.dockerhub-user))
@@ -107,6 +110,7 @@ jobs:
         - name: output
       image_resource:
         type: docker-image
+        check_every: 1h
         source:
           repository: conda/c3i-linux-64
           username: ((common.dockerhub-user))
@@ -141,6 +145,7 @@ jobs:
         - name: output
       image_resource:
         type: docker-image
+        check_every: 1h
         source:
           repository: conda/c3i-linux-64
           username: ((common.dockerhub-user))

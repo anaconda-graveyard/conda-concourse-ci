@@ -1,17 +1,20 @@
 resource_types:
 - name: concourse-pipeline
   type: docker-image
+  check_every: 1h
   source:
     repository: robdimsdale/concourse-pipeline-resource
     tag: latest-final
 # used to download arbitrary user configuration (credentials, platforms)
 - name: s3-simple
   type: docker-image
+  check_every: 1h
   source:
     repository: 18fgsa/s3-resource-simple
 # used to check for PRs and update status at Github
 - name: pull-request
   type: docker-image
+  check_every: 1h
   source:
     repository: jtarchie/pr
 
@@ -90,6 +93,7 @@ jobs:
         - name: output
       image_resource:
         type: docker-image
+        check_every: 1h
         source:
           repository: conda/c3i-linux-64
           username: ((common.dockerhub-user))
