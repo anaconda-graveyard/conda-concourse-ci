@@ -15,6 +15,7 @@ jobs:
           username: {{docker-hub-username}}
           password: {{docker-hub-password}}
         type: docker-image
+        check_every: 1h
       inputs:
       - name: recipe-repo-source
       platform: linux
@@ -37,6 +38,7 @@ jobs:
           repository: conda/c3i-linux-64
           tag: latest
         type: docker-image
+        check_every: 1h
       inputs:
         - name: recipe-repo-source
       outputs:
@@ -56,6 +58,7 @@ jobs:
 resources:
 - name: docker-image
   type: docker-image
+  check_every: 1h
   source:
     username: {{docker-hub-username}}
     password: {{docker-hub-password}}

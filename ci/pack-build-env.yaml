@@ -2,11 +2,12 @@
 resource_types:
 - name: rsync-resource
   type: docker-image
+  check_every: 1h
   source:
-      repository: conda/concourse-rsync-resource
-      tag: latest
-      username: ((common.dockerhub-user))
-      password: ((common.dockerhub-pass))
+    repository: conda/concourse-rsync-resource
+    tag: latest
+    username: ((common.dockerhub-user))
+    password: ((common.dockerhub-pass))
 
 resources:
 - name: once-a-week
