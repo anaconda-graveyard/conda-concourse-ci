@@ -27,7 +27,6 @@ RUN wget https://graviton-rpms.s3.amazonaws.com/installers/build_AR_3/Miniconda3
     bash Miniconda3-py38_4.9.2-Linux-aarch64.sh -bfp /opt/conda && \
     /opt/conda/bin/conda config --set show_channel_urls True && \
     /opt/conda/bin/conda config --set add_pip_as_python_dependency False && \
-    /opt/conda/bin/conda config --add channels aarch64-staging && \
     /opt/conda/bin/conda install --yes --quiet conda-build anaconda-client && \
     /opt/conda/bin/conda clean -ay && \
     /opt/conda/bin/conda init bash && \
