@@ -25,8 +25,8 @@ def _base_task(upload_job_name, username=None, password=None):
                 'inputs': [{'name': 'output-artifacts'}],
                 'image_resource': {
                     'type': 'docker-image',
-                    'source': {'repository': 'conda/c3i-linux-64',
-                               'tag': 'latest'}},
+                    'source': {'repository': 'public.ecr.aws/y0o4y9o3/anaconda-pkg-build',
+                               'tag': 'master'}},
                 'platform': 'linux',
                 'run': {}
             }}

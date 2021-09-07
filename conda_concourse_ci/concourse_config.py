@@ -396,8 +396,8 @@ class JobConfig:
 
     def add_consolidate_task(self, inputs, subdir, docker_user=None, docker_pass=None):
         _source = {
-                    'repository': 'conda/c3i-linux-64',
-                    'tag': 'latest',
+                    'repository': 'public.ecr.aws/y0o4y9o3/anaconda-pkg-build',
+                    'tag': 'master',
                     }
         if docker_user and docker_pass:
             _source.update({
@@ -432,8 +432,8 @@ class JobConfig:
         outputs = [{'name': 'converted-artifacts'}]
 
         _source = {
-                    'repository': 'conda/c3i-linux-64',
-                    'tag': 'latest',
+                    'repository': 'public.ecr.aws/y0o4y9o3/anaconda-pkg-build',
+                    'tag': 'master',
                 }
         if docker_user and docker_pass:
             _source.update({

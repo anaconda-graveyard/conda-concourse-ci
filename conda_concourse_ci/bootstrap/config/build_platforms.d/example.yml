@@ -7,7 +7,5 @@ connector:
     type: docker-image
     check_every: 1h
     source:
-      repository: conda/c3i-linux-64
-      tag: latest
-      username: ((common.dockerhub-user))
-      password: ((common.dockerhub-pass))
+      repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
+      tag: master
