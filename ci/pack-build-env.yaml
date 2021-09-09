@@ -5,7 +5,7 @@ resource_types:
   check_every: 1h
   source:
       repository: public.ecr.aws/y0o4y9o3/concourse-rsync-resource
-      tag: latest
+      tag: master
 
 resources:
 - name: once-a-week
