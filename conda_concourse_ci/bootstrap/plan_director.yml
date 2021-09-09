@@ -5,8 +5,6 @@ resource_types:
   source:
       repository: public.ecr.aws/y0o4y9o3/concourse-rsync-resource
       tag: master
-      username: ((common.dockerhub-user))
-      password: ((common.dockerhub-pass))
 
 resources:
 - name: tracker-timer
