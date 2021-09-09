@@ -4,6 +4,7 @@ arch: 64
 connector:
   image_resource:
     type: docker-image
+    check_every: 1h
     source:
       repository: busybox
       username: ((common.dockerhub-user))

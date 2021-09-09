@@ -2,6 +2,7 @@
 resource_types:
 - name: rsync-resource
   type: docker-image
+  check_every: 1h
   source:
       repository: public.ecr.aws/y0o4y9o3/concourse-rsync-resource
       tag: latest
