@@ -53,11 +53,11 @@ class PipelineConfig:
     def add_rsync_resource_type(self, docker_user=None, docker_pass=None):
         _source = {
                 'repository': 'public.ecr.aws/y0o4y9o3/concourse-rsync-resource',
-                'tag': 'latest'
+                'tag': 'master'
                 }
 
-        if docker_user and docker_pass:
-            _source.update({'username': docker_user, 'password': docker_pass})
+#       if docker_user and docker_pass:
+#           _source.update({'username': docker_user, 'password': docker_pass})
 
         self.add_resource_type(
             name='rsync-resource',
@@ -397,13 +397,13 @@ class JobConfig:
     def add_consolidate_task(self, inputs, subdir, docker_user=None, docker_pass=None):
         _source = {
                     'repository': 'public.ecr.aws/y0o4y9o3/anaconda-pkg-build',
-                    'tag': 'latest',
+                    'tag': 'master',
                     }
-        if docker_user and docker_pass:
-            _source.update({
-                'username': docker_user,
-                'password': docker_pass
-                })
+#       if docker_user and docker_pass:
+#           _source.update({
+#               'username': docker_user,
+#               'password': docker_pass
+#               })
 
         config = {
             # we can always do this on linux, so prefer it for speed.
@@ -433,13 +433,13 @@ class JobConfig:
 
         _source = {
                     'repository': 'public.ecr.aws/y0o4y9o3/anaconda-pkg-build',
-                    'tag': 'latest',
+                    'tag': 'master',
                 }
-        if docker_user and docker_pass:
-            _source.update({
-                'username': docker_user,
-                'password': docker_pass
-                })
+#       if docker_user and docker_pass:
+#           _source.update({
+#               'username': docker_user,
+#               'password': docker_pass
+#               })
 
         config = {
             # we can always do this on linux, so prefer it for speed.

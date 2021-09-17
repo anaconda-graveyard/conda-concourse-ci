@@ -26,15 +26,15 @@ def _base_task(upload_job_name, username=None, password=None):
                 'image_resource': {
                     'type': 'docker-image',
                     'source': {'repository': 'public.ecr.aws/y0o4y9o3/anaconda-pkg-build',
-                               'tag': 'latest'}},
+                               'tag': 'master'}},
                 'platform': 'linux',
                 'run': {}
             }}
 
-    if username and password:
-        source = base_task.get('config').get('image_resource').get('source')
-        source.update({'username': username, 'password': password})
-        base_task['config']['image_resource']['source'] = source
+#   if username and password:
+#       source = base_task.get('config').get('image_resource').get('source')
+#       source.update({'username': username, 'password': password})
+#       base_task['config']['image_resource']['source'] = source
 
     return base_task
 
