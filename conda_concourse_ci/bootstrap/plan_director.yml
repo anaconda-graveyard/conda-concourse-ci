@@ -53,9 +53,7 @@ jobs:
           type: docker-image
           check_every: 1h
           source:
-            repository: conda/c3i-linux-64
-            username: ((common.dockerhub-user))
-            password: ((common.dockerhub-pass))
+            repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
         params:
           GITHUB_TOKEN: ((recipe-repo-access-token))
         run:
@@ -74,9 +72,7 @@ jobs:
           type: docker-image
           check_every: 1h
           source:
-            repository: conda/c3i-linux-64
-            username: ((common.dockerhub-user))
-            password: ((common.dockerhub-pass))
+            repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
         params:
           GITHUB_TOKEN: ((recipe-repo-access-token))
         run:
@@ -112,9 +108,7 @@ jobs:
         type: docker-image
         check_every: 1h
         source:
-          repository: conda/c3i-linux-64
-          username: ((common.dockerhub-user))
-          password: ((common.dockerhub-pass))
+          repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
       platform: linux
       run:
         # this should output plan.yaml (credentials baked in) and recipes.  These will be in a folder
@@ -147,9 +141,7 @@ jobs:
         type: docker-image
         check_every: 1h
         source:
-          repository: conda/c3i-linux-64
-          username: ((common.dockerhub-user))
-          password: ((common.dockerhub-pass))
+          repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
       platform: linux
       run:
         path: c3i

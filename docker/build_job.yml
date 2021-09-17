@@ -10,7 +10,7 @@ jobs:
       image_resource:
         source:
           # can't template just part of a line: https://github.com/concourse/concourse/issues/545
-          repository: conda/c3i-linux-64
+          repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
           tag: latest
           username: {{docker-hub-username}}
           password: {{docker-hub-password}}
@@ -35,7 +35,7 @@ jobs:
         source:
           username: {{docker-hub-username}}
           password: {{docker-hub-password}}
-          repository: conda/c3i-linux-64
+          repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
           tag: latest
         type: docker-image
         check_every: 1h
@@ -63,7 +63,7 @@ resources:
     username: {{docker-hub-username}}
     password: {{docker-hub-password}}
     # can't template just part of a line: https://github.com/concourse/concourse/issues/545
-    repository: conda/c3i-linux-64
+    repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
 
 - name: recipe-repo-source
   type: git
