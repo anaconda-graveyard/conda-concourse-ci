@@ -26,7 +26,7 @@ def _base_task(upload_job_name, username=None, password=None):
                 'image_resource': {
                     'type': 'docker-image',
                     'source': {'repository': 'conda_concourse_ci/uploads.py',
-                               'tag': 'master'}},
+                               'tag': 'latest'}},
                 'platform': 'linux',
                 'run': {}
             }}

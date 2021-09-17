@@ -11,7 +11,7 @@ jobs:
         source:
           # can't template just part of a line: https://github.com/concourse/concourse/issues/545
           repository: continuumio/anaconda-pkg-build
-          tag: master
+          tag: latest
           username: {{docker-hub-username}}
           password: {{docker-hub-password}}
         type: docker-image
@@ -34,7 +34,7 @@ jobs:
       image_resource:
         source:
           repository: continuumio/anaconda-pkg-build
-          tag: master
+          tag: latest
           username: {{docker-hub-username}}
           password: {{docker-hub-password}}
         type: docker-image
@@ -61,7 +61,7 @@ resources:
   check_every: 1h
   source:
     repository: continuumio/anaconda-pkg-build
-    tag: master
+    tag: latest
     username: {{docker-hub-username}}
     password: {{docker-hub-password}}
     # can't template just part of a line: https://github.com/concourse/concourse/issues/545

@@ -53,7 +53,7 @@ class PipelineConfig:
     def add_rsync_resource_type(self, docker_user=None, docker_pass=None):
         _source = {
                 'repository': 'continuumio/anaconda-pkg-build',
-                'tag': 'master'
+                'tag': 'latest'
                 }
 
         if docker_user and docker_pass:
@@ -186,7 +186,7 @@ class PipelineConfig:
             type_="git",
             source={
                 "uri": pr_repo,
-                "branch": "master",
+                "branch": "latest",
                 "paths": [pr_file],
             },
         )
@@ -205,7 +205,7 @@ class PipelineConfig:
                 type_="git",
                 source={
                     "uri": config_vars["stage-for-upload-repo"],
-                    "branch": config_vars.get("stage-for-upload-branch", "master"),
+                    "branch": config_vars.get("stage-for-upload-branch", "latest"),
                 },
             )
             plan.append({'get': 'stage-packages-scripts', 'trigger': False})
@@ -397,7 +397,7 @@ class JobConfig:
     def add_consolidate_task(self, inputs, subdir, docker_user=None, docker_pass=None):
         _source = {
                     'repository': 'continuumio/anaconda-pkg-build',
-                    'tag': 'master',
+                    'tag': 'latest',
                     }
         if docker_user and docker_pass:
             _source.update({
@@ -433,7 +433,7 @@ class JobConfig:
 
         _source = {
                     'repository': 'continuumio/anaconda-pkg-build',
-                    'tag': 'master',
+                    'tag': 'latest',
                 }
         if docker_user and docker_pass:
             _source.update({
