@@ -56,8 +56,8 @@ class PipelineConfig:
                 'tag': 'master'
                 }
 
-      if docker_user and docker_pass:
-          _source.update({'username': docker_user, 'password': docker_pass})
+        if docker_user and docker_pass:
+            _source.update({'username': docker_user, 'password': docker_pass})
 
         self.add_resource_type(
             name='rsync-resource',
@@ -399,8 +399,8 @@ class JobConfig:
                     'repository': 'continuumio/anaconda-pkg-build',
                     'tag': 'master',
                     }
-      if docker_user and docker_pass:
-          _source.update({
+        if docker_user and docker_pass:
+            _source.update({
               'username': docker_user,
               'password': docker_pass
               })
@@ -435,11 +435,11 @@ class JobConfig:
                     'repository': 'continuumio/anaconda-pkg-build',
                     'tag': 'master',
                 }
-      if docker_user and docker_pass:
-          _source.update({
-              'username': docker_user,
-              'password': docker_pass
-              })
+        if docker_user and docker_pass:
+            _source.update({
+                'username': docker_user,
+                'password': docker_pass
+                })
 
         config = {
             # we can always do this on linux, so prefer it for speed.
