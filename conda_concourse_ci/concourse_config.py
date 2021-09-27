@@ -403,9 +403,9 @@ class JobConfig:
                     }
         if docker_user and docker_pass:
             _source.update({
-              'username': docker_user,
-              'password': docker_pass
-              })
+                'username': docker_user,
+                'password': docker_pass
+                })
 
         config = {
             # we can always do this on linux, so prefer it for speed.

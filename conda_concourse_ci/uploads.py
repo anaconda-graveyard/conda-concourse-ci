@@ -31,10 +31,10 @@ def _base_task(upload_job_name, username=None, password=None):
                 'run': {}
             }}
 
-  if username and password:
-      source = base_task.get('config').get('image_resource').get('source')
-      source.update({'username': username, 'password': password})
-      base_task['config']['image_resource']['source'] = source
+    if username and password:
+        source = base_task.get('config').get('image_resource').get('source')
+        source.update({'username': username, 'password': password})
+        base_task['config']['image_resource']['source'] = source
 
     return base_task
 
