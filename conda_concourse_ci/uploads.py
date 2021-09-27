@@ -25,8 +25,13 @@ def _base_task(upload_job_name, username=None, password=None):
                 'inputs': [{'name': 'output-artifacts'}],
                 'image_resource': {
                     'type': 'docker-image',
-                    'source': {'repository': 'conda_concourse_ci/uploads.py',
-                               'tag': 'latest'}},
+                    'source': {
+                        'repository': 'continuumio/anaconda-pkg-build',
+                        'tag': 'latest',
+                        'username': '((common.dockerhub-user))',
+                        'password': '((common.dockerhub-pass))'
+                    }
+                },
                 'platform': 'linux',
                 'run': {}
             }}
