@@ -53,7 +53,7 @@ class PipelineConfig:
     def add_rsync_resource_type(self, docker_user=None, docker_pass=None):
         _source = {
                 'repository': 'public.ecr.aws/y0o4y9o3/concourse-rsync-resource',
-                'tag': 'latest'
+                'tag': 'master'
                 }
 
         if docker_user and docker_pass:
