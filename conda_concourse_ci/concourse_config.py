@@ -52,7 +52,7 @@ class PipelineConfig:
 
     def add_rsync_resource_type(self, docker_user=None, docker_pass=None):
         _source = {
-                'repository': 'continuumio/anaconda-pkg-build',
+                'repository': 'public.ecr.aws/y0o4y9o3/concourse-rsync-resource',
                 'tag': 'latest'
                 }
 
