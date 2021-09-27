@@ -398,6 +398,8 @@ class JobConfig:
         _source = {
                     'repository': 'continuumio/anaconda-pkg-build',
                     'tag': 'latest',
+                    'username': '((common.dockerhub-user))',
+                    'password': '((common.dockerhub-pass))'
                     }
         if docker_user and docker_pass:
             _source.update({
@@ -434,6 +436,8 @@ class JobConfig:
         _source = {
                     'repository': 'continuumio/anaconda-pkg-build',
                     'tag': 'latest',
+                    'username': '((common.dockerhub-user))',
+                    'password': '((common.dockerhub-pass))'
                 }
         if docker_user and docker_pass:
             _source.update({
