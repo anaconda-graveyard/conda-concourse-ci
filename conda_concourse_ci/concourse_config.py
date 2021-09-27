@@ -186,7 +186,7 @@ class PipelineConfig:
             type_="git",
             source={
                 "uri": pr_repo,
-                "branch": "latest",
+                "branch": "master",
                 "paths": [pr_file],
             },
         )
@@ -205,7 +205,7 @@ class PipelineConfig:
                 type_="git",
                 source={
                     "uri": config_vars["stage-for-upload-repo"],
-                    "branch": config_vars.get("stage-for-upload-branch", "latest"),
+                    "branch": config_vars.get("stage-for-upload-branch", "master"),
                 },
             )
             plan.append({'get': 'stage-packages-scripts', 'trigger': False})
