@@ -396,8 +396,10 @@ class JobConfig:
 
     def add_consolidate_task(self, inputs, subdir, docker_user=None, docker_pass=None):
         _source = {
-                    'repository': 'conda/c3i-linux-64',
+                    'repository': 'continuumio/anaconda-pkg-build',
                     'tag': 'latest',
+                    'username': '((common.dockerhub-user))',
+                    'password': '((common.dockerhub-pass))'
                     }
         if docker_user and docker_pass:
             _source.update({
@@ -432,8 +434,10 @@ class JobConfig:
         outputs = [{'name': 'converted-artifacts'}]
 
         _source = {
-                    'repository': 'conda/c3i-linux-64',
+                    'repository': 'continuumio/anaconda-pkg-build',
                     'tag': 'latest',
+                    'username': '((common.dockerhub-user))',
+                    'password': '((common.dockerhub-pass))'
                 }
         if docker_user and docker_pass:
             _source.update({

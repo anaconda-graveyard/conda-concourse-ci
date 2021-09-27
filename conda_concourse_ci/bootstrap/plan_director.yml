@@ -51,7 +51,7 @@ jobs:
           type: docker-image
           check_every: 1h
           source:
-            repository: conda/c3i-linux-64
+            repository: continuumio/anaconda-pkg-build
             username: ((common.dockerhub-user))
             password: ((common.dockerhub-pass))
         params:
@@ -72,7 +72,7 @@ jobs:
           type: docker-image
           check_every: 1h
           source:
-            repository: conda/c3i-linux-64
+            repository: continuumio/anaconda-pkg-build
             username: ((common.dockerhub-user))
             password: ((common.dockerhub-pass))
         params:
@@ -110,7 +110,7 @@ jobs:
         type: docker-image
         check_every: 1h
         source:
-          repository: conda/c3i-linux-64
+          repository: continuumio/anaconda-pkg-build
           username: ((common.dockerhub-user))
           password: ((common.dockerhub-pass))
       platform: linux
@@ -145,7 +145,7 @@ jobs:
         type: docker-image
         check_every: 1h
         source:
-          repository: conda/c3i-linux-64
+          repository: continuumio/anaconda-pkg-build
           username: ((common.dockerhub-user))
           password: ((common.dockerhub-pass))
       platform: linux
