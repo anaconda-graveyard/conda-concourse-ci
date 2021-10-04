@@ -10,10 +10,8 @@ jobs:
       image_resource:
         source:
           # can't template just part of a line: https://github.com/concourse/concourse/issues/545
-          repository: continuumio/anaconda-pkg-build
-          tag: latest
-          username: {{docker-hub-username}}
-          password: {{docker-hub-password}}
+          repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
+          tag: master-amd64
         type: docker-image
         check_every: 1h
       inputs:
@@ -33,10 +31,8 @@ jobs:
       platform: linux
       image_resource:
         source:
-          repository: continuumio/anaconda-pkg-build
-          tag: latest
-          username: {{docker-hub-username}}
-          password: {{docker-hub-password}}
+          repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
+          tag: master-amd64
         type: docker-image
         check_every: 1h
       inputs:
@@ -60,10 +56,8 @@ resources:
   type: docker-image
   check_every: 1h
   source:
-    repository: continuumio/anaconda-pkg-build
-    tag: latest
-    username: {{docker-hub-username}}
-    password: {{docker-hub-password}}
+    repository: public.ecr.aws/y0o4y9o3/anaconda-pkg-build
+    tag: master-amd64
     # can't template just part of a line: https://github.com/concourse/concourse/issues/545
 
 - name: recipe-repo-source
