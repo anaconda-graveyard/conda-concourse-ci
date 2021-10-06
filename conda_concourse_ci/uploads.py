@@ -26,10 +26,8 @@ def _base_task(upload_job_name, username=None, password=None):
                 'image_resource': {
                     'type': 'docker-image',
                     'source': {
-                        'repository': 'continuumio/anaconda-pkg-build',
-                        'tag': 'latest',
-                        'username': '((common.dockerhub-user))',
-                        'password': '((common.dockerhub-pass))'
+                        'repository': 'public.ecr.aws/y0o4y9o3/anaconda-pkg-build',
+                        'tag': 'master-amd64',
                     }
                 },
                 'platform': 'linux',
