@@ -20,7 +20,8 @@ def test_submit(mocker):
                                                debug=False, pipeline_file='plan_director.yml',
                                                pipeline_name='{base_name} plan director',
                                                public=True, src_dir=os.getcwd(),
-                                               subparser_name='submit', pass_throughs=[])
+                                               subparser_name='submit', pass_throughs=[],
+                                               buildsubdir='linux-64')
 
 
 def test_submit_one_off(mocker):
@@ -57,6 +58,7 @@ def test_submit_one_off(mocker):
         pr_file=None,
         repository=None,
         dry_run=False,
+        buildsubdir='linux-64'
     )
 
 

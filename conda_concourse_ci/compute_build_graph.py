@@ -383,6 +383,12 @@ def _write_recipe_log(path):
     if not os.path.exists(os.path.join(path, "meta.yaml")):
         path = os.path.join(path, "recipe")
     try:
+        from conda_build.os_utils.external import find_executable
+        git = find_executable('git')
+        if not git:
+            log.error("Could not find a git executable")
+            sys.exit(1)
+        print('found git {}, path {}'.format(git, path ))
         output = subprocess.check_output(['git', 'log'], cwd=path)
         with open(os.path.join(path, "recipe_log.txt"), "wb") as f:
             f.write(output)

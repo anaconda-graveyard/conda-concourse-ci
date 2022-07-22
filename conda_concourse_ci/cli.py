@@ -171,11 +171,24 @@ def parse_args(parse_this=None):
                                 "to all jobs.  For finer control, use extra/worker_tags in "
                                 "meta.yaml with selectors.",
                                 dest='worker_tags')
+    one_off_parser.add_argument('--noarch-build-subdir', '-s', action='store', default='linux-64',
+                                help="set the 'subdir' (machine to build on) for noarch",
+                                dest='buildsubdir')
+
     one_off_parser.add_argument(
         '-m', '--variant-config-files',
         action="append",
         help="""Additional variant config files to add.  These yaml files can contain
         keys such as `c_compiler` and `target_platform` to form a build matrix."""
+    )
+    one_off_parser.add_argument(
+        '-b', '--build-on',
+        action="append",
+        default=[],
+        help="""Build on these platforms, either locally or locally-via-docker (macOS supported
+        only at present.  Use of this flag currently implies `--dry-run` and you will not get"
+        concourse runs (currently). Example usage: `--build-on=local` or
+        `--build-on=docker=conda/c3i-linux-64 --build-on=docker=conda/c3i-linux-ppc64le`"""
     )
     one_off_parser.add_argument('--output-dir', help=("folder where output plan and recipes live."
                                 "Defaults to temp folder.  Set to something to save output."))
@@ -211,7 +224,9 @@ def parse_args(parse_this=None):
         action="store_true",
         help=(
             "Dry run, prepare concourse plan and files but do not submit. "
-            "Best used with the --output-dir option so the output can be inspected"
+            "Best used with the --output-dir option so the output can be inspected."
+            "Use of `--build-on=*` currently implies `--dry-run` and you will not get"
+            "concourse runs (currently)."
         ),
     )
 
@@ -221,7 +236,7 @@ def parse_args(parse_this=None):
         help="""File describing batch job.  Each lines defines a seperate
         one-off job.  List one or more folders on each line.  Job specific
         arguments can be specified after a ';' using param=value, multiple
-        arguments are seperated by a ','.  For example:
+        arguments are separated by a ','.  For example:
 
             recipe-feedstock; channel=conda-forge,clobber_sections_file=clobber.yaml
         """)
@@ -361,6 +376,22 @@ def main(args=None):
     elif args.subparser_name == 'examine':
         execute.compute_builds(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'one-off':
+        build_on = {}
+        print(args.build_on)
+        if 'build_on' in args and args.build_on and len(args.build_on):
+            for bo in args.build_on:
+                bo_var = bo
+                bo_val = True
+                if '=' in bo_var:
+                    bo_var = bo.split('=', 1)[0]
+                    bo_val = ''.join(bo.split('=', 1)[1:])
+                if bo_var in build_on:
+                    build_on[bo_var].append(bo_val)
+                else:
+                    build_on[bo_var] = [bo_val]
+        args_dict = args.__dict__
+        if args_dict.get('build_on'):
+            args_dict['build_on'] = build_on
         execute.submit_one_off(pass_throughs=pass_throughs, **args.__dict__)
     elif args.subparser_name == 'batch':
         execute.submit_batch(pass_throughs=pass_throughs, **args.__dict__)
