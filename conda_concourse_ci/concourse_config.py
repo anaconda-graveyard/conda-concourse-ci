@@ -492,6 +492,10 @@ class JobConfig:
                         'mkdir -p signed-artifacts/noarch\n'
                         'find . -name "signed-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file signed-artifacts/{subdir}\n'  # NOQA
                         'find . -name "signed-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file signed-artifacts/noarch\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/{subdir}/*.conda" -print0 | xargs -0 -I file mv file signed-artifacts/{subdir}\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/noarch/*.conda" -print0 | xargs -0 -I file mv file signed-artifacts/noarch\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/{subdir}/*.sig" -print0 | xargs -0 -I file mv file signed-artifacts/{subdir}\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/noarch/*.sig" -print0 | xargs -0 -I file mv file signed-artifacts/noarch\n'  # NOQA
                         'pushd signed-artifacts/{subdir} && TODO_SIGN_ARTIFACTS && popd\n'  # NOQA
                         'pushd signed-artifacts/noarch && TODO_SIGN_ARTIFACTS && popd\n'  # NOQA
                     .format(subdir=subdir)
