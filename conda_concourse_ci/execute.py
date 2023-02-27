@@ -196,6 +196,7 @@ def get_build_task(
         use_staging_channel=False,
         automated_pipeline=False,
         pull_recipes_resource=None,
+        sign_artifacts=True,
         ):
 
     worker_tags = (ensure_list(worker_tags) +
@@ -351,8 +352,17 @@ def graph_to_plan_with_jobs(
             pull_recipes_resource=pull_recipes_resource,
         ))
         if not test_only:
-            jobconfig.add_convert_task(meta.config.host_subdir,
-                    docker_user=docker_user, docker_pass=docker_pass)
+            jobconfig.add_convert_task(
+                meta.config.host_subdir,
+                docker_user=docker_user,
+                docker_pass=docker_pass,
+            )
+            jobconfig.add_sign_artifacts_task(
+                meta.config.host_subdir,
+                signing_key=config_vars['concourse-package-signing-key'],
+                docker_user=docker_user,
+                docker_pass=docker_pass,
+            )
             resource_name = 'rsync_' + node
             jobconfig.add_put_artifacts(resource_name)
             plconfig.add_rsync_packages(resource_name, config_vars)
