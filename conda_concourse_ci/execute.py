@@ -196,7 +196,6 @@ def get_build_task(
         use_staging_channel=False,
         automated_pipeline=False,
         pull_recipes_resource=None,
-        sign_artifacts=True,
         ):
 
     worker_tags = (ensure_list(worker_tags) +
