@@ -377,7 +377,7 @@ class JobConfig:
         self.plan.append({
             'put': resource_name,
             'params': {
-                'sync_dir': 'converted-artifacts',
+                'sync_dir': 'signed-artifacts',
                 'rsync_opts': [
                     "--archive",
                     "--no-perms",
@@ -458,13 +458,55 @@ class JobConfig:
                         'mkdir -p converted-artifacts/noarch\n'
                         'find . -name "converted-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/{subdir}\n'  # NOQA
                         'find . -name "converted-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file converted-artifacts/noarch\n'  # NOQA
-                'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'
-                'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'
+                        'pushd converted-artifacts/{subdir} && cph t "*.tar.bz2" .conda && popd\n'  # NOQA
+                        'pushd converted-artifacts/noarch && cph t "*.tar.bz2" .conda && popd\n'  # NOQA
                     .format(subdir=subdir)
                     ],
             }
         }
         self.plan.append({'task': 'convert .tar.bz2 to .conda', 'config': config})
+
+    def add_sign_artifacts_task(self, subdir, signing_key, docker_user=None, docker_pass=None):
+        _source = {
+            'repository': 'public.ecr.aws/y0o4y9o3/anaconda-pkg-build',
+            'tag': 'master-amd64',
+        }
+        if docker_user and docker_pass:
+            _source.update({
+                'username': docker_user,
+                'password': docker_pass
+            })
+        config = {
+            'platform': 'linux',
+            'inputs': [{'name': 'converted-artifacts'}],
+            'outputs': [{'name': 'signed-artifacts'}],
+            'image_resource': {
+                'type': 'docker-image',
+                'source': _source,
+            },
+            'run': {
+                'path': 'sh',
+                'args': [
+                    '-exc',
+                        'mkdir -p signed-artifacts/{subdir}\n'
+                        'mkdir -p signed-artifacts/noarch\n'
+                        'find . -name "signed-artifacts" -prune -o -path "*/{subdir}/*.tar.bz2" -print0 | xargs -0 -I file mv file signed-artifacts/{subdir}\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/noarch/*.tar.bz2" -print0 | xargs -0 -I file mv file signed-artifacts/noarch\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/{subdir}/*.conda" -print0 | xargs -0 -I file mv file signed-artifacts/{subdir}\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/noarch/*.conda" -print0 | xargs -0 -I file mv file signed-artifacts/noarch\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/{subdir}/*.sig" -print0 | xargs -0 -I file mv file signed-artifacts/{subdir}\n'  # NOQA
+                        'find . -name "signed-artifacts" -prune -o -path "*/noarch/*.sig" -print0 | xargs -0 -I file mv file signed-artifacts/noarch\n'  # NOQA
+                        'pushd signed-artifacts/{subdir} && TODO_SIGN_ARTIFACTS && popd\n'  # NOQA
+                        'pushd signed-artifacts/noarch && TODO_SIGN_ARTIFACTS && popd\n'  # NOQA
+                    .format(subdir=subdir)
+                ],
+            }
+        }
+        self.plan.append({
+            'task': 'sign artifacts with Concourse package signing key',
+            'config': config,
+        })
+
 
 
 class BuildStepConfig:
