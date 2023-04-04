@@ -149,7 +149,7 @@ def testing_graph(request):
 @pytest.fixture(scope='function')
 def testing_conda_resolve(request):
     pkgs = ('a', 'b', 'c', 'd')
-    if conda_interface.conda_43:
+    if True: # check for conda >= 4.3
         index = {conda_interface.Dist(dist_name='-'.join((pkg, '920', 'h68c14d1_0')),
                                       channel=None,
                                       name=pkg,

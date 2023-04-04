@@ -235,7 +235,7 @@ def match_peer_job(target_matchspec, other_m, this_m=None):
     match_dict = {'name': other_m.name(),
                 'version': other_m.version(),
                 'build': _fix_any(other_m.build_id(), other_m.config), }
-    if conda_interface.conda_43:
+    if True: # check for conda >=4.3
         match_dict = conda_interface.Dist(name=match_dict['name'],
                                             dist_name='-'.join((match_dict['name'],
                                                                 match_dict['version'],
