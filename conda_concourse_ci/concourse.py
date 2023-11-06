@@ -33,13 +33,13 @@ class Concourse(AbstractContextManager):
     """
 
     def __init__(
-            self,
-            concourse_url,
-            username=None,
-            password=None,
-            team_name=None,
-            target='conda-concourse-server'
-            ):
+        self,
+        concourse_url,
+        username=None,
+        password=None,
+        team_name=None,
+        target="conda-concourse-server",
+    ):
         self.concourse_url = concourse_url
         self.username = username
         self.password = password
@@ -54,99 +54,109 @@ class Concourse(AbstractContextManager):
         self.logout()
 
     def _fly(self, fly_args, check=True):
-        """ Run a fly command with the stored target """
-        args = ['fly', '-t', self.target] + fly_args
-        logging.debug('command: ' + ' '.join(args))
+        """Run a fly command with the stored target"""
+        args = ["fly", "-t", self.target] + fly_args
+        logging.debug("command: " + " ".join(args))
         complete = subprocess.run(args, capture_output=True)
-        logging.debug('returncode: ' + str(complete.returncode))
-        logging.debug('stdout: ' + complete.stdout.decode('utf-8'))
-        logging.debug('stderr: ' + complete.stderr.decode('utf-8'))
+        logging.debug("returncode: " + str(complete.returncode))
+        logging.debug("stdout: " + complete.stdout.decode("utf-8"))
+        logging.debug("stderr: " + complete.stderr.decode("utf-8"))
         if check:
             complete.check_returncode()
         return complete
 
     def _flyj(self, fly_args, check=True):
-        """ Return the deserialized json output from a fly command. """
-        complete = self._fly(fly_args=fly_args + ['--json'], check=check)
+        """Return the deserialized json output from a fly command."""
+        complete = self._fly(fly_args=fly_args + ["--json"], check=check)
         return json.loads(complete.stdout)
 
     def login(self):
-        fly_args = ['login', '--concourse-url', self.concourse_url]
+        fly_args = ["login", "--concourse-url", self.concourse_url]
         if self.team_name is not None:
-            fly_args.extend(['--team-name', self.team_name])
+            fly_args.extend(["--team-name", self.team_name])
         if self.username is not None:
-            fly_args.extend(['--username', self.username])
+            fly_args.extend(["--username", self.username])
         if self.password is not None:
-            fly_args.extend(['--password', self.password])
+            fly_args.extend(["--password", self.password])
         self._fly(fly_args)
 
     def logout(self):
         self._fly(["logout"])
 
     def sync(self):
-        self._fly(['sync'])
+        self._fly(["sync"])
 
     def set_pipeline(self, pipeline, config_file, vars_path):
-        self._fly([
-            "set-pipeline",
-            "--non-interactive",
-            "--pipeline", pipeline,
-            "--config", config_file,
-            "--load-vars-from", vars_path
-        ])
+        self._fly(
+            [
+                "set-pipeline",
+                "--non-interactive",
+                "--pipeline",
+                pipeline,
+                "--config",
+                config_file,
+                "--load-vars-from",
+                vars_path,
+            ]
+        )
 
     def expose_pipeline(self, pipeline):
-        self._fly(['expose-pipeline', '--pipeline', pipeline])
+        self._fly(["expose-pipeline", "--pipeline", pipeline])
 
     def destroy_pipeline(self, pipeline):
-        self._fly([
-            'destroy-pipeline',
-            '--non-interactive',
-            '--pipeline', pipeline,
-        ])
+        self._fly(
+            [
+                "destroy-pipeline",
+                "--non-interactive",
+                "--pipeline",
+                pipeline,
+            ]
+        )
 
     def pause_pipeline(self, pipeline):
-        self._fly([
-            'pause-pipeline',
-            '--pipeline', pipeline,
-        ])
+        self._fly(
+            [
+                "pause-pipeline",
+                "--pipeline",
+                pipeline,
+            ]
+        )
 
     def unpause_pipeline(self, pipeline):
-        self._fly([
-            'unpause-pipeline',
-            '--pipeline', pipeline,
-        ])
+        self._fly(
+            [
+                "unpause-pipeline",
+                "--pipeline",
+                pipeline,
+            ]
+        )
 
     @property
     def pipelines(self):
-        """ A list of pipelines names """
-        return [i['name'] for i in self._flyj(['pipelines'])]
+        """A list of pipelines names"""
+        return [i["name"] for i in self._flyj(["pipelines"])]
 
     def get_jobs(self, pipeline):
-        return self._flyj(['jobs', '-p', pipeline])
+        return self._flyj(["jobs", "-p", pipeline])
 
     def get_builds(self, pipeline):
-        return self._flyj(['builds', '--pipeline', pipeline])
+        return self._flyj(["builds", "--pipeline", pipeline])
 
     def status_of_jobs(self, pipeline):
         statuses = {}
         jobs = self.get_jobs(pipeline)
         for job in jobs:
-            name = job.get('name', 'unknown')
-            build = job.get('finished_build', None)
+            name = job.get("name", "unknown")
+            build = job.get("finished_build", None)
             if build:
-                status = build.get('status', 'n/a')
+                status = build.get("status", "n/a")
             else:
-                status = 'n/a'
+                status = "n/a"
             statuses[name] = status
         return statuses
 
     def trigger_job(self, pipeline, job):
-        self._fly(['trigger-job', '--job', f'{pipeline}/{job}'])
+        self._fly(["trigger-job", "--job", f"{pipeline}/{job}"])
 
     def abort_build(self, pipeline, job, name):
-        self._fly([
-            'abort-build',
-            '--job', f'{pipeline}/{job}',
-            '--build', name
-        ])
+        self._fly(["abort-build", "--job", f"{pipeline}/{job}", "--build", name])
