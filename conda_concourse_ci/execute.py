@@ -715,8 +715,11 @@ def compute_builds(path, base_name, folders, matrix_base_dir=None,
 
         try:
             shutil.copytree(os.path.join(path, recipe), out_folder)
-        except: # noqa
-            os.system("cp -Rf '{}' '{}'".format(os.path.join(path, recipe), out_folder))
+        except Exception as e1:
+            try:
+                os.system("cp -Rf '{}/*' '{}'".format(os.path.join(path, recipe), out_folder), shell=True)
+            except Exception as e2:
+                print('cp -Rf recipe fallback failed')
 
         # write the conda_build_config.yml for this particular metadata into that recipe
         #   This should sit alongside meta.yaml, where conda-build will be able to find it
